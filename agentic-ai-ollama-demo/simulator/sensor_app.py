@@ -33,18 +33,35 @@ def main() -> None:
         if run_id and run_id != last_seen_run:
             last_seen_run = run_id
             if status.get("status") == "failed":
+                metadata = status.get("metadata", {})
+                job_name = metadata.get("job_name", "current pipeline")
+                domain = metadata.get("domain", "data platform")
                 prompt = (
-                    "Why did the nightly banking customer 360 dbt pipeline fail and how do we fix it? "
-                    "Use the latest runtime logs and metadata."
+                    f"Investigate why the latest {domain} pipeline run failed for job '{job_name}' and determine a solution. "
+                    "Use the latest runtime logs and metadata, and keep the diagnosis generic enough to apply to recurring failures."
                 )
                 try:
                     result = run_agent(prompt)
+                    latest_status = load_json(PIPELINE_STATUS, {})
+                    latest_run_id = latest_status.get("run_id")
+                    latest_run_status = latest_status.get("status")
+
+                    # Ignore stale agent output if the pipeline has already advanced
+                    # to a newer run or recovered while the investigation was running.
+                    if latest_run_id != run_id or latest_run_status != "failed":
+                        _append_sensor_log(
+                            f"Discarded stale remediation for run_id={run_id}; latest run is {latest_run_id} with status={latest_run_status}"
+                        )
+                        continue
+
                     final_answer = result["final_answer"]
                     LATEST_AGENT_REPORT.write_text(final_answer, encoding="utf-8")
                     _append_sensor_log("Detected failed dbt run and generated agent remediation plan")
+                    current_memory = metadata.get("runtime", {}).get("executor_memory_gb", 4)
+                    target_memory = max(current_memory * 2, 8)
                     recommendation = {
-                        "summary": "Increase executor memory from 4GB to 8GB and rerun the banking dbt pipeline.",
-                        "executor_memory_gb": 8,
+                        "summary": f"Increase executor memory from {current_memory}GB to {target_memory}GB and rerun the affected pipeline.",
+                        "executor_memory_gb": target_memory,
                         "actions": result["fix"]["actions"],
                         "rationale": result["fix"]["rationale"],
                     }

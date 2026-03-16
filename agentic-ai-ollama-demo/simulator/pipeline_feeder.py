@@ -8,7 +8,7 @@ from datetime import datetime, timezone
 
 from simulator.dataset_generator import generate_dataset
 from simulator.paths import CURRENT_JOB_METADATA, DBT_DIR, FIX_STATE, PIPELINE_LOG, PIPELINE_STATUS, RUNTIME_DIR, SCENARIO_STATE
-from simulator.runtime_state import append_event, load_json, write_json
+from simulator.runtime_state import append_event, clear_approval_state, consume_pipeline_trigger, load_json, write_json
 
 
 def _append_log(message: str) -> None:
@@ -76,6 +76,7 @@ def run_cycle() -> None:
     else:
         _append_log("INFO pipeline: dbt model mart_customer_360 finished successfully")
         _append_log("INFO pipeline: dbt model fct_account_activity finished successfully")
+        clear_approval_state()
         append_event(
             "pipeline",
             "Pipeline Recovery",
@@ -110,7 +111,19 @@ def main() -> None:
 
     while True:
         run_cycle()
-        time.sleep(interval)
+        slept = 0
+        while slept < interval:
+            trigger = consume_pipeline_trigger()
+            if trigger:
+                append_event(
+                    "pipeline",
+                    "Immediate Cycle Triggered",
+                    f"Operator requested an immediate pipeline run: {trigger.get('reason', 'manual trigger')}.",
+                    severity="info",
+                )
+                break
+            time.sleep(1)
+            slept += 1
 
 
 if __name__ == "__main__":

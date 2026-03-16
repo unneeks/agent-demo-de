@@ -40,7 +40,7 @@ class OllamaClient:
 
 def build_goal_summary(client: OllamaClient, user_request: str) -> str:
     prompt = f"""
-You are an AI systems engineer helping with a failing data pipeline.
+You are an AI systems engineer helping investigate and resolve a failing data pipeline.
 Turn the request into a crisp goal statement for an agent workflow.
 
 User request:
@@ -58,9 +58,9 @@ Goal:
 Available tools:
 {tool_text}
 
-Create a short execution plan for a local agent investigating a failed nightly ETL pipeline.
-Use one step per line. Mention when to analyze logs, inspect metadata, assess system health,
-generate a fix, and verify the rerun.
+Create a short execution plan for a local agent that detects failures, determines likely root causes,
+suggests a safe remediation, and verifies recovery. Use one step per line. Mention when to analyze logs,
+inspect metadata, assess system health, generate a fix, and verify the rerun.
 """.strip()
     raw_plan = client.generate(prompt, system_prompt="Return 5-7 plain text lines with no numbering.")
     return [line.strip("- ").strip() for line in raw_plan.splitlines() if line.strip()]

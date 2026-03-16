@@ -12,5 +12,5 @@ def reflect_on_execution(tool_results: dict[str, Any]) -> str:
         "The evidence is consistent across logs, metadata, and health checks. "
         f"Logs show {log_summary.lower()} Metadata indicates {metadata_summary.lower()} "
         f"Health checks report {health_summary.lower()} "
-        "The most likely root cause is insufficient executor memory rather than a platform outage."
+        "The most likely root cause is a workload or configuration bottleneck rather than a platform-wide outage."
     )

@@ -5,7 +5,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from simulator.paths import AGENT_RUN_STATE, APPROVAL_STATE, EVENT_LOG, FIX_STATE, PIPELINE_LOG, RUNTIME_DIR
+from simulator.paths import AGENT_RUN_STATE, APPROVAL_STATE, EVENT_LOG, FIX_STATE, LATEST_AGENT_REPORT, PIPELINE_LOG, PIPELINE_TRIGGER, RUNTIME_DIR
 
 
 def now_iso() -> str:
@@ -72,6 +72,11 @@ def set_approval_decision(status: str, operator: str = "human_operator") -> dict
     return approval
 
 
+def clear_approval_state() -> None:
+    if APPROVAL_STATE.exists():
+        APPROVAL_STATE.unlink()
+
+
 def apply_fix_payload(executor_memory_gb: int, source: str, approved_by: str = "human_operator") -> dict[str, Any]:
     payload = {
         "status": "applied",
@@ -88,3 +93,27 @@ def read_log_tail(limit: int = 60) -> list[str]:
     if not PIPELINE_LOG.exists():
         return []
     return PIPELINE_LOG.read_text(encoding="utf-8").splitlines()[-limit:]
+
+
+def reset_incident_state() -> None:
+    for path in (FIX_STATE, APPROVAL_STATE, AGENT_RUN_STATE, LATEST_AGENT_REPORT, EVENT_LOG):
+        if path.exists():
+            path.unlink()
+
+
+def request_pipeline_trigger(reason: str) -> None:
+    write_json(
+        PIPELINE_TRIGGER,
+        {
+            "requested_at": now_iso(),
+            "reason": reason,
+        },
+    )
+
+
+def consume_pipeline_trigger() -> dict[str, Any] | None:
+    if not PIPELINE_TRIGGER.exists():
+        return None
+    payload = load_json(PIPELINE_TRIGGER, {})
+    PIPELINE_TRIGGER.unlink(missing_ok=True)
+    return payload

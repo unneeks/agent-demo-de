@@ -26,7 +26,7 @@ def log_analyzer() -> dict[str, Any]:
     ]
     memory_failure = "Java heap space" in log_text or "OOMKilled" in log_text
     summary = (
-        "the nightly customer ETL failed because the transform step exhausted executor memory"
+        "the latest pipeline run failed because a transformation step exhausted executor memory"
         if memory_failure
         else "no memory issue detected in the logs"
     )
@@ -44,8 +44,9 @@ def metadata_lookup() -> dict[str, Any]:
         metadata_path = DATA_DIR / "sample_job_metadata.json"
     payload = _read_json(metadata_path)
     dependencies = payload.get("upstream_dependencies", [])
+    domain = payload.get("domain", "data platform")
     summary = (
-        f"the job {payload['job_name']} depends on {', '.join(dependencies)} and runs a heavy customer aggregation"
+        f"the job {payload['job_name']} belongs to the {domain} domain, depends on {', '.join(dependencies)}, and runs a heavy transformation workload"
     )
     return {
         "job_name": payload["job_name"],
@@ -76,8 +77,8 @@ def fix_generator(log_result: dict[str, Any], metadata_result: dict[str, Any], h
         "Monitor worker memory pressure during the next nightly window.",
     ]
     rationale = (
-        "The transform stage failed with heap exhaustion while platform services remained healthy, "
-        "so the lowest-risk fix is to raise executor memory and rerun the batch."
+        "The failing stage exhausted worker memory while platform services remained healthy, "
+        "so the lowest-risk remediation is to raise executor memory and rerun the pipeline."
     )
     return {
         "actions": actions,
@@ -91,7 +92,7 @@ def verification_runner(fix_result: dict[str, Any]) -> dict[str, Any]:
     return {
         "success": True,
         "applied_actions": actions,
-        "summary": "Simulated rerun completed successfully. The nightly customer ETL finished after increasing executor memory.",
+        "summary": "Simulated rerun completed successfully. The pipeline recovered after increasing executor memory.",
         "job_status": "succeeded",
         "rows_processed": 12480593,
     }

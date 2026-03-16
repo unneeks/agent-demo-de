@@ -38,12 +38,24 @@ def _append_timeline(state: AgentState, phase: str, title: str, details: str, st
     return timeline
 
 
+def _display_phase_name(phase: str) -> str:
+    labels = {
+        "understand_request": "Understand Request",
+        "create_plan": "Create Plan",
+        "execute_tools": "Execute Tools",
+        "reflect_on_results": "Reflect On Results",
+        "generate_fix": "Generate Fix",
+        "verify_fix": "Verify Fix",
+    }
+    return labels.get(phase, phase.replace("_", " ").title())
+
+
 def understand_request(state: AgentState) -> AgentState:
     client = OllamaClient()
     goal = build_goal_summary(client, state["user_request"])
     return {
         "goal": goal,
-        "timeline": _append_timeline(state, "understand_request", "Goal Understood", goal),
+        "timeline": _append_timeline(state, "understand_request", "Understand Request", goal),
     }
 
 
@@ -56,7 +68,7 @@ def create_plan(state: AgentState) -> AgentState:
     )
     return {
         "plan": steps,
-        "timeline": _append_timeline(state, "create_plan", "Plan Created", " | ".join(steps)),
+        "timeline": _append_timeline(state, "create_plan", "Create Plan", " | ".join(steps)),
     }
 
 
@@ -73,7 +85,7 @@ def execute_tools(state: AgentState) -> AgentState:
         "timeline": _append_timeline(
             state,
             "execute_tools",
-            "Tools Executed",
+            "Execute Tools",
             f"Logs: {log_result['summary']}; Metadata: {metadata_result['summary']}; Health: {health_result['summary']}",
         ),
     }
@@ -83,7 +95,7 @@ def reflect_on_results(state: AgentState) -> AgentState:
     reflection = reflect_on_execution(state["tool_results"])
     return {
         "reflection": reflection,
-        "timeline": _append_timeline(state, "reflect_on_results", "Reflection Complete", reflection),
+        "timeline": _append_timeline(state, "reflect_on_results", "Reflect On Results", reflection),
     }
 
 
@@ -98,7 +110,7 @@ def generate_fix(state: AgentState) -> AgentState:
         "timeline": _append_timeline(
             state,
             "generate_fix",
-            "Fix Proposed",
+            "Generate Fix",
             " | ".join(fix["actions"]),
         ),
     }
@@ -108,7 +120,7 @@ def verify_fix(state: AgentState) -> AgentState:
     verification = verification_runner(state["fix"])
     return {
         "verification": verification,
-        "timeline": _append_timeline(state, "verify_fix", "Verification Simulated", verification["summary"]),
+        "timeline": _append_timeline(state, "verify_fix", "Verify Fix", verification["summary"]),
     }
 
 
@@ -135,12 +147,7 @@ def return_final_answer(state: AgentState) -> AgentState:
     )
     return {
         "final_answer": final_answer,
-        "timeline": _append_timeline(
-            state,
-            "return_final_answer",
-            "Final Answer Ready",
-            "Agent packaged investigation summary and recommendation.",
-        ),
+        "timeline": list(state.get("timeline", [])),
     }
 
 

@@ -10,13 +10,17 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 from agent.agent_graph import build_agent_graph
+from simulator.dataset_generator import generate_dataset
 from simulator.paths import AGENT_RUN_STATE, APPROVAL_STATE, CURRENT_JOB_METADATA, PIPELINE_STATUS, ROOT_DIR, SCENARIO_STATE
+from simulator.scenarios import SCENARIOS
 from simulator.runtime_state import (
     append_event,
     apply_fix_payload,
     load_json,
     read_event_tail,
     read_log_tail,
+    reset_incident_state,
+    request_pipeline_trigger,
     set_approval_decision,
     write_agent_run_state,
 )
@@ -37,6 +41,13 @@ class RunRequest(BaseModel):
 
 class ApprovalRequest(BaseModel):
     operator: str = "human_operator"
+
+
+class ScenarioRequest(BaseModel):
+    scenario: str
+    reset_incident: bool = True
+    trigger_now: bool = True
+    operator: str = "web_operator"
 
 
 def _build_dashboard_payload() -> dict[str, Any]:
@@ -158,6 +169,41 @@ def reject_fix(request: ApprovalRequest) -> dict[str, Any]:
         payload={"operator": request.operator},
     )
     return {"approval": approval}
+
+
+@app.post("/api/reset")
+def reset_incident(request: ApprovalRequest) -> dict[str, Any]:
+    reset_incident_state()
+    append_event(
+        "operator",
+        "Incident State Reset",
+        "Operator cleared runtime approvals, agent traces, and fix state for a fresh demo cycle.",
+        severity="info",
+        payload={"operator": request.operator},
+    )
+    return {"status": "reset"}
+
+
+@app.post("/api/scenario/load")
+def load_scenario(request: ScenarioRequest) -> dict[str, Any]:
+    if request.scenario not in SCENARIOS:
+        raise HTTPException(status_code=400, detail=f"Unknown scenario '{request.scenario}'.")
+
+    if request.reset_incident:
+        reset_incident_state()
+
+    scenario_payload = generate_dataset(request.scenario)
+    if request.trigger_now:
+        request_pipeline_trigger(f"scenario:{request.scenario}")
+
+    append_event(
+        "operator",
+        "Scenario Loaded",
+        f"Operator loaded scenario '{request.scenario}' for the next pipeline cycle.",
+        severity="info",
+        payload={"scenario": request.scenario, "trigger_now": request.trigger_now, "operator": request.operator},
+    )
+    return {"scenario": scenario_payload}
 
 
 def cli() -> None:
