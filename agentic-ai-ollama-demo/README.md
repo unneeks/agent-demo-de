@@ -11,7 +11,7 @@ It now includes two demo modes:
 
 The demo walks through a realistic lifecycle:
 
-User Request -> Goal Understanding -> Planning -> Tool Execution -> Reflection / Health Check -> Fix Generation -> Verification -> Final Result
+User Request -> Goal Understanding -> Planning -> Tool Execution -> Reflection / Health Check -> Fix Generation -> MCP Change Record -> Human Approval -> Verification -> Final Result
 
 ## Why This Repo Exists
 
@@ -28,7 +28,7 @@ It is designed to be:
 
 The agent investigates a failing nightly customer ETL job, correlates logs and metadata, reasons about infrastructure health, proposes a fix, simulates a rerun, and returns a structured operational summary.
 
-In the closed-loop mode, a second application continuously runs a dbt banking pipeline and writes fresh logs. A sensor watches those logs, calls the agent when a run fails, raises a remediation proposal, and waits for a human approval before the next cycle recovers.
+In the closed-loop mode, a second application continuously runs a dbt banking pipeline and writes fresh logs. A sensor watches those logs, calls the agent when a run fails, raises an MCP-backed change record for the remediation, and waits for human approval before the next cycle recovers.
 
 The FastAPI service also serves a live operator dashboard at `http://localhost:8000`.
 
@@ -56,8 +56,9 @@ Everything runs locally. There are no external API dependencies.
 3. Tool execution: Read pipeline logs, inspect metadata, and simulate system health checks.
 4. Reflection: Correlate evidence and identify the most likely root cause.
 5. Fix generation: Propose a concrete remediation.
-6. Verification: Simulate rerunning the pipeline after the change.
-7. Final answer: Return a concise operational summary.
+6. Change control: Open a change record through a local MCP tool.
+7. Verification: Verify recovery after the approved change is applied.
+8. Final answer: Return a concise operational summary.
 
 ## Demo Story
 
@@ -89,9 +90,10 @@ The flow is:
 2. The `pipeline` app continuously runs a dbt project and writes runtime logs.
 3. The `sensor` app watches for failed runs.
 4. On failure, the sensor invokes the agent using the latest runtime log and metadata.
-5. The agent recommends a fix and opens a human approval request.
-6. The operator approves or rejects the remediation in the web UI.
-7. The next dbt cycle succeeds, demonstrating closed-loop behavior.
+5. The agent recommends a fix and raises a change record through a local MCP tool.
+6. The operator approves or rejects the change record in the web UI.
+7. Only after the change is approved is the fix applied for the next dbt cycle.
+8. The next dbt cycle succeeds, demonstrating closed-loop behavior.
 
 Available scenarios:
 
@@ -136,6 +138,121 @@ docker compose exec -T ollama ollama pull llama3.2:3b
 ./scripts/run_demo.sh "Why did the nightly customer ETL job fail and how do we fix it?"
 ```
 
+## End-To-End Run
+
+Use this sequence when you want the full control-room story from healthy system to approved recovery.
+
+### 1. Start the stack
+
+```bash
+cd /Users/ranjitpillai/codexmap/agentic-ai-ollama-demo
+docker compose up --build -d
+./scripts/setup.sh
+```
+
+This starts:
+
+- `ollama` for the local model
+- `agent` for the API and web UI
+- `pipeline` for the continuous dbt job
+- `sensor` for failure detection and agent invocation
+
+### 2. Open the UI
+
+Open:
+
+`http://localhost:8000`
+
+The system should settle into a healthy monitoring state if no incident is active.
+
+### 3. Reset to a clean baseline
+
+Use the `Reset Incident` button in the UI, then click `Healthy`.
+
+Equivalent command-line path:
+
+```bash
+./scripts/load_dataset.sh baseline
+```
+
+Expected result:
+
+- pipeline status stays healthy
+- the agent timeline is sleeping
+- no remediation panel is shown
+
+### 4. Trigger a failing incident
+
+Click `Memory Stress` in the UI.
+
+Equivalent command-line path:
+
+```bash
+./scripts/load_dataset.sh memory_stress
+```
+
+Expected result:
+
+- the next dbt cycle fails
+- the sensor invokes the agent
+- the agent analyzes logs and metadata
+- the agent raises an MCP change record
+- the UI moves to `Change Approval Required`
+
+### 5. Review the change record
+
+In the `Remediation` tab, review:
+
+- the change ID
+- the proposed actions
+- the rationale
+- the MCP change-record status
+
+At this point the fix is **not** applied yet.
+
+### 6. Approve the change
+
+Click `Approve Change`.
+
+What happens next:
+
+- the MCP change record is updated to `approved`
+- only then is the fix written into `runtime/fix_state.json`
+- the next pipeline cycle runs with the approved remediation
+
+### 7. Watch recovery
+
+Stay on the `Overview` tab and keep `Live Mode` on.
+
+Expected result:
+
+- the next cycle succeeds
+- the incident banner clears
+- the approval state disappears
+- the visible cognition returns to a sleeping agent
+
+### 8. Trigger another demo run
+
+For a clean replay:
+
+1. Click `Reset Incident`
+2. Click `Healthy` to return to baseline
+3. Click `Memory Stress` when you want the next failure
+
+### 9. Follow logs during the run
+
+```bash
+docker compose logs -f pipeline sensor agent
+```
+
+This is useful while demoing the UI because it shows:
+
+- dbt cycle starts and failures
+- sensor detection
+- agent completion
+- MCP-backed change approval flow
+- post-approval recovery
+
 ## Architecture
 
 ```mermaid
@@ -148,6 +265,7 @@ flowchart LR
     T --> M["Metadata Lookup"]
     T --> H["Health Check"]
     T --> F["Fix Generator"]
+    T --> C["MCP Change Tool"]
     T --> V["Verification Runner"]
     P["Continuous dbt Pipeline"] --> T
     S["Sensor / Remediator"] --> G
@@ -162,7 +280,8 @@ flowchart TD
     P --> E["execute_tools"]
     E --> R["reflect_on_results"]
     R --> F["generate_fix"]
-    F --> V["verify_fix"]
+    F --> C["raise_change_record"]
+    C --> V["verify_fix"]
     V --> A["return_final_answer"]
 ```
 
@@ -175,7 +294,8 @@ digraph agent_workflow {
   create_plan -> execute_tools;
   execute_tools -> reflect_on_results;
   reflect_on_results -> generate_fix;
-  generate_fix -> verify_fix;
+  generate_fix -> raise_change_record;
+  raise_change_record -> verify_fix;
   verify_fix -> return_final_answer;
 }
 ```
@@ -190,7 +310,8 @@ flowchart LR
     L --> S["Continuous Sensor"]
     M --> S
     S --> A["Agent"]
-    A --> Q["runtime/approval_state.json"]
+    A --> C["Local MCP Change Tool"]
+    C --> Q["runtime/approval_state.json"]
     Q --> U["Web Approval UI"]
     U --> F["runtime/fix_state.json"]
     F --> P
@@ -205,7 +326,7 @@ It shows:
 - a dramatic incident banner when the banking pipeline fails
 - live pipeline status and scenario context
 - the agent's LangGraph phase timeline
-- a human-in-the-loop approval panel for remediations
+- a human-in-the-loop approval panel for MCP change records
 - an event stream with critical, warning, and recovery moments
 - the raw pipeline log tail
 
@@ -235,6 +356,8 @@ agentic-ai-ollama-demo/
 │   └── seeds/generated/
 ├── runtime/
 ├── simulator/
+│   ├── change_mcp_client.py
+│   ├── change_mcp_server.py
 │   ├── dataset_generator.py
 │   ├── pipeline_feeder.py
 │   └── sensor_app.py
@@ -307,6 +430,18 @@ You can swap datasets at any time:
 ./scripts/load_dataset.sh fraud_spike
 ```
 
+### 5. Refresh services after code changes
+
+If you change backend or UI code while the stack is running:
+
+```bash
+docker compose restart agent sensor pipeline
+```
+
+Then hard refresh the browser:
+
+- `Cmd+Shift+R` on macOS
+
 ## Local Python Run
 
 If you want to run the project without Docker for the agent process:
@@ -336,7 +471,8 @@ The expected story is:
 - metadata confirms the ETL stage is memory-heavy
 - health checks show the platform is healthy overall
 - the fix generator recommends increasing executor memory
-- the verification step simulates a successful rerun
+- the agent raises an MCP change record before any fix is applied
+- verification remains blocked until the change is approved
 
 In the closed-loop demo:
 
@@ -344,8 +480,8 @@ In the closed-loop demo:
 - the `memory_stress` dataset causes the first `mart_customer_360` build to fail
 - the `sensor` service detects the failure and invokes the agent
 - the agent writes a remediation report to `runtime/latest_agent_report.txt`
-- the web UI pauses on a human approval step
-- your approval writes the fix into `runtime/fix_state.json`
+- the web UI pauses on a human approval step for the change record
+- your approval updates the MCP change record and then writes the fix into `runtime/fix_state.json`
 - the next pipeline cycle succeeds
 
 ## FastAPI Endpoints

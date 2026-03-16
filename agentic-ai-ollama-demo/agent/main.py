@@ -10,8 +10,9 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 from agent.agent_graph import build_agent_graph
+from simulator.change_mcp_client import call_change_mcp
 from simulator.dataset_generator import generate_dataset
-from simulator.paths import AGENT_RUN_STATE, APPROVAL_STATE, CURRENT_JOB_METADATA, PIPELINE_STATUS, ROOT_DIR, SCENARIO_STATE
+from simulator.paths import AGENT_RUN_STATE, APPROVAL_STATE, CHANGE_RECORDS_STATE, CURRENT_JOB_METADATA, PIPELINE_STATUS, ROOT_DIR, SCENARIO_STATE
 from simulator.scenarios import SCENARIOS
 from simulator.runtime_state import (
     append_event,
@@ -56,6 +57,7 @@ def _build_dashboard_payload() -> dict[str, Any]:
     approval = load_json(APPROVAL_STATE, {"status": "idle"})
     agent_run = load_json(AGENT_RUN_STATE, {"status": "idle"})
     metadata = load_json(CURRENT_JOB_METADATA, {})
+    change_records = load_json(CHANGE_RECORDS_STATE, [])
 
     return {
         "pipeline": pipeline,
@@ -63,6 +65,7 @@ def _build_dashboard_payload() -> dict[str, Any]:
         "approval": approval,
         "agent_run": agent_run,
         "metadata": metadata,
+        "change_records": change_records[-10:],
         "events": read_event_tail(),
         "log_tail": read_log_tail(),
     }
@@ -136,35 +139,78 @@ def approve_fix(request: ApprovalRequest) -> dict[str, Any]:
     approval = load_json(APPROVAL_STATE, {"status": "idle"})
     recommendation = approval.get("recommendation")
     if approval.get("status") != "pending" or not recommendation:
-        raise HTTPException(status_code=409, detail="No pending fix recommendation to approve.")
+        raise HTTPException(status_code=409, detail="No pending fix recommendation is waiting for approval.")
+
+    metadata = load_json(CURRENT_JOB_METADATA, {})
+    run_id = approval.get("run_id")
+    created_record = call_change_mcp(
+        "create_change_record",
+        {
+            "service": "dbt_banking_pipeline",
+            "job_name": metadata.get("job_name", "current_pipeline"),
+            "domain": metadata.get("domain", "data platform"),
+            "run_id": run_id,
+            "risk": "medium",
+            "summary": recommendation.get("summary", "Apply remediation for the failed pipeline run."),
+            "rationale": recommendation.get("rationale", "No rationale supplied."),
+            "implementation_plan": recommendation.get("actions", []),
+            "proposed_fix": {
+                "executor_memory_gb": int(recommendation.get("executor_memory_gb", 8)),
+                "actions": recommendation.get("actions", []),
+            },
+            "requested_by": request.operator,
+        },
+    )
+    approved_record = call_change_mcp(
+        "approve_change_record",
+        {"change_id": created_record["change_id"], "operator": request.operator},
+    )
 
     fix_state = apply_fix_payload(
         executor_memory_gb=int(recommendation.get("executor_memory_gb", 8)),
-        source="human_approved_remediation",
+        source=f"approved_change_record:{approved_record['change_id']}",
         approved_by=request.operator,
     )
-    approval = set_approval_decision("approved", operator=request.operator)
+    approval = set_approval_decision("approved", operator=request.operator, change_record=approved_record)
     append_event(
         "approval",
-        "Fix Approved",
-        "Operator approved the recommended memory increase for the next pipeline cycle.",
-        severity="success",
-        payload={"operator": request.operator, "executor_memory_gb": fix_state["executor_memory_gb"]},
+        "Change Record Raised",
+        f"Approved remediation created change record {created_record['change_id']} for execution governance.",
+        severity="info",
+        payload={"operator": request.operator, "change_id": created_record["change_id"], "run_id": run_id},
     )
-    return {"approval": approval, "fix_state": fix_state}
+    append_event(
+        "approval",
+        "Change Auto-Approved",
+        f"Change record {approved_record['change_id']} was auto-approved after human remediation approval.",
+        severity="success",
+        payload={"operator": request.operator, "change_id": approved_record["change_id"], "run_id": run_id},
+    )
+    append_event(
+        "approval",
+        "Fix Applied",
+        f"Approved change record {approved_record['change_id']} armed the fix for the next pipeline cycle.",
+        severity="success",
+        payload={
+            "operator": request.operator,
+            "change_id": approved_record["change_id"],
+            "executor_memory_gb": fix_state["executor_memory_gb"],
+        },
+    )
+    return {"approval": approval, "fix_state": fix_state, "change_record": approved_record}
 
 
 @app.post("/api/approval/reject")
 def reject_fix(request: ApprovalRequest) -> dict[str, Any]:
     approval = load_json(APPROVAL_STATE, {"status": "idle"})
     if approval.get("status") != "pending":
-        raise HTTPException(status_code=409, detail="No pending fix recommendation to reject.")
+        raise HTTPException(status_code=409, detail="No pending fix recommendation is waiting for approval.")
 
     approval = set_approval_decision("rejected", operator=request.operator)
     append_event(
         "approval",
         "Fix Rejected",
-        "Operator rejected the remediation proposal. The sensor will wait for another failure cycle.",
+        "Operator rejected the remediation proposal before any change record was created.",
         severity="warning",
         payload={"operator": request.operator},
     )

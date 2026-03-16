@@ -139,10 +139,20 @@ def return_final_answer(state: AgentState) -> AgentState:
             _format_section("PLAN", "\n".join(f"{idx}. {step}" for idx, step in enumerate(state["plan"], start=1))),
             _format_section("TOOL EXECUTION", "\n".join(tool_lines)),
             _format_section("REFLECTION", state["reflection"]),
-            _format_section("FIX", f"{state['fix']['rationale']}\n" + "\n".join(fix_lines)),
+            _format_section(
+                "FIX",
+                (
+                    f"{state['fix']['rationale']}\n"
+                    + "\n".join(fix_lines)
+                    + "\n- Wait for human approval before applying the fix."
+                ),
+            ),
             _format_section("VERIFICATION", verification_text),
-            "Final Result: The nightly customer ETL failed due to executor memory exhaustion. "
-            "Increase executor memory and rerun the job; the simulated verification succeeds.",
+            (
+                f"Final Result: The latest pipeline failure was traced to executor memory exhaustion. "
+                "The proposed fix now requires human approval before a change record is raised, approved, "
+                "and applied to the next pipeline cycle."
+            ),
         ]
     )
     return {

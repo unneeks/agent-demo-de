@@ -76,7 +76,7 @@ def main() -> None:
                         append_event(
                             "sensor",
                             "Auto-Remediation Applied",
-                            "The sensor auto-approved the memory increase for the next cycle.",
+                            "The sensor auto-approved the recommended remediation for the next cycle.",
                             severity="warning",
                             payload={"run_id": run_id, "actions": recommendation["actions"]},
                         )

@@ -83,6 +83,10 @@ const phaseStates = {
   execute_tools: "active",
   reflect_on_results: "active",
   generate_fix: "active",
+  human_in_the_loop: "active",
+  raise_change_record: "active",
+  auto_approve_change: "active",
+  apply_fix: "settling",
   verify_fix: "settling",
 };
 
@@ -164,7 +168,7 @@ function renderHero(data) {
 
   if (pipeline.status === "failed") {
     heroStatusCard.classList.add("danger");
-    heroStatus.textContent = approval.status === "pending" ? "Approval Required" : "Critical Failure";
+    heroStatus.textContent = approval.status === "pending" ? "Human Approval Required" : "Critical Failure";
     heroSubstatus.textContent = pipeline.summary || "The latest dbt run failed.";
     alarmBanner.classList.remove("hidden");
     alarmTitle.textContent = approval.status === "pending" ? "Remediation Waiting For Human Approval" : "dbt Pipeline Failure";
@@ -175,8 +179,8 @@ function renderHero(data) {
     alarmBanner.classList.add("hidden");
   } else if (approval.status === "approved") {
     heroStatusCard.classList.add("warning");
-    heroStatus.textContent = "Remediation Armed";
-    heroSubstatus.textContent = "A human-approved fix is staged for the next pipeline cycle.";
+    heroStatus.textContent = "Change Approved";
+    heroSubstatus.textContent = "A human-approved change record is staged for the next pipeline cycle.";
     alarmBanner.classList.add("hidden");
   } else {
     heroStatus.textContent = "Monitoring";
@@ -187,11 +191,62 @@ function renderHero(data) {
 
 function getPlayableTimeline(fullTimeline, approval) {
   const filteredTimeline = (fullTimeline || []).filter((item) => item.phase !== "return_final_answer");
+  const generateFixIndex = filteredTimeline.findIndex((item) => item.phase === "generate_fix");
+  const baseTimeline = generateFixIndex >= 0 ? filteredTimeline.slice(0, generateFixIndex + 1) : filteredTimeline;
+
+  if (approval?.status === "pending") {
+    return [
+      ...baseTimeline,
+      {
+        phase: "human_in_the_loop",
+        title: "Human In The Loop",
+        details: "Waiting for an operator to approve the proposed remediation before any governed change is raised.",
+      },
+    ];
+  }
+
+  if (approval?.status === "approved") {
+    const changeId = approval?.change_record?.change_id || "pending";
+    return [
+      ...baseTimeline,
+      {
+        phase: "human_in_the_loop",
+        title: "Human In The Loop",
+        details: "The operator approved the proposed remediation path.",
+      },
+      {
+        phase: "raise_change_record",
+        title: "Raise Change Record",
+        details: `Raised governed change record ${changeId} for operational execution.`,
+      },
+      {
+        phase: "auto_approve_change",
+        title: "Auto Approve Change",
+        details: `The MCP workflow auto-approved change record ${changeId} after human remediation approval.`,
+      },
+      {
+        phase: "apply_fix",
+        title: "Apply Fix",
+        details: "The approved change armed the remediation for the next pipeline cycle.",
+      },
+    ];
+  }
+
+  if (approval?.status === "rejected") {
+    return [
+      ...baseTimeline,
+      {
+        phase: "human_in_the_loop",
+        title: "Human In The Loop",
+        details: "The operator rejected the proposed remediation, so no change record was raised.",
+      },
+    ];
+  }
+
   if (approval?.status !== "pending") {
     return filteredTimeline;
   }
-  const fixIndex = filteredTimeline.findIndex((item) => item.phase === "generate_fix");
-  return fixIndex >= 0 ? filteredTimeline.slice(0, fixIndex + 1) : filteredTimeline;
+  return filteredTimeline;
 }
 
 function isTimelinePrefix(previousTimeline, nextTimeline) {
@@ -225,13 +280,13 @@ function renderSummary(data) {
   activePhaseSummary.textContent = latestPhase ? latestPhase.title : "The next agent run will paint its workflow here.";
 
   if (approval.status === "pending") {
-    approvalSummary.textContent = "The sensor has proposed a fix and is waiting for a human decision.";
+    approvalSummary.textContent = "The proposed remediation is waiting for a human decision before any change record is raised.";
   } else if (approval.status === "approved") {
-    approvalSummary.textContent = "A fix was approved and the next cycle should incorporate the remediation.";
+    approvalSummary.textContent = "The remediation was approved, a change record was raised and approved, and the next cycle should incorporate the fix.";
   } else if (approval.status === "rejected") {
-    approvalSummary.textContent = "The recommendation was rejected. The next failure cycle will generate a new proposal.";
+    approvalSummary.textContent = "The remediation was rejected before any change record was raised.";
   } else {
-    approvalSummary.textContent = "The agent has not requested operator approval yet.";
+    approvalSummary.textContent = "The agent has not requested a change approval yet.";
   }
 }
 
@@ -275,7 +330,7 @@ function startTimelinePlayback(fullTimeline, approval, pipeline) {
   const playableTimeline = getPlayableTimeline(fullTimeline, approval);
   const playableSignature = JSON.stringify(playableTimeline.map((item) => [item.phase, item.title, item.details]));
   const rawTimelineExtended = isTimelinePrefix(playbackTimeline, playableTimeline);
-  const fixStageIndex = playableTimeline.findIndex((item) => item.phase === "generate_fix");
+  const approvalStageIndex = playableTimeline.findIndex((item) => item.phase === "human_in_the_loop");
 
   if (recoverySleepTimer) {
     clearTimeout(recoverySleepTimer);
@@ -315,30 +370,44 @@ function startTimelinePlayback(fullTimeline, approval, pipeline) {
     playbackIndex = playableTimeline.length - 1;
   }
 
-  if (approval?.status === "pending" && fixStageIndex >= 0) {
-    playbackIndex = Math.max(playbackIndex, fixStageIndex);
+  if (approval?.status === "pending" && approvalStageIndex >= 0) {
+    playbackIndex = Math.max(playbackIndex, approvalStageIndex);
   }
 
+  const playbackChanged = playableSignature !== playbackSignature;
   playbackTimeline = playableTimeline;
   playbackSignature = playableSignature;
 
-  if (timelinePlaybackTimer) {
-    clearInterval(timelinePlaybackTimer);
+  if (approval?.status === "pending" && approvalStageIndex >= 0) {
+    playbackIndex = approvalStageIndex;
+    if (timelinePlaybackTimer) {
+      clearTimeout(timelinePlaybackTimer);
+      timelinePlaybackTimer = null;
+    }
+    return;
+  }
+
+  if (timelinePlaybackTimer && playbackChanged) {
+    clearTimeout(timelinePlaybackTimer);
     timelinePlaybackTimer = null;
   }
 
   if (playableTimeline.length <= 1 || playbackIndex >= playableTimeline.length - 1) {
     playbackIndex = playableTimeline.length - 1;
-  } else {
-    timelinePlaybackTimer = setInterval(() => {
+  } else if (!timelinePlaybackTimer) {
+    timelinePlaybackTimer = setTimeout(function advancePlayback() {
       if (playbackIndex >= playbackTimeline.length - 1) {
-        clearInterval(timelinePlaybackTimer);
         timelinePlaybackTimer = null;
         return;
       }
       playbackIndex += 1;
       renderSummary({ pipeline: currentDashboard.pipeline, scenario: currentDashboard.scenario, approval: currentDashboard.approval });
       renderTimeline({ agent_run: { timeline: playbackTimeline } });
+      if (playbackIndex < playbackTimeline.length - 1) {
+        timelinePlaybackTimer = setTimeout(advancePlayback, 3500);
+      } else {
+        timelinePlaybackTimer = null;
+      }
     }, 3500);
   }
 
@@ -362,10 +431,9 @@ let currentDashboard = {
 function renderApproval(data) {
   const approval = data.approval || {};
   const recommendation = approval.recommendation;
+  const changeRecord = approval.change_record || {};
   const isPending = approval.status === "pending" && recommendation;
-  const visibleTimeline = playbackTimeline.slice(0, Math.max(playbackIndex + 1, 0));
-  const hasReachedFixStage = visibleTimeline.some((item) => item.phase === "generate_fix" || item.phase === "verify_fix");
-  const showApproval = isPending && hasReachedFixStage;
+  const showApproval = isPending;
   approveButton.disabled = !isPending;
   rejectButton.disabled = !isPending;
   approvalPill.textContent = approval.status || "idle";
@@ -374,8 +442,8 @@ function renderApproval(data) {
   remediationContextPanel.classList.toggle("hidden-panel", !showApproval);
 
   if (!showApproval) {
-    approvalBody.innerHTML = '<p class="empty-state">No recommendation is waiting for approval.</p>';
-    remediationContext.innerHTML = '<p class="empty-state">When the agent proposes a fix, the rationale and actions will appear here.</p>';
+    approvalBody.innerHTML = '<p class="empty-state">No change record is waiting for approval.</p>';
+    remediationContext.innerHTML = '<p class="empty-state">When the agent raises a change record, the rationale and actions will appear here.</p>';
     return;
   }
 
@@ -386,16 +454,25 @@ function renderApproval(data) {
       <ul class="approval-list">
         ${(recommendation.actions || []).map((item) => `<li>${item}</li>`).join("")}
       </ul>
+      ${changeRecord.change_id ? `<p><strong>Change ID:</strong> ${changeRecord.change_id}</p>` : ""}
+      ${changeRecord.status ? `<p><strong>Change Status:</strong> ${changeRecord.status}</p>` : ""}
+      ${changeRecord.risk ? `<p><strong>Risk:</strong> ${changeRecord.risk}</p>` : ""}
       <p><strong>Requested:</strong> ${formatTimestamp(approval.requested_at)}</p>
       <p><strong>Run ID:</strong> ${approval.run_id || "n/a"}</p>
     </div>
   `;
 
-  remediationContext.innerHTML = renderMarkdown(
-    `### Recommended Change\n- Summary: ${recommendation.summary}\n- Rationale: ${recommendation.rationale}\n\n### Actions\n${(recommendation.actions || [])
-      .map((item) => `- ${item}`)
-      .join("\n")}`
-  );
+  remediationContext.innerHTML = changeRecord.change_id
+    ? renderMarkdown(
+        `### MCP Change Record\n- Change ID: ${changeRecord.change_id}\n- Status: ${changeRecord.status || "approved"}\n- Service: ${changeRecord.service || "pipeline"}\n- Risk: ${changeRecord.risk || "medium"}\n\n### Recommended Change\n- Summary: ${recommendation.summary}\n- Rationale: ${recommendation.rationale}\n\n### Actions\n${(recommendation.actions || [])
+          .map((item) => `- ${item}`)
+          .join("\n")}`
+      )
+    : renderMarkdown(
+        `### Human Approval\n- Status: pending human decision\n- Next Step: if approved, the system will raise and auto-approve a governed change record before applying the fix.\n\n### Recommended Change\n- Summary: ${recommendation.summary}\n- Rationale: ${recommendation.rationale}\n\n### Actions\n${(recommendation.actions || [])
+          .map((item) => `- ${item}`)
+          .join("\n")}`
+      );
 }
 
 function renderEvents(data) {

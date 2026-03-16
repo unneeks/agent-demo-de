@@ -14,7 +14,7 @@
           <p class="eyebrow">Agentic AI Banking Ops</p>
           <h1>Control Room</h1>
           <p class="subcopy">
-            Live monitoring for the dbt banking pipeline, incident response agent, and human approval loop.
+            Live monitoring for the dbt banking pipeline, incident response agent, MCP change control, and human approval loop.
           </p>
         </div>
         <div class="topbar-actions">
@@ -69,7 +69,7 @@
           <article class="summary-card">
             <p class="muted-label">Approval State</p>
             <h3 id="approval-status">No proposal</h3>
-            <p id="approval-summary">The agent has not requested operator approval yet.</p>
+            <p id="approval-summary">The agent has not requested a change approval yet.</p>
           </article>
           <article class="summary-card">
             <p class="muted-label">Agent Progress</p>
@@ -130,12 +130,12 @@
             <div class="panel-header">
               <div>
                 <p class="muted-label">Human In The Loop</p>
-                <h2>Remediation Approval</h2>
+                <h2>Human Approval</h2>
               </div>
               <span class="pill warning" id="approval-pill">Awaiting signal</span>
             </div>
             <div id="approval-body" class="approval-body">
-              <p class="empty-state">No recommendation is waiting for approval.</p>
+              <p class="empty-state">No remediation is waiting for human approval.</p>
             </div>
             <div class="approval-actions">
               <button id="approve-button" class="action-button approve" disabled>Approve Fix</button>
@@ -154,7 +154,7 @@
               </div>
             </div>
             <div class="markdown-body" id="remediation-context">
-              <p class="empty-state">When the agent proposes a fix, the rationale and actions will appear here.</p>
+              <p class="empty-state">When the agent proposes a fix, the rationale and approval context will appear here.</p>
             </div>
           </article>
         </section>

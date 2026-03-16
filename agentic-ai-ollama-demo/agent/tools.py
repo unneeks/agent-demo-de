@@ -63,8 +63,11 @@ def metadata_lookup() -> dict[str, Any]:
 def health_check() -> dict[str, Any]:
     payload = run_health_check()
     fix_state_path = RUNTIME_DIR / "fix_state.json"
+    pipeline_status_path = RUNTIME_DIR / "pipeline_status.json"
     if fix_state_path.exists():
         payload["fix_state"] = _read_json(fix_state_path)
+    if pipeline_status_path.exists():
+        payload["pipeline_status"] = _read_json(pipeline_status_path)
     return payload
 
 
@@ -84,15 +87,16 @@ def fix_generator(log_result: dict[str, Any], metadata_result: dict[str, Any], h
         "actions": actions,
         "rationale": rationale,
         "health_context": health_result["summary"],
+        "executor_memory_gb": increase_to,
     }
 
 
 def verification_runner(fix_result: dict[str, Any]) -> dict[str, Any]:
     actions = fix_result["actions"]
     return {
-        "success": True,
+        "success": False,
         "applied_actions": actions,
-        "summary": "Simulated rerun completed successfully. The pipeline recovered after increasing executor memory.",
-        "job_status": "succeeded",
-        "rows_processed": 12480593,
+        "summary": "Verification is blocked until a human approves the proposed fix and the next pipeline cycle applies it.",
+        "job_status": "awaiting_human_approval",
+        "rows_processed": 0,
     }

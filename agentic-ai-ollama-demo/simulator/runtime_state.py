@@ -5,7 +5,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from simulator.paths import AGENT_RUN_STATE, APPROVAL_STATE, EVENT_LOG, FIX_STATE, LATEST_AGENT_REPORT, PIPELINE_LOG, PIPELINE_TRIGGER, RUNTIME_DIR
+from simulator.paths import AGENT_RUN_STATE, APPROVAL_STATE, CHANGE_RECORDS_STATE, EVENT_LOG, FIX_STATE, LATEST_AGENT_REPORT, PIPELINE_LOG, PIPELINE_TRIGGER, RUNTIME_DIR
 
 
 def now_iso() -> str:
@@ -52,22 +52,34 @@ def write_agent_run_state(payload: dict[str, Any]) -> None:
     write_json(AGENT_RUN_STATE, payload)
 
 
-def set_approval_pending(run_id: str, recommendation: dict[str, Any], timeline: list[dict[str, Any]]) -> None:
+def set_approval_pending(
+    run_id: str,
+    recommendation: dict[str, Any],
+    timeline: list[dict[str, Any]],
+    change_record: dict[str, Any] | None = None,
+) -> None:
     payload = {
         "status": "pending",
         "run_id": run_id,
         "requested_at": now_iso(),
         "recommendation": recommendation,
         "timeline": timeline,
+        "change_record": change_record or {},
     }
     write_json(APPROVAL_STATE, payload)
 
 
-def set_approval_decision(status: str, operator: str = "human_operator") -> dict[str, Any]:
+def set_approval_decision(
+    status: str,
+    operator: str = "human_operator",
+    change_record: dict[str, Any] | None = None,
+) -> dict[str, Any]:
     approval = load_json(APPROVAL_STATE, {"status": "idle"})
     approval["status"] = status
     approval["decided_at"] = now_iso()
     approval["operator"] = operator
+    if change_record is not None:
+        approval["change_record"] = change_record
     write_json(APPROVAL_STATE, approval)
     return approval
 
@@ -96,7 +108,7 @@ def read_log_tail(limit: int = 60) -> list[str]:
 
 
 def reset_incident_state() -> None:
-    for path in (FIX_STATE, APPROVAL_STATE, AGENT_RUN_STATE, LATEST_AGENT_REPORT, EVENT_LOG):
+    for path in (FIX_STATE, APPROVAL_STATE, AGENT_RUN_STATE, LATEST_AGENT_REPORT, EVENT_LOG, CHANGE_RECORDS_STATE):
         if path.exists():
             path.unlink()
 
