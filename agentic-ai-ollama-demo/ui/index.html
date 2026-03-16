@@ -11,7 +11,13 @@
     <main class="dashboard-shell">
       <header class="hero">
         <div>
-          <p class="eyebrow">Closed-Loop Agentic AI Demo</p>
+          <div class="hero-topbar">
+            <p class="eyebrow">Closed-Loop Agentic AI Demo</p>
+            <button id="live-mode-button" class="live-button live-on" type="button">
+              <span class="live-indicator"></span>
+              <span id="live-mode-label">Live Mode: ON</span>
+            </button>
+          </div>
           <h1>Banking Pipeline Control Room</h1>
           <p class="hero-copy">
             Watch the dbt banking pipeline, inspect the agent's internal phases, and gate remediations

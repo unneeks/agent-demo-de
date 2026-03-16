@@ -20,6 +20,11 @@ const rejectButton = document.getElementById("reject-button");
 const eventCount = document.getElementById("event-count");
 const eventStream = document.getElementById("event-stream");
 const logView = document.getElementById("log-view");
+const liveModeButton = document.getElementById("live-mode-button");
+const liveModeLabel = document.getElementById("live-mode-label");
+
+let liveModeEnabled = true;
+let refreshTimer = null;
 
 async function fetchDashboard() {
   const response = await fetch("/api/dashboard");
@@ -202,6 +207,26 @@ async function refresh() {
   }
 }
 
+function syncLiveModeButton() {
+  liveModeButton.classList.toggle("live-on", liveModeEnabled);
+  liveModeButton.classList.toggle("live-off", !liveModeEnabled);
+  liveModeLabel.textContent = liveModeEnabled ? "Live Mode: ON" : "Live Mode: PAUSED";
+}
+
+function startPolling() {
+  if (refreshTimer) {
+    clearInterval(refreshTimer);
+  }
+  refreshTimer = setInterval(refresh, 2500);
+}
+
+function stopPolling() {
+  if (refreshTimer) {
+    clearInterval(refreshTimer);
+    refreshTimer = null;
+  }
+}
+
 approveButton.addEventListener("click", async () => {
   approveButton.disabled = true;
   rejectButton.disabled = true;
@@ -224,5 +249,18 @@ rejectButton.addEventListener("click", async () => {
   }
 });
 
+liveModeButton.addEventListener("click", async () => {
+  liveModeEnabled = !liveModeEnabled;
+  syncLiveModeButton();
+
+  if (liveModeEnabled) {
+    await refresh();
+    startPolling();
+  } else {
+    stopPolling();
+  }
+});
+
+syncLiveModeButton();
 refresh();
-setInterval(refresh, 2500);
+startPolling();
