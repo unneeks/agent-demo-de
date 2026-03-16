@@ -4,5 +4,7 @@ __pycache__/
 runtime/*.log
 runtime/*.json
 runtime/*.txt
+runtime/*.duckdb
 dbt_demo/logs/
 dbt_demo/target/
+dbt_demo/.user.yml
