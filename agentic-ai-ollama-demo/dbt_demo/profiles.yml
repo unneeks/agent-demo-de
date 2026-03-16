@@ -1,0 +1,7 @@
+agentic_ai_banking_demo:
+  target: dev
+  outputs:
+    dev:
+      type: duckdb
+      path: /app/runtime/banking_demo.duckdb
+      threads: 2

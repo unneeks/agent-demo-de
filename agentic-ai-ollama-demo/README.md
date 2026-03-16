@@ -4,6 +4,11 @@ A minimal open-source project that demonstrates a fully local agentic AI system 
 
 This repo is built for live demos, workshops, and teaching. It shows the full agent loop end-to-end without relying on any external API.
 
+It now includes two demo modes:
+
+- a simple single-run incident investigation
+- a closed-loop banking pipeline with a continuous sensor and a log-feeding simulator
+
 The demo walks through a realistic lifecycle:
 
 User Request -> Goal Understanding -> Planning -> Tool Execution -> Reflection / Health Check -> Fix Generation -> Verification -> Final Result
@@ -23,6 +28,8 @@ It is designed to be:
 
 The agent investigates a failing nightly customer ETL job, correlates logs and metadata, reasons about infrastructure health, proposes a fix, simulates a rerun, and returns a structured operational summary.
 
+In the closed-loop mode, a second application continuously runs a dbt banking pipeline and writes fresh logs. A sensor watches those logs, calls the agent when a run fails, applies a simulated remediation, and allows the next cycle to recover.
+
 ## Overview
 
 This project simulates a data engineering support agent investigating a failed nightly customer ETL pipeline. The agent uses a local LLM through the Ollama REST API for goal understanding and planning, then combines deterministic tools for log analysis, metadata inspection, health checks, fix generation, and verification.
@@ -37,6 +44,8 @@ Everything runs locally. There are no external API dependencies.
 - LangChain Core
 - Ollama
 - Docker Compose
+- dbt Core
+- dbt DuckDB
 
 ## Agentic AI Phases
 
@@ -63,6 +72,31 @@ Expected diagnosis:
 - The recommended fix is to increase executor memory and rerun the job.
 - Verification confirms the simulated rerun succeeds.
 
+## Closed-Loop Banking Demo
+
+The extended demo uses banking entities and a dbt pipeline:
+
+- `bank_customers`
+- `bank_accounts`
+- `bank_transactions`
+- `bank_loans`
+
+The flow is:
+
+1. Generate a banking dataset scenario.
+2. The `pipeline` app continuously runs a dbt project and writes runtime logs.
+3. The `sensor` app watches for failed runs.
+4. On failure, the sensor invokes the agent using the latest runtime log and metadata.
+5. The agent recommends a fix.
+6. The sensor applies a simulated remediation by increasing executor memory.
+7. The next dbt cycle succeeds, demonstrating closed-loop behavior.
+
+Available scenarios:
+
+- `baseline`: healthy pipeline
+- `memory_stress`: intentionally fails first, then recovers after remediation
+- `fraud_spike`: succeeds with a riskier banking dataset
+
 ## Quickstart
 
 ### Docker-first path
@@ -71,6 +105,21 @@ Expected diagnosis:
 docker compose up --build -d
 ./scripts/setup.sh
 ./scripts/run_demo.sh
+```
+
+### Closed-loop path
+
+```bash
+./scripts/start_closed_loop.sh memory_stress
+docker compose logs -f pipeline sensor
+```
+
+Generate a different banking dataset on demand:
+
+```bash
+./scripts/load_dataset.sh baseline
+./scripts/load_dataset.sh fraud_spike
+./scripts/load_dataset.sh memory_stress
 ```
 
 ### Manual commands
@@ -94,6 +143,8 @@ flowchart LR
     T --> H["Health Check"]
     T --> F["Fix Generator"]
     T --> V["Verification Runner"]
+    P["Continuous dbt Pipeline"] --> T
+    S["Sensor / Remediator"] --> G
 ```
 
 ## Agent Workflow
@@ -122,6 +173,20 @@ digraph agent_workflow {
 }
 ```
 
+Closed-loop runtime:
+
+```mermaid
+flowchart LR
+    D["Dataset Generator"] --> P["dbt Pipeline Feeder"]
+    P --> L["runtime/pipeline.log"]
+    P --> M["runtime/current_job_metadata.json"]
+    L --> S["Continuous Sensor"]
+    M --> S
+    S --> A["Agent"]
+    A --> F["runtime/fix_state.json"]
+    F --> P
+```
+
 ## Repository Structure
 
 ```text
@@ -141,8 +206,20 @@ agentic-ai-ollama-demo/
 ├── data/
 │   ├── sample_pipeline_logs.txt
 │   └── sample_job_metadata.json
+├── dbt_demo/
+│   ├── dbt_project.yml
+│   ├── profiles.yml
+│   ├── models/
+│   └── seeds/generated/
+├── runtime/
+├── simulator/
+│   ├── dataset_generator.py
+│   ├── pipeline_feeder.py
+│   └── sensor_app.py
 └── scripts/
+    ├── load_dataset.sh
     ├── setup.sh
+    ├── start_closed_loop.sh
     └── run_demo.sh
 ```
 
@@ -186,6 +263,20 @@ Or pass a custom prompt:
 ./scripts/run_demo.sh "Why did the nightly customer ETL job fail and how do we fix it?"
 ```
 
+### 4. Run the closed-loop banking demo
+
+```bash
+./scripts/start_closed_loop.sh memory_stress
+docker compose logs -f pipeline sensor
+```
+
+You can swap datasets at any time:
+
+```bash
+./scripts/load_dataset.sh baseline
+./scripts/load_dataset.sh fraud_spike
+```
+
 ## Local Python Run
 
 If you want to run the project without Docker for the agent process:
@@ -217,6 +308,15 @@ The expected story is:
 - the fix generator recommends increasing executor memory
 - the verification step simulates a successful rerun
 
+In the closed-loop demo:
+
+- the `pipeline` service continuously runs dbt and writes banking pipeline logs
+- the `memory_stress` dataset causes the first `mart_customer_360` build to fail
+- the `sensor` service detects the failure and invokes the agent
+- the agent writes a remediation report to `runtime/latest_agent_report.txt`
+- the sensor applies a simulated fix in `runtime/fix_state.json`
+- the next pipeline cycle succeeds
+
 ## FastAPI Endpoints
 
 - `GET /health`
@@ -236,6 +336,8 @@ curl -X POST http://localhost:8000/run \
 - LangGraph manages the stateful workflow and visible node transitions.
 - The tools are deterministic to keep the demo stable in front of an audience.
 - The LLM is used where it adds value for teaching: goal understanding and planning.
+- dbt gives the pipeline side of the demo a realistic warehouse transformation layer.
+- The simulator writes runtime state into shared files so the sensor and agent can collaborate without external infrastructure.
 
 ## Good Demo Prompts
 
@@ -243,6 +345,8 @@ curl -X POST http://localhost:8000/run \
 ./scripts/run_demo.sh "Why did the nightly ETL pipeline fail?"
 ./scripts/run_demo.sh "Why did the nightly customer ETL job fail and how do we fix it?"
 ./scripts/run_demo.sh "Investigate the failed batch pipeline and recommend a remediation."
+./scripts/load_dataset.sh memory_stress
+./scripts/start_closed_loop.sh memory_stress
 ```
 
 ## Future Extensions
@@ -251,6 +355,7 @@ curl -X POST http://localhost:8000/run \
 - persist runs and traces for replay
 - swap in a vector store for operational runbooks
 - add branching fix strategies and retry policies
+- store sensor events in a small database instead of flat runtime files
 
 ## Final Commands
 
@@ -258,6 +363,16 @@ curl -X POST http://localhost:8000/run \
 docker compose up --build -d
 ./scripts/setup.sh
 ./scripts/run_demo.sh
+```
+
+Closed-loop commands:
+
+```bash
+docker compose up --build -d ollama agent pipeline
+./scripts/setup.sh
+./scripts/load_dataset.sh memory_stress
+docker compose up -d sensor
+docker compose logs -f pipeline sensor
 ```
 
 Requested host-based alternative:

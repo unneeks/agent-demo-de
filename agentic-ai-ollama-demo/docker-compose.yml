@@ -21,5 +21,31 @@ services:
     volumes:
       - .:/app
 
+  pipeline:
+    build: .
+    container_name: agentic-ai-pipeline
+    command: ["python", "-m", "simulator.pipeline_feeder"]
+    environment:
+      PIPELINE_DEFAULT_SCENARIO: ${PIPELINE_DEFAULT_SCENARIO:-memory_stress}
+      PIPELINE_INTERVAL_SECONDS: ${PIPELINE_INTERVAL_SECONDS:-20}
+    volumes:
+      - .:/app
+
+  sensor:
+    build: .
+    container_name: agentic-ai-sensor
+    depends_on:
+      - ollama
+      - agent
+      - pipeline
+    command: ["python", "-m", "simulator.sensor_app"]
+    environment:
+      OLLAMA_BASE_URL: http://ollama:11434
+      OLLAMA_MODEL: ${OLLAMA_MODEL:-llama3.2:3b}
+      SENSOR_INTERVAL_SECONDS: ${SENSOR_INTERVAL_SECONDS:-8}
+      SENSOR_AUTO_REMEDIATE: ${SENSOR_AUTO_REMEDIATE:-true}
+    volumes:
+      - .:/app
+
 volumes:
   ollama_data:

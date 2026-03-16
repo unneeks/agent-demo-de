@@ -1,0 +1,21 @@
+name: agentic_ai_banking_demo
+version: 1.0.0
+config-version: 2
+
+profile: agentic_ai_banking_demo
+
+model-paths: ["models"]
+seed-paths: ["seeds"]
+target-path: "target"
+clean-targets: ["target", "dbt_packages"]
+
+models:
+  agentic_ai_banking_demo:
+    staging:
+      +materialized: view
+    marts:
+      +materialized: table
+
+seeds:
+  agentic_ai_banking_demo:
+    +quote_columns: false

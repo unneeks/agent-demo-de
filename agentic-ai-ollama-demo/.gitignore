@@ -1,3 +1,8 @@
 .env
 .pycache/
 __pycache__/
+runtime/*.log
+runtime/*.json
+runtime/*.txt
+dbt_demo/logs/
+dbt_demo/target/

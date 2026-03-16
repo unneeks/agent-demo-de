@@ -4,3 +4,5 @@ langgraph==0.2.67
 langchain-core==0.3.51
 requests==2.32.3
 pydantic==2.10.6
+dbt-core==1.9.2
+dbt-duckdb==1.9.2
