@@ -18,16 +18,33 @@ class AgentState(TypedDict, total=False):
     fix: dict[str, Any]
     verification: dict[str, Any]
     final_answer: str
+    timeline: list[dict[str, Any]]
 
 
 def _format_section(title: str, body: str) -> str:
     return f"----- {title} -----\n{body.strip()}\n"
 
 
+def _append_timeline(state: AgentState, phase: str, title: str, details: str, status: str = "complete") -> list[dict[str, Any]]:
+    timeline = list(state.get("timeline", []))
+    timeline.append(
+        {
+            "phase": phase,
+            "title": title,
+            "details": details,
+            "status": status,
+        }
+    )
+    return timeline
+
+
 def understand_request(state: AgentState) -> AgentState:
     client = OllamaClient()
     goal = build_goal_summary(client, state["user_request"])
-    return {"goal": goal}
+    return {
+        "goal": goal,
+        "timeline": _append_timeline(state, "understand_request", "Goal Understood", goal),
+    }
 
 
 def create_plan(state: AgentState) -> AgentState:
@@ -37,10 +54,13 @@ def create_plan(state: AgentState) -> AgentState:
         state["goal"],
         ["log_analyzer", "metadata_lookup", "health_check", "fix_generator", "verification_runner"],
     )
-    return {"plan": steps}
+    return {
+        "plan": steps,
+        "timeline": _append_timeline(state, "create_plan", "Plan Created", " | ".join(steps)),
+    }
 
 
-def execute_tools(_: AgentState) -> AgentState:
+def execute_tools(state: AgentState) -> AgentState:
     log_result = log_analyzer()
     metadata_result = metadata_lookup()
     health_result = health_check()
@@ -49,13 +69,22 @@ def execute_tools(_: AgentState) -> AgentState:
             "log_analyzer": log_result,
             "metadata_lookup": metadata_result,
             "health_check": health_result,
-        }
+        },
+        "timeline": _append_timeline(
+            state,
+            "execute_tools",
+            "Tools Executed",
+            f"Logs: {log_result['summary']}; Metadata: {metadata_result['summary']}; Health: {health_result['summary']}",
+        ),
     }
 
 
 def reflect_on_results(state: AgentState) -> AgentState:
     reflection = reflect_on_execution(state["tool_results"])
-    return {"reflection": reflection}
+    return {
+        "reflection": reflection,
+        "timeline": _append_timeline(state, "reflect_on_results", "Reflection Complete", reflection),
+    }
 
 
 def generate_fix(state: AgentState) -> AgentState:
@@ -64,12 +93,23 @@ def generate_fix(state: AgentState) -> AgentState:
         state["tool_results"]["metadata_lookup"],
         state["tool_results"]["health_check"],
     )
-    return {"fix": fix}
+    return {
+        "fix": fix,
+        "timeline": _append_timeline(
+            state,
+            "generate_fix",
+            "Fix Proposed",
+            " | ".join(fix["actions"]),
+        ),
+    }
 
 
 def verify_fix(state: AgentState) -> AgentState:
     verification = verification_runner(state["fix"])
-    return {"verification": verification}
+    return {
+        "verification": verification,
+        "timeline": _append_timeline(state, "verify_fix", "Verification Simulated", verification["summary"]),
+    }
 
 
 def return_final_answer(state: AgentState) -> AgentState:
@@ -93,7 +133,15 @@ def return_final_answer(state: AgentState) -> AgentState:
             "Increase executor memory and rerun the job; the simulated verification succeeds.",
         ]
     )
-    return {"final_answer": final_answer}
+    return {
+        "final_answer": final_answer,
+        "timeline": _append_timeline(
+            state,
+            "return_final_answer",
+            "Final Answer Ready",
+            "Agent packaged investigation summary and recommendation.",
+        ),
+    }
 
 
 def build_agent_graph():

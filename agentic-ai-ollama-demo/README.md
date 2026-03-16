@@ -7,7 +7,7 @@ This repo is built for live demos, workshops, and teaching. It shows the full ag
 It now includes two demo modes:
 
 - a simple single-run incident investigation
-- a closed-loop banking pipeline with a continuous sensor and a log-feeding simulator
+- a closed-loop banking pipeline with a continuous sensor, operator approval, and a dramatic web control room
 
 The demo walks through a realistic lifecycle:
 
@@ -28,7 +28,9 @@ It is designed to be:
 
 The agent investigates a failing nightly customer ETL job, correlates logs and metadata, reasons about infrastructure health, proposes a fix, simulates a rerun, and returns a structured operational summary.
 
-In the closed-loop mode, a second application continuously runs a dbt banking pipeline and writes fresh logs. A sensor watches those logs, calls the agent when a run fails, applies a simulated remediation, and allows the next cycle to recover.
+In the closed-loop mode, a second application continuously runs a dbt banking pipeline and writes fresh logs. A sensor watches those logs, calls the agent when a run fails, raises a remediation proposal, and waits for a human approval before the next cycle recovers.
+
+The FastAPI service also serves a live operator dashboard at `http://localhost:8000`.
 
 ## Overview
 
@@ -87,8 +89,8 @@ The flow is:
 2. The `pipeline` app continuously runs a dbt project and writes runtime logs.
 3. The `sensor` app watches for failed runs.
 4. On failure, the sensor invokes the agent using the latest runtime log and metadata.
-5. The agent recommends a fix.
-6. The sensor applies a simulated remediation by increasing executor memory.
+5. The agent recommends a fix and opens a human approval request.
+6. The operator approves or rejects the remediation in the web UI.
 7. The next dbt cycle succeeds, demonstrating closed-loop behavior.
 
 Available scenarios:
@@ -122,6 +124,10 @@ Generate a different banking dataset on demand:
 ./scripts/load_dataset.sh memory_stress
 ```
 
+Open the live control room:
+
+`http://localhost:8000`
+
 ### Manual commands
 
 ```bash
@@ -145,6 +151,7 @@ flowchart LR
     T --> V["Verification Runner"]
     P["Continuous dbt Pipeline"] --> T
     S["Sensor / Remediator"] --> G
+    U["Human Approval UI"] --> S
 ```
 
 ## Agent Workflow
@@ -183,9 +190,24 @@ flowchart LR
     L --> S["Continuous Sensor"]
     M --> S
     S --> A["Agent"]
-    A --> F["runtime/fix_state.json"]
+    A --> Q["runtime/approval_state.json"]
+    Q --> U["Web Approval UI"]
+    U --> F["runtime/fix_state.json"]
     F --> P
 ```
+
+## Web UI
+
+The control room at `http://localhost:8000` is designed to make the demo legible in real time.
+
+It shows:
+
+- a dramatic incident banner when the banking pipeline fails
+- live pipeline status and scenario context
+- the agent's LangGraph phase timeline
+- a human-in-the-loop approval panel for remediations
+- an event stream with critical, warning, and recovery moments
+- the raw pipeline log tail
 
 ## Repository Structure
 
@@ -216,6 +238,10 @@ agentic-ai-ollama-demo/
 │   ├── dataset_generator.py
 │   ├── pipeline_feeder.py
 │   └── sensor_app.py
+├── ui/
+│   ├── index.html
+│   ├── app.js
+│   └── styles.css
 └── scripts/
     ├── load_dataset.sh
     ├── setup.sh
@@ -270,6 +296,10 @@ Or pass a custom prompt:
 docker compose logs -f pipeline sensor
 ```
 
+Then open:
+
+`http://localhost:8000`
+
 You can swap datasets at any time:
 
 ```bash
@@ -314,12 +344,18 @@ In the closed-loop demo:
 - the `memory_stress` dataset causes the first `mart_customer_360` build to fail
 - the `sensor` service detects the failure and invokes the agent
 - the agent writes a remediation report to `runtime/latest_agent_report.txt`
-- the sensor applies a simulated fix in `runtime/fix_state.json`
+- the web UI pauses on a human approval step
+- your approval writes the fix into `runtime/fix_state.json`
 - the next pipeline cycle succeeds
 
 ## FastAPI Endpoints
 
+- `GET /`
 - `GET /health`
+- `GET /api/dashboard`
+- `POST /api/approval/approve`
+- `POST /api/approval/reject`
+- `POST /api/run`
 - `POST /run`
 
 Example:
@@ -338,6 +374,7 @@ curl -X POST http://localhost:8000/run \
 - The LLM is used where it adds value for teaching: goal understanding and planning.
 - dbt gives the pipeline side of the demo a realistic warehouse transformation layer.
 - The simulator writes runtime state into shared files so the sensor and agent can collaborate without external infrastructure.
+- The UI exposes the agent phases and approval boundary so the system feels observable instead of opaque.
 
 ## Good Demo Prompts
 
@@ -351,7 +388,6 @@ curl -X POST http://localhost:8000/run \
 
 ## Future Extensions
 
-- add a UI for graph state visualization
 - persist runs and traces for replay
 - swap in a vector store for operational runbooks
 - add branching fix strategies and retry policies

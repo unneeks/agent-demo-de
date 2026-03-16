@@ -5,17 +5,56 @@ import os
 from typing import Any
 
 from fastapi import FastAPI, HTTPException
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 from agent.agent_graph import build_agent_graph
+from simulator.paths import AGENT_RUN_STATE, APPROVAL_STATE, CURRENT_JOB_METADATA, PIPELINE_STATUS, ROOT_DIR, SCENARIO_STATE
+from simulator.runtime_state import (
+    append_event,
+    apply_fix_payload,
+    load_json,
+    read_event_tail,
+    read_log_tail,
+    set_approval_decision,
+    write_agent_run_state,
+)
 
 
-app = FastAPI(title="Agentic AI Ollama Demo", version="1.0.0")
+UI_DIR = ROOT_DIR / "ui"
+
+app = FastAPI(title="Agentic AI Ollama Demo", version="2.0.0")
 agent_graph = build_agent_graph()
+
+if UI_DIR.exists():
+    app.mount("/assets", StaticFiles(directory=UI_DIR), name="assets")
 
 
 class RunRequest(BaseModel):
     prompt: str
+
+
+class ApprovalRequest(BaseModel):
+    operator: str = "human_operator"
+
+
+def _build_dashboard_payload() -> dict[str, Any]:
+    pipeline = load_json(PIPELINE_STATUS, {"status": "idle"})
+    scenario = load_json(SCENARIO_STATE, {"scenario": "not_loaded"})
+    approval = load_json(APPROVAL_STATE, {"status": "idle"})
+    agent_run = load_json(AGENT_RUN_STATE, {"status": "idle"})
+    metadata = load_json(CURRENT_JOB_METADATA, {})
+
+    return {
+        "pipeline": pipeline,
+        "scenario": scenario,
+        "approval": approval,
+        "agent_run": agent_run,
+        "metadata": metadata,
+        "events": read_event_tail(),
+        "log_tail": read_log_tail(),
+    }
 
 
 def run_agent(prompt: str) -> dict[str, Any]:
@@ -24,11 +63,40 @@ def run_agent(prompt: str) -> dict[str, Any]:
 
     try:
         result = agent_graph.invoke({"user_request": prompt})
+        payload = {
+            "status": "complete",
+            "prompt": prompt,
+            "goal": result.get("goal"),
+            "plan": result.get("plan", []),
+            "timeline": result.get("timeline", []),
+            "fix": result.get("fix", {}),
+            "verification": result.get("verification", {}),
+            "final_answer": result.get("final_answer", ""),
+        }
+        write_agent_run_state(payload)
+        append_event(
+            "agent",
+            "Agent Investigation Completed",
+            "The LangGraph workflow completed and returned a remediation summary.",
+            severity="info",
+            payload={"timeline_count": len(payload["timeline"])},
+        )
     except Exception as exc:
+        append_event(
+            "agent",
+            "Agent Investigation Failed",
+            f"FastAPI agent workflow execution failed: {exc}",
+            severity="critical",
+        )
         raise RuntimeError(
             "Agent execution failed. Ensure Ollama is reachable and the configured model is pulled."
         ) from exc
     return result
+
+
+@app.get("/")
+def dashboard() -> FileResponse:
+    return FileResponse(UI_DIR / "index.html")
 
 
 @app.get("/health")
@@ -36,6 +104,12 @@ def health() -> dict[str, str]:
     return {"status": "ok", "model": os.getenv("OLLAMA_MODEL", "llama3.2:3b")}
 
 
+@app.get("/api/dashboard")
+def dashboard_state() -> dict[str, Any]:
+    return _build_dashboard_payload()
+
+
+@app.post("/api/run")
 @app.post("/run")
 def run(request: RunRequest) -> dict[str, Any]:
     try:
@@ -44,6 +118,46 @@ def run(request: RunRequest) -> dict[str, Any]:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     except RuntimeError as exc:
         raise HTTPException(status_code=500, detail=str(exc)) from exc
+
+
+@app.post("/api/approval/approve")
+def approve_fix(request: ApprovalRequest) -> dict[str, Any]:
+    approval = load_json(APPROVAL_STATE, {"status": "idle"})
+    recommendation = approval.get("recommendation")
+    if approval.get("status") != "pending" or not recommendation:
+        raise HTTPException(status_code=409, detail="No pending fix recommendation to approve.")
+
+    fix_state = apply_fix_payload(
+        executor_memory_gb=int(recommendation.get("executor_memory_gb", 8)),
+        source="human_approved_remediation",
+        approved_by=request.operator,
+    )
+    approval = set_approval_decision("approved", operator=request.operator)
+    append_event(
+        "approval",
+        "Fix Approved",
+        "Operator approved the recommended memory increase for the next pipeline cycle.",
+        severity="success",
+        payload={"operator": request.operator, "executor_memory_gb": fix_state["executor_memory_gb"]},
+    )
+    return {"approval": approval, "fix_state": fix_state}
+
+
+@app.post("/api/approval/reject")
+def reject_fix(request: ApprovalRequest) -> dict[str, Any]:
+    approval = load_json(APPROVAL_STATE, {"status": "idle"})
+    if approval.get("status") != "pending":
+        raise HTTPException(status_code=409, detail="No pending fix recommendation to reject.")
+
+    approval = set_approval_decision("rejected", operator=request.operator)
+    append_event(
+        "approval",
+        "Fix Rejected",
+        "Operator rejected the remediation proposal. The sensor will wait for another failure cycle.",
+        severity="warning",
+        payload={"operator": request.operator},
+    )
+    return {"approval": approval}
 
 
 def cli() -> None:

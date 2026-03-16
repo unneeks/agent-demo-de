@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Agentic Banking Control Room</title>
+    <link rel="stylesheet" href="/assets/styles.css" />
+  </head>
+  <body>
+    <div class="ambient-grid"></div>
+    <main class="dashboard-shell">
+      <header class="hero">
+        <div>
+          <p class="eyebrow">Closed-Loop Agentic AI Demo</p>
+          <h1>Banking Pipeline Control Room</h1>
+          <p class="hero-copy">
+            Watch the dbt banking pipeline, inspect the agent's internal phases, and gate remediations
+            with human approval when the system goes critical.
+          </p>
+        </div>
+        <div class="hero-status" id="hero-status-card">
+          <div class="hero-ring"></div>
+          <div>
+            <p class="muted-label">Current Posture</p>
+            <h2 id="hero-status">Stabilizing</h2>
+            <p id="hero-substatus">Waiting for the first pipeline heartbeat.</p>
+          </div>
+        </div>
+      </header>
+
+      <section class="alarm-banner hidden" id="alarm-banner">
+        <div>
+          <p class="banner-label">Critical Event</p>
+          <h2 id="alarm-title">Pipeline Failure Detected</h2>
+          <p id="alarm-details">The operator console is waiting for the latest telemetry.</p>
+        </div>
+        <div class="banner-pulse"></div>
+      </section>
+
+      <section class="stats-grid">
+        <article class="panel metric-panel">
+          <p class="muted-label">Pipeline Status</p>
+          <h3 id="pipeline-status">Idle</h3>
+          <p id="pipeline-summary">No pipeline run has been observed yet.</p>
+        </article>
+        <article class="panel metric-panel">
+          <p class="muted-label">Scenario</p>
+          <h3 id="scenario-name">Not loaded</h3>
+          <p id="scenario-description">Load a banking scenario to begin the demo.</p>
+        </article>
+        <article class="panel metric-panel">
+          <p class="muted-label">Approval State</p>
+          <h3 id="approval-status">No proposal</h3>
+          <p id="approval-summary">The agent has not requested operator approval yet.</p>
+        </article>
+      </section>
+
+      <section class="main-grid">
+        <article class="panel agent-panel">
+          <div class="panel-header">
+            <div>
+              <p class="muted-label">Agent Timeline</p>
+              <h2>Visible Cognition</h2>
+            </div>
+            <span class="pill" id="timeline-count">0 phases</span>
+          </div>
+          <div class="timeline-strip" id="timeline-strip"></div>
+          <div class="timeline-detail" id="timeline-detail">
+            <p class="empty-state">The next agent run will paint its workflow here.</p>
+          </div>
+        </article>
+
+        <article class="panel approval-panel">
+          <div class="panel-header">
+            <div>
+              <p class="muted-label">Human In The Loop</p>
+              <h2>Remediation Approval</h2>
+            </div>
+            <span class="pill warning" id="approval-pill">Awaiting signal</span>
+          </div>
+          <div id="approval-body" class="approval-body">
+            <p class="empty-state">No recommendation is waiting for approval.</p>
+          </div>
+          <div class="approval-actions">
+            <button id="approve-button" class="action-button approve" disabled>Approve Fix</button>
+            <button id="reject-button" class="action-button reject" disabled>Reject Fix</button>
+          </div>
+        </article>
+
+        <article class="panel event-panel">
+          <div class="panel-header">
+            <div>
+              <p class="muted-label">Incident Feed</p>
+              <h2>Event Stream</h2>
+            </div>
+            <span class="pill" id="event-count">0 events</span>
+          </div>
+          <div class="event-stream" id="event-stream"></div>
+        </article>
+
+        <article class="panel log-panel">
+          <div class="panel-header">
+            <div>
+              <p class="muted-label">Raw Telemetry</p>
+              <h2>Pipeline Log Tail</h2>
+            </div>
+          </div>
+          <pre class="log-view" id="log-view"></pre>
+        </article>
+      </section>
+    </main>
+    <script src="/assets/app.js" defer></script>
+  </body>
+</html>

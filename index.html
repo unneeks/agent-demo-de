@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Civilization Engine</title>
+    <link rel="stylesheet" href="./src/styles.css" />
+  </head>
+  <body>
+    <div class="page-shell">
+      <header class="hero">
+        <p class="eyebrow">Civilization Engine / Iteration 01</p>
+        <h1>Visualizing traditions as cultural streams across time.</h1>
+        <p class="hero-copy">
+          This first slice establishes the domain model, a seed dataset, and a
+          timeline explorer for South Asian religious and civilizational change.
+        </p>
+      </header>
+
+      <main class="layout">
+        <aside class="controls-panel">
+          <section class="panel-block">
+            <h2>Query Engine</h2>
+            <label class="query-label" for="query-input">Natural language starter</label>
+            <div class="query-row">
+              <input
+                id="query-input"
+                name="query"
+                type="text"
+                placeholder="show traditions outside Vedic system"
+              />
+              <button id="run-query-button" type="button">Run</button>
+            </div>
+            <div class="chip-row">
+              <button class="preset-chip" data-query="show traditions outside Vedic system" type="button">
+                Outside Vedic system
+              </button>
+              <button class="preset-chip" data-query="show bhakti movements" type="button">
+                Bhakti movements
+              </button>
+              <button class="preset-chip" data-query="show traditions in Tamilakam" type="button">
+                Tamilakam
+              </button>
+            </div>
+            <p class="hint" id="query-summary"></p>
+          </section>
+
+          <section class="panel-block">
+            <h2>Tradition Detail</h2>
+            <div id="detail-panel" class="detail-panel"></div>
+          </section>
+        </aside>
+
+        <section class="viz-panel">
+          <div class="viz-heading">
+            <div>
+              <p class="eyebrow">Phase 2 baseline</p>
+              <h2 id="viz-title">Timeline River</h2>
+            </div>
+            <p class="viz-copy" id="viz-description"></p>
+          </div>
+          <div class="view-switcher" role="tablist" aria-label="Visualization modes">
+            <button class="view-toggle is-active" data-view="timeline" type="button">
+              Timeline River
+            </button>
+            <button class="view-toggle" data-view="synchronology" type="button">
+              Synchronological Chart
+            </button>
+          </div>
+          <div id="timeline-root" class="timeline-card"></div>
+        </section>
+      </main>
+    </div>
+
+    <script type="module" src="./src/main.js"></script>
+  </body>
+</html>

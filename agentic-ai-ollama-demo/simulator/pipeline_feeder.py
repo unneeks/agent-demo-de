@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import json
 import os
 import subprocess
 import time
@@ -8,12 +7,7 @@ from datetime import datetime, timezone
 
 from simulator.dataset_generator import generate_dataset
 from simulator.paths import CURRENT_JOB_METADATA, DBT_DIR, FIX_STATE, PIPELINE_LOG, PIPELINE_STATUS, RUNTIME_DIR, SCENARIO_STATE
-
-
-def _load_json(path, fallback):
-    if not path.exists():
-        return fallback
-    return json.loads(path.read_text(encoding="utf-8"))
+from simulator.runtime_state import append_event, load_json, write_json
 
 
 def _append_log(message: str) -> None:
@@ -24,7 +18,7 @@ def _append_log(message: str) -> None:
 
 
 def _write_status(payload: dict[str, object]) -> None:
-    PIPELINE_STATUS.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+    write_json(PIPELINE_STATUS, payload)
 
 
 def _dbt_cmd(command: list[str], force_memory_error: bool) -> subprocess.CompletedProcess[str]:
@@ -40,10 +34,10 @@ def _dbt_cmd(command: list[str], force_memory_error: bool) -> subprocess.Complet
 
 
 def run_cycle() -> None:
-    scenario = _load_json(SCENARIO_STATE, {})
+    scenario = load_json(SCENARIO_STATE, {})
     if not scenario:
         scenario = generate_dataset("memory_stress")
-    fix_state = _load_json(FIX_STATE, {"executor_memory_gb": 4, "status": "not_applied"})
+    fix_state = load_json(FIX_STATE, {"executor_memory_gb": 4, "status": "not_applied"})
 
     scenario_name = scenario["scenario"]
     fix_applied = fix_state.get("executor_memory_gb", 4) >= 8
@@ -52,6 +46,7 @@ def run_cycle() -> None:
     run_id = datetime.now(tz=timezone.utc).strftime("%Y%m%dT%H%M%SZ")
     _append_log(f"INFO scheduler: Starting dbt banking pipeline run_id={run_id} scenario={scenario_name}")
     _append_log("INFO dataset_loader: Banking entities refreshed from generated demo seeds")
+    append_event("pipeline", "Pipeline Cycle Started", f"dbt run {run_id} started for scenario {scenario_name}.")
 
     seed_result = _dbt_cmd(["dbt", "seed", "--project-dir", str(DBT_DIR), "--profiles-dir", str(DBT_DIR)], False)
     run_result = _dbt_cmd(["dbt", "run", "--project-dir", str(DBT_DIR), "--profiles-dir", str(DBT_DIR)], force_memory_error)
@@ -70,13 +65,27 @@ def run_cycle() -> None:
         _append_log("WARN spark.executor: Executor memory overhead exceeded threshold on customer_360 model")
         _append_log("ERROR spark.executor: java.lang.OutOfMemoryError: Java heap space")
         _append_log("ERROR pipeline: dbt model mart_customer_360 failed with worker memory exhaustion")
+        append_event(
+            "pipeline",
+            "Critical Pipeline Failure",
+            "mart_customer_360 crashed with simulated memory exhaustion.",
+            severity="critical",
+            payload={"run_id": run_id, "scenario": scenario_name},
+        )
     else:
         _append_log("INFO pipeline: dbt model mart_customer_360 finished successfully")
         _append_log("INFO pipeline: dbt model fct_account_activity finished successfully")
+        append_event(
+            "pipeline",
+            "Pipeline Recovery",
+            "Banking dbt models completed successfully.",
+            severity="success",
+            payload={"run_id": run_id, "scenario": scenario_name},
+        )
 
     _append_log(f"INFO pipeline: run_id={run_id} status={status}")
 
-    metadata = _load_json(CURRENT_JOB_METADATA, {})
+    metadata = load_json(CURRENT_JOB_METADATA, {})
     _write_status(
         {
             "run_id": run_id,
