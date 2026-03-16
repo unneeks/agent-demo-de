@@ -1,0 +1,25 @@
+services:
+  ollama:
+    image: ollama/ollama:latest
+    container_name: agentic-ai-ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+
+  agent:
+    build: .
+    container_name: agentic-ai-demo
+    depends_on:
+      - ollama
+    environment:
+      OLLAMA_BASE_URL: http://ollama:11434
+      OLLAMA_MODEL: ${OLLAMA_MODEL:-llama3.2:3b}
+      AGENT_PORT: ${AGENT_PORT:-8000}
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+
+volumes:
+  ollama_data:

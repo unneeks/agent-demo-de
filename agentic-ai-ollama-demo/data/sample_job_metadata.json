@@ -1,0 +1,20 @@
+{
+  "job_name": "nightly_customer_etl",
+  "owner": "data-platform@demo.local",
+  "schedule": "0 1 * * *",
+  "upstream_dependencies": [
+    "bronze.customer_events",
+    "silver.customer_profiles"
+  ],
+  "downstream_tables": [
+    "gold.customer_metrics",
+    "gold.customer_health"
+  ],
+  "runtime": {
+    "executor_memory_gb": 4,
+    "retry_policy": "1 immediate retry",
+    "executor_instances": 4,
+    "spark_version": "3.5.1"
+  },
+  "notes": "Customer metrics transform is the heaviest stage and spikes memory usage during month-end."
+}
