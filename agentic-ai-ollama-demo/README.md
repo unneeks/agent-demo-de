@@ -1,16 +1,42 @@
 # agentic-ai-ollama-demo
 
-A minimal open-source repository that demonstrates a local agentic AI system for data engineering incident response using Ollama, LangGraph, FastAPI, and Docker.
+A minimal open-source project that demonstrates a fully local agentic AI system for data engineering incident response using Ollama, LangGraph, FastAPI, and Docker.
+
+This repo is built for live demos, workshops, and teaching. It shows the full agent loop end-to-end without relying on any external API.
 
 The demo walks through a realistic lifecycle:
 
 User Request -> Goal Understanding -> Planning -> Tool Execution -> Reflection / Health Check -> Fix Generation -> Verification -> Final Result
+
+## Why This Repo Exists
+
+Most agent demos either skip orchestration or depend on hosted APIs. This project keeps the architecture honest while staying lightweight enough to explain in a few minutes.
+
+It is designed to be:
+
+- fully local
+- simple enough for a live walkthrough
+- realistic enough to teach agent design patterns
+- stable enough to demo repeatedly
+
+## What The Agent Does
+
+The agent investigates a failing nightly customer ETL job, correlates logs and metadata, reasons about infrastructure health, proposes a fix, simulates a rerun, and returns a structured operational summary.
 
 ## Overview
 
 This project simulates a data engineering support agent investigating a failed nightly customer ETL pipeline. The agent uses a local LLM through the Ollama REST API for goal understanding and planning, then combines deterministic tools for log analysis, metadata inspection, health checks, fix generation, and verification.
 
 Everything runs locally. There are no external API dependencies.
+
+## Tech Stack
+
+- Python 3.11
+- FastAPI
+- LangGraph
+- LangChain Core
+- Ollama
+- Docker Compose
 
 ## Agentic AI Phases
 
@@ -36,6 +62,24 @@ Expected diagnosis:
 - Health checks show the platform is healthy but workers are under memory pressure.
 - The recommended fix is to increase executor memory and rerun the job.
 - Verification confirms the simulated rerun succeeds.
+
+## Quickstart
+
+### Docker-first path
+
+```bash
+docker compose up --build -d
+./scripts/setup.sh
+./scripts/run_demo.sh
+```
+
+### Manual commands
+
+```bash
+docker compose up --build -d
+docker compose exec -T ollama ollama pull llama3.2:3b
+./scripts/run_demo.sh "Why did the nightly customer ETL job fail and how do we fix it?"
+```
 
 ## Architecture
 
@@ -107,7 +151,7 @@ agentic-ai-ollama-demo/
 ### 1. Start Ollama and the agent service
 
 ```bash
-docker compose up --build
+docker compose up --build -d
 ```
 
 ### 2. Pull a local model
@@ -115,16 +159,20 @@ docker compose up --build
 If you are using the Docker Compose stack, load the model into the Ollama container:
 
 ```bash
-docker compose exec ollama ollama pull llama3.2:3b
+./scripts/setup.sh
 ```
 
-If you already run Ollama on the host machine, this also works:
+Equivalent manual command:
+
+```bash
+docker compose exec -T ollama ollama pull llama3.2:3b
+```
+
+If you already run Ollama on the host machine instead of Docker:
 
 ```bash
 ollama pull llama3.2:3b
 ```
-
-You can also use `mistral:7b` or `deepseek-r1:8b` by changing `OLLAMA_MODEL`.
 
 ### 3. Run the demo
 
@@ -150,6 +198,25 @@ cp .env.example .env
 python agent/main.py "Why did the nightly ETL pipeline fail?"
 ```
 
+## What You Will See
+
+The demo prints clearly separated sections:
+
+- `----- GOAL -----`
+- `----- PLAN -----`
+- `----- TOOL EXECUTION -----`
+- `----- REFLECTION -----`
+- `----- FIX -----`
+- `----- VERIFICATION -----`
+
+The expected story is:
+
+- the log analyzer detects an out-of-memory failure
+- metadata confirms the ETL stage is memory-heavy
+- health checks show the platform is healthy overall
+- the fix generator recommends increasing executor memory
+- the verification step simulates a successful rerun
+
 ## FastAPI Endpoints
 
 - `GET /health`
@@ -163,17 +230,6 @@ curl -X POST http://localhost:8000/run \
   -d '{"prompt":"Why did the nightly customer ETL job fail and how do we fix it?"}'
 ```
 
-## Example Output Sections
-
-The CLI prints:
-
-- `----- GOAL -----`
-- `----- PLAN -----`
-- `----- TOOL EXECUTION -----`
-- `----- REFLECTION -----`
-- `----- FIX -----`
-- `----- VERIFICATION -----`
-
 ## Design Notes
 
 - Ollama is accessed directly through its REST API using `requests`.
@@ -181,11 +237,26 @@ The CLI prints:
 - The tools are deterministic to keep the demo stable in front of an audience.
 - The LLM is used where it adds value for teaching: goal understanding and planning.
 
+## Good Demo Prompts
+
+```bash
+./scripts/run_demo.sh "Why did the nightly ETL pipeline fail?"
+./scripts/run_demo.sh "Why did the nightly customer ETL job fail and how do we fix it?"
+./scripts/run_demo.sh "Investigate the failed batch pipeline and recommend a remediation."
+```
+
+## Future Extensions
+
+- add a UI for graph state visualization
+- persist runs and traces for replay
+- swap in a vector store for operational runbooks
+- add branching fix strategies and retry policies
+
 ## Final Commands
 
 ```bash
-docker compose up --build
-docker compose exec ollama ollama pull llama3.2:3b
+docker compose up --build -d
+./scripts/setup.sh
 ./scripts/run_demo.sh
 ```
 
