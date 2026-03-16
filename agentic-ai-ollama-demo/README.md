@@ -195,7 +195,7 @@ python3.11 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 cp .env.example .env
-python agent/main.py "Why did the nightly ETL pipeline fail?"
+python -m agent.main "Why did the nightly ETL pipeline fail?"
 ```
 
 ## What You Will See
