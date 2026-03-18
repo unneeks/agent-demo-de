@@ -1,0 +1,20 @@
+{
+  "name": "signallayer",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build:extension": "node ./scripts/build-extension.mjs",
+    "build:styles": "tailwindcss -i ./extension/src/ui/styles.css -o ./extension/dist/styles.css --minify",
+    "build": "npm run build:styles && npm run build:extension",
+    "backend": "node ./backend/src/server.js",
+    "test": "node --test ./backend/tests/*.test.js ./tests/*.test.js"
+  },
+  "dependencies": {
+    "esbuild": "^0.27.4",
+    "jsdom": "^29.0.0",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "tailwindcss": "^3.4.17"
+  }
+}

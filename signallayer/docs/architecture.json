@@ -1,0 +1,192 @@
+{
+  "system": {
+    "name": "SignalLayer",
+    "mission": "Augment WhatsApp Web conversations with non-intrusive, explainable claim analysis without modifying original message content.",
+    "principles": [
+      "non_intrusive_ui",
+      "explainability_over_certainty",
+      "progressive_disclosure",
+      "trust_through_transparency"
+    ],
+    "performance_targets": {
+      "ui_injection_ms_p95": 100,
+      "fast_pass_ms_p95": 30,
+      "deep_analysis_ms_p95": 1500
+    }
+  },
+  "subsystems": {
+    "extension_layer": {
+      "responsibilities": [
+        "Observe WhatsApp Web DOM for chat and message changes",
+        "Extract normalized message records and conversation context",
+        "Inject annotation badges, hover tooltips, and sidebar mounting points",
+        "Coordinate background analysis requests and UI state updates"
+      ],
+      "interfaces": {
+        "input": {
+          "dom_nodes": "HTMLElement[]",
+          "user_events": "hover|click|mutation",
+          "cached_results": "Map<messageHash, AnalysisResult>"
+        },
+        "output": {
+          "normalized_messages": "MessageRecord[]",
+          "ui_events": "ANNOTATE|OPEN_PANE|SHOW_TOOLTIP|ERROR",
+          "analysis_requests": "AnalyzeRequest"
+        }
+      },
+      "failure_modes": [
+        "WhatsApp DOM selectors change and parsing returns empty messages",
+        "Mutation bursts cause duplicate work or slow rendering",
+        "Content security policy blocks unsupported resource loading",
+        "Backend unavailable leads to stale or missing deep analysis"
+      ]
+    },
+    "ui_component_layer": {
+      "responsibilities": [
+        "Render overlay badges, summary bar, tooltips, and analysis sidebar",
+        "Visualize claim states including loading, success, low confidence, and error",
+        "Keep interaction model lightweight and detached from host DOM styling"
+      ],
+      "interfaces": {
+        "input": {
+          "message_view_model": "MessageAnalysisViewModel",
+          "conversation_summary": "ConversationSummary",
+          "ui_state": "PanelState"
+        },
+        "output": {
+          "rendered_nodes": "HTMLElement",
+          "user_actions": "OPEN_MESSAGE|CLOSE_PANE|RETRY_ANALYSIS"
+        }
+      },
+      "failure_modes": [
+        "Host page CSS leaks into overlay and degrades readability",
+        "Long evidence strings overflow tooltip or card layouts",
+        "Frequent rerenders create flicker during rapid DOM updates"
+      ]
+    },
+    "backend_layer": {
+      "responsibilities": [
+        "Expose analysis HTTP endpoints with stable JSON contracts",
+        "Run two-pass analysis orchestration",
+        "Maintain in-memory caching and lightweight retrieval corpus access",
+        "Return structured, explainable claim results with metadata"
+      ],
+      "interfaces": {
+        "input": {
+          "http_post_analyze": {
+            "message": "string",
+            "context": "MessageContext[]",
+            "messageId": "string",
+            "conversationId": "string"
+          }
+        },
+        "output": {
+          "analysis_response": "AnalyzeResponse",
+          "health_response": "status metadata"
+        }
+      },
+      "failure_modes": [
+        "Malformed requests omit required message field",
+        "Reasoning pipeline times out during deep analysis",
+        "Cache churn causes repeated expensive work on similar messages"
+      ]
+    },
+    "ai_agent_layer": {
+      "responsibilities": [
+        "Extract claim candidates from text",
+        "Classify claims as factual, opinion, or prediction",
+        "Retrieve lightweight evidence snippets",
+        "Generate summaries, counterpoints, and confidence scores",
+        "Produce transparent reasoning metadata for the UI"
+      ],
+      "interfaces": {
+        "input": {
+          "message_record": "MessageRecord",
+          "conversation_context": "MessageContext[]",
+          "retrieval_hits": "EvidenceHit[]"
+        },
+        "output": {
+          "claim_candidates": "Claim[]",
+          "analysis_trace": "ReasoningTrace"
+        }
+      },
+      "failure_modes": [
+        "Over-extraction flags opinions as factual claims",
+        "Conflicting evidence produces unstable confidence scoring",
+        "LLM unavailable or skipped forces fallback heuristics"
+      ]
+    },
+    "data_layer": {
+      "responsibilities": [
+        "Store retrieval corpus and deterministic heuristics metadata",
+        "Provide message hashing and cache keys",
+        "Normalize contracts shared across extension and backend"
+      ],
+      "interfaces": {
+        "input": {
+          "raw_documents": "KnowledgeDocument[]",
+          "analysis_artifacts": "AnalysisResult"
+        },
+        "output": {
+          "retrieval_hits": "EvidenceHit[]",
+          "cache_records": "CachedAnalysis"
+        }
+      },
+      "failure_modes": [
+        "Corpus too small yields weak evidence",
+        "Hash collisions return incorrect cached analysis",
+        "Schema drift breaks extension/backend interoperability"
+      ]
+    }
+  },
+  "cross_cutting_contracts": {
+    "MessageRecord": {
+      "id": "string",
+      "conversationId": "string",
+      "author": "self|other|system",
+      "text": "string",
+      "timestamp": "string|null",
+      "messageHash": "string"
+    },
+    "AnalyzeRequest": {
+      "message": "string",
+      "context": "Array<{ id: string, text: string, author: string }>",
+      "messageId": "string",
+      "conversationId": "string",
+      "messageHash": "string"
+    },
+    "AnalyzeResponse": {
+      "messageId": "string",
+      "messageHash": "string",
+      "status": "ok|no_claims|error",
+      "fastPass": {
+        "hasClaims": "boolean",
+        "signal": "neutral|claim|mixed",
+        "badges": "string[]"
+      },
+      "claims": [
+        {
+          "id": "string",
+          "text": "string",
+          "type": "factual|opinion|prediction",
+          "confidence": "number",
+          "summary": "string",
+          "counter": "string",
+          "evidence": [
+            {
+              "title": "string",
+              "snippet": "string",
+              "stance": "supporting|conflicting|context",
+              "sourceType": "corpus|context|heuristic"
+            }
+          ]
+        }
+      ],
+      "meta": {
+        "latencyMs": "number",
+        "cache": "hit|miss",
+        "reasoningMode": "heuristic|hybrid"
+      }
+    }
+  }
+}

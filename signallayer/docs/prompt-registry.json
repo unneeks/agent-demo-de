@@ -1,0 +1,25 @@
+{
+  "generator": "generateComponentPrompt(componentName, context)",
+  "registry": {
+    "extension_layer": {
+      "contextRef": "shared/prompts.js",
+      "focus": "WhatsApp DOM parsing, cache-aware analysis scheduling, non-intrusive overlay injection"
+    },
+    "ui_component_layer": {
+      "contextRef": "shared/prompts.js",
+      "focus": "React component states, progressive disclosure, dark theme overlay"
+    },
+    "backend_layer": {
+      "contextRef": "shared/prompts.js",
+      "focus": "Analyze API, validation, caching, response normalization"
+    },
+    "ai_agent_layer": {
+      "contextRef": "shared/prompts.js",
+      "focus": "Modular reasoning pipeline with extraction, classification, retrieval, countering, scoring"
+    },
+    "data_layer": {
+      "contextRef": "shared/prompts.js",
+      "focus": "Shared contracts, retrieval corpus, hashing, cache helpers"
+    }
+  }
+}

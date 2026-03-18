@@ -1,0 +1,25 @@
+{
+  "manifest_version": 3,
+  "name": "SignalLayer",
+  "version": "0.1.0",
+  "description": "Conversation augmentation overlay for WhatsApp Web with claim detection and reasoning.",
+  "permissions": [],
+  "host_permissions": [
+    "https://web.whatsapp.com/*",
+    "http://localhost:8787/*"
+  ],
+  "content_scripts": [
+    {
+      "matches": ["https://web.whatsapp.com/*"],
+      "js": ["content.js"],
+      "css": ["styles.css"],
+      "run_at": "document_idle"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["styles.css"],
+      "matches": ["https://web.whatsapp.com/*"]
+    }
+  ]
+}

@@ -1,0 +1,266 @@
+{
+  "system": {
+    "name": "SignalLayer",
+    "mode": "standalone-browser-chat-app",
+    "principles": [
+      "non-intrusive-ui",
+      "explainability-over-certainty",
+      "progressive-disclosure",
+      "trust-through-transparency"
+    ],
+    "summary": "SignalLayer is a browser-based conversation augmentation application with a first-party chat surface, inline claim annotations, a conversation summary bar, a right-side analysis pane, and a modular reasoning backend."
+  },
+  "subsystems": [
+    {
+      "name": "browser_app_layer",
+      "label": "Browser App Layer",
+      "responsibilities": [
+        "Render the chat experience and message timeline",
+        "Decorate messages with inline badges without mutating message text",
+        "Manage hover, click, selection, and analysis pane state",
+        "Coordinate fast local analysis with async backend enrichment",
+        "Persist lightweight client cache keyed by message hash"
+      ],
+      "interfaces": {
+        "inputs": [
+          {
+            "name": "chat_message",
+            "shape": {
+              "id": "string",
+              "author": "string",
+              "text": "string",
+              "timestamp": "ISO-8601 string"
+            }
+          },
+          {
+            "name": "analysis_result",
+            "shape": {
+              "messageId": "string",
+              "status": "idle|loading|ready|error",
+              "summary": "string",
+              "claims": "Claim[]",
+              "latencyMs": "number"
+            }
+          }
+        ],
+        "outputs": [
+          {
+            "name": "analyze_request",
+            "shape": {
+              "message": "string",
+              "context": "ChatMessage[]",
+              "conversationId": "string",
+              "messageId": "string"
+            }
+          },
+          {
+            "name": "ui_events",
+            "shape": {
+              "type": "hover|open-pane|close-pane|retry|send-message",
+              "payload": "object"
+            }
+          }
+        ]
+      },
+      "failure_modes": [
+        "Large conversations create excessive re-renders or layout shifts",
+        "Rapid message arrival causes duplicate analysis requests",
+        "Badge injection obscures message affordances on narrow screens",
+        "Client cache becomes stale when message text changes"
+      ]
+    },
+    {
+      "name": "ui_component_layer",
+      "label": "UI Component Layer",
+      "responsibilities": [
+        "Provide reusable React components for badges, decorators, tooltips, pane cards, and confidence bars",
+        "Enforce a dark theme with low-intrusion visual hierarchy",
+        "Surface uncertainty, evidence, and counterpoints with progressive disclosure"
+      ],
+      "interfaces": {
+        "inputs": [
+          {
+            "name": "component_props",
+            "shape": {
+              "message": "ChatMessage",
+              "analysis": "AnalysisResult",
+              "selectedClaimId": "string|null",
+              "handlers": "UI handler callbacks"
+            }
+          }
+        ],
+        "outputs": [
+          {
+            "name": "interaction_callbacks",
+            "shape": {
+              "onHover": "function",
+              "onOpenPane": "function",
+              "onRetry": "function"
+            }
+          }
+        ]
+      },
+      "failure_modes": [
+        "Tooltip content overflows viewport",
+        "Low-contrast confidence visuals reduce readability",
+        "Component state diverges from app store during async updates"
+      ]
+    },
+    {
+      "name": "backend_layer",
+      "label": "Backend API Layer",
+      "responsibilities": [
+        "Accept analysis requests from the browser app",
+        "Coordinate claim extraction, classification, retrieval, counterpoint generation, and confidence scoring",
+        "Normalize outputs into a stable JSON contract",
+        "Serve deterministic fixtures when external model access is unavailable"
+      ],
+      "interfaces": {
+        "inputs": [
+          {
+            "name": "POST /analyze",
+            "shape": {
+              "message": "string",
+              "context": "ChatMessage[]",
+              "conversationId": "string",
+              "messageId": "string"
+            }
+          }
+        ],
+        "outputs": [
+          {
+            "name": "analysis_response",
+            "shape": {
+              "messageId": "string",
+              "summary": "string",
+              "claims": [
+                {
+                  "id": "string",
+                  "text": "string",
+                  "type": "factual|opinion|prediction",
+                  "confidence": "number",
+                  "summary": "string",
+                  "counter": "string",
+                  "evidence": [
+                    {
+                      "title": "string",
+                      "snippet": "string",
+                      "sourceType": "kb|conversation"
+                    }
+                  ],
+                  "status": "supported|contested|uncertain|no-evidence"
+                }
+              ],
+              "meta": {
+                "cacheHit": "boolean",
+                "latencyMs": "number",
+                "pipeline": "string[]"
+              }
+            }
+          }
+        ]
+      },
+      "failure_modes": [
+        "Malformed payloads or missing context fields",
+        "Model timeout or unavailable provider",
+        "Evidence corpus does not contain relevant support",
+        "Concurrent requests create duplicate work without cache coalescing"
+      ]
+    },
+    {
+      "name": "ai_agent_layer",
+      "label": "AI Agent Layer",
+      "responsibilities": [
+        "Run modular reasoning steps instead of a single monolithic prompt",
+        "Generate component prompts for implementation and prompt refinements",
+        "Bridge optional LLM providers with deterministic local heuristics fallback",
+        "Score confidence based on retrieval quality, claim clarity, and contradiction signals"
+      ],
+      "interfaces": {
+        "inputs": [
+          {
+            "name": "reasoning_task",
+            "shape": {
+              "message": "string",
+              "contextWindow": "ChatMessage[]",
+              "evidenceDocs": "KnowledgeDocument[]",
+              "componentName": "string"
+            }
+          }
+        ],
+        "outputs": [
+          {
+            "name": "reasoning_result",
+            "shape": {
+              "claims": "Claim[]",
+              "summary": "string",
+              "promptAudit": "PromptLoopRecord[]"
+            }
+          }
+        ]
+      },
+      "failure_modes": [
+        "Provider response is unparsable or inconsistent with schema",
+        "Prompt loop produces redundant refinements",
+        "Heuristic fallback over-classifies soft opinions as factual claims"
+      ]
+    },
+    {
+      "name": "data_layer",
+      "label": "Data Layer",
+      "responsibilities": [
+        "Store the seed evidence corpus for RAG-lite retrieval",
+        "Provide hash-based memoization for analysis results",
+        "Retain chat fixtures for tests and UI previews"
+      ],
+      "interfaces": {
+        "inputs": [
+          {
+            "name": "knowledge_document",
+            "shape": {
+              "id": "string",
+              "title": "string",
+              "content": "string",
+              "tags": "string[]"
+            }
+          }
+        ],
+        "outputs": [
+          {
+            "name": "retrieval_match",
+            "shape": {
+              "doc": "KnowledgeDocument",
+              "score": "number",
+              "matchedTerms": "string[]"
+            }
+          }
+        ]
+      },
+      "failure_modes": [
+        "Sparse corpus yields weak evidence quality",
+        "Cache key collisions across near-identical messages",
+        "Fixture drift causes frontend and backend contract mismatches"
+      ]
+    }
+  ],
+  "cross_cutting": {
+    "performance": {
+      "strategy": "two-pass-analysis",
+      "targets": {
+        "localBadgeClassificationMs": 100,
+        "backendP95Ms": 1200
+      }
+    },
+    "safety": [
+      "show uncertainty states explicitly",
+      "never hide original user text",
+      "degrade gracefully on network or model failure"
+    ],
+    "testing": [
+      "simulate chat DOM and annotation placement",
+      "validate parsing and claim contracts",
+      "measure caching and response latency",
+      "exercise no-claim and conflicting-evidence scenarios"
+    ]
+  }
+}

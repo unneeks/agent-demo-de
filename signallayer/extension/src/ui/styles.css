@@ -1,0 +1,15 @@
+@tailwind components;
+@tailwind utilities;
+
+@layer components {
+  .sl-anchor {
+    display: inline-flex;
+    align-items: center;
+    margin-left: 8px;
+    vertical-align: middle;
+  }
+
+  .sl-shell {
+    font-family: ui-sans-serif, system-ui, sans-serif;
+  }
+}

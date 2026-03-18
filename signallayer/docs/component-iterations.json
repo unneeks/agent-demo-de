@@ -1,0 +1,59 @@
+{
+  "phase": "iterative_component_generation",
+  "components": [
+    {
+      "name": "extension_layer",
+      "implementation": [
+        "extension/src/content/main.jsx",
+        "extension/src/lib/parser.js",
+        "extension/src/lib/api.js",
+        "extension/src/lib/store.js"
+      ],
+      "validation": "shared/prompts.js::validateComponentResult",
+      "refinement": "shared/prompts.js::generateRefinementPrompt"
+    },
+    {
+      "name": "ui_component_layer",
+      "implementation": [
+        "extension/src/ui/components/AnnotationBadge.jsx",
+        "extension/src/ui/components/MessageDecorator.jsx",
+        "extension/src/ui/components/TooltipCard.jsx",
+        "extension/src/ui/components/AnalysisPane.jsx",
+        "extension/src/ui/components/ClaimCard.jsx",
+        "extension/src/ui/components/EvidenceList.jsx",
+        "extension/src/ui/components/ConfidenceBar.jsx"
+      ],
+      "validation": "shared/prompts.js::validateComponentResult",
+      "refinement": "shared/prompts.js::generateRefinementPrompt"
+    },
+    {
+      "name": "backend_layer",
+      "implementation": [
+        "backend/src/server.js",
+        "backend/src/cache.js"
+      ],
+      "validation": "shared/prompts.js::validateComponentResult",
+      "refinement": "shared/prompts.js::generateRefinementPrompt"
+    },
+    {
+      "name": "ai_agent_layer",
+      "implementation": [
+        "backend/src/reasoner.js",
+        "backend/src/retrieval.js",
+        "backend/src/llm.js"
+      ],
+      "validation": "shared/prompts.js::validateComponentResult",
+      "refinement": "shared/prompts.js::generateRefinementPrompt"
+    },
+    {
+      "name": "data_layer",
+      "implementation": [
+        "shared/contracts.js",
+        "shared/corpus.js",
+        "shared/utils.js"
+      ],
+      "validation": "shared/prompts.js::validateComponentResult",
+      "refinement": "shared/prompts.js::generateRefinementPrompt"
+    }
+  ]
+}

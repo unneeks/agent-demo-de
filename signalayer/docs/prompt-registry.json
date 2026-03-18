@@ -1,0 +1,37 @@
+{
+  "browser_app_layer": {
+    "component": "browser_app_layer",
+    "context": {
+      "productMode": "standalone-chat-app"
+    },
+    "prompt": "You are implementing the SignalLayer component 'browser_app_layer'.\nPrimary goal: Implement the standalone SignalLayer browser chat shell with message timeline, summary bar, badge orchestration, and analysis pane state.\n\nRequirements:\n- Define responsibilities and boundaries clearly.\n- Respect the shared JSON contracts in the architecture spec.\n- Handle edge cases, degraded states, and testability.\n- Keep the implementation MVP-sized but production-shaped.\n- Prefer explainability and transparency over false certainty.\n\nConstraints:\n- Do not mutate the original message text.\n- Fast local pass should keep badge placement under 100ms for the visible viewport.\n- Async backend updates must reconcile safely with optimistic local state.\n\nInput formats:\n- Seed chat conversation fixture\n- Analysis API responses\n- Client cache lookups by message hash\n\nOutput formats:\n- Rendered chat layout\n- Inline annotation badges\n- Tooltip previews\n- Open/closed analysis pane state\n\nEdge cases to cover:\n- message has no detectable claims\n- multiple claims in one message\n- stale response arrives after a newer request\n- mobile layout collapses pane\n\nTesting requirements:\n- visible messages render without layout shift\n- badge clicks open the matching pane state\n- cache hits bypass duplicate network calls\n\nAdditional context: {\"productMode\":\"standalone-chat-app\"}"
+  },
+  "ui_component_layer": {
+    "component": "ui_component_layer",
+    "context": {
+      "theme": "dark"
+    },
+    "prompt": "You are implementing the SignalLayer component 'ui_component_layer'.\nPrimary goal: Build reusable React components for the annotation system, evidence display, and confidence visualization.\n\nRequirements:\n- Define responsibilities and boundaries clearly.\n- Respect the shared JSON contracts in the architecture spec.\n- Handle edge cases, degraded states, and testability.\n- Keep the implementation MVP-sized but production-shaped.\n- Prefer explainability and transparency over false certainty.\n\nConstraints:\n- Use TailwindCSS with a dark theme.\n- Keep visuals low-intrusion and readable over chat surfaces.\n- Components must support loading, empty, ready, and error states.\n\nInput formats:\n- ChatMessage props\n- AnalysisResult props\n- Selection and interaction handlers\n\nOutput formats:\n- Composable React UI primitives\n- Accessible hover cards and pane cards\n\nEdge cases to cover:\n- long evidence snippets\n- very low confidence values\n- empty evidence arrays\n- keyboard-only interaction\n\nTesting requirements:\n- components render critical states\n- confidence bar width is clamped\n- tooltips do not crash on missing claim data\n\nAdditional context: {\"theme\":\"dark\"}"
+  },
+  "backend_layer": {
+    "component": "backend_layer",
+    "context": {
+      "endpoint": "/analyze"
+    },
+    "prompt": "You are implementing the SignalLayer component 'backend_layer'.\nPrimary goal: Implement the analysis API with stable schemas, caching, validation, and graceful fallbacks.\n\nRequirements:\n- Define responsibilities and boundaries clearly.\n- Respect the shared JSON contracts in the architecture spec.\n- Handle edge cases, degraded states, and testability.\n- Keep the implementation MVP-sized but production-shaped.\n- Prefer explainability and transparency over false certainty.\n\nConstraints:\n- Return the required `claims` array schema.\n- Expose CORS for the browser client in development.\n- Keep the backend dependency footprint reasonable.\n\nInput formats:\n- POST /analyze payload\n- Knowledge corpus\n- Optional environment-backed LLM provider configuration\n\nOutput formats:\n- Structured analysis response\n- Latency and cache metadata\n- Predictable error payloads\n\nEdge cases to cover:\n- invalid JSON body\n- empty message\n- provider timeout\n- retrieval returns no results\n\nTesting requirements:\n- schema validation for valid and invalid requests\n- cache hit path returns identical payloads\n- pipeline fallback works without provider credentials\n\nAdditional context: {\"endpoint\":\"/analyze\"}"
+  },
+  "ai_agent_layer": {
+    "component": "ai_agent_layer",
+    "context": {
+      "strategy": "modular-pipeline"
+    },
+    "prompt": "You are implementing the SignalLayer component 'ai_agent_layer'.\nPrimary goal: Implement modular reasoning stages and the meta-prompt generation loop.\n\nRequirements:\n- Define responsibilities and boundaries clearly.\n- Respect the shared JSON contracts in the architecture spec.\n- Handle edge cases, degraded states, and testability.\n- Keep the implementation MVP-sized but production-shaped.\n- Prefer explainability and transparency over false certainty.\n\nConstraints:\n- Do not rely on one large prompt for the entire pipeline.\n- Support a deterministic fallback path when no LLM is configured.\n- Record prompt loop iterations for inspection.\n\nInput formats:\n- Message text and conversation context\n- Retrieved evidence snippets\n- Component generation context\n\nOutput formats:\n- Claim extraction results\n- Prompt registry entries\n- Prompt refinement records\n\nEdge cases to cover:\n- ambiguous opinion phrasing\n- predictions written as assertions\n- prompt refinement stalls without net improvement\n\nTesting requirements:\n- claim classifiers produce supported label set\n- prompt registry output contains required fields\n- fallback and provider paths share the same schema\n\nAdditional context: {\"strategy\":\"modular-pipeline\"}"
+  },
+  "data_layer": {
+    "component": "data_layer",
+    "context": {
+      "corpus": "local-seed"
+    },
+    "prompt": "You are implementing the SignalLayer component 'data_layer'.\nPrimary goal: Provide the seed evidence corpus, fixtures, and cache utilities used by the MVP.\n\nRequirements:\n- Define responsibilities and boundaries clearly.\n- Respect the shared JSON contracts in the architecture spec.\n- Handle edge cases, degraded states, and testability.\n- Keep the implementation MVP-sized but production-shaped.\n- Prefer explainability and transparency over false certainty.\n\nConstraints:\n- Keep the corpus local and easy to inspect.\n- Use stable IDs for fixtures and documents.\n- Cache keys must be deterministic.\n\nInput formats:\n- Knowledge documents\n- Fixture chat transcripts\n- Message text for hashing\n\nOutput formats:\n- Retrieval candidates\n- Fixture payloads\n- Cache entries\n\nEdge cases to cover:\n- duplicate documents\n- near-identical message hashes\n- fixture messages with punctuation-heavy text\n\nTesting requirements:\n- retrieval ranking returns expected top hits\n- hash function is stable\n- fixtures conform to shared schema\n\nAdditional context: {\"corpus\":\"local-seed\"}"
+  }
+}
