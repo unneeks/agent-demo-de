@@ -1,0 +1,6 @@
+version: "1.0"
+steps:
+  custom_security_scan:
+    type: custom-plugin
+    arguments:
+      severity: high

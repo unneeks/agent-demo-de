@@ -1,0 +1,35 @@
+[
+  {
+    "id": "git-clone-checkout",
+    "match": {
+      "type": "git-clone"
+    },
+    "actionTemplate": {
+      "uses": "actions/checkout@v4"
+    },
+    "requiredSecrets": [],
+    "notes": "Use checkout for Codefresh git-clone steps."
+  },
+  {
+    "id": "docker-build-push-action",
+    "match": {
+      "type": "build"
+    },
+    "actionTemplate": {
+      "uses": "docker/build-push-action@v6"
+    },
+    "requiredSecrets": [],
+    "notes": "Use Docker Buildx for Codefresh build steps."
+  },
+  {
+    "id": "approval-environment",
+    "match": {
+      "type": "pending-approval"
+    },
+    "actionTemplate": {
+      "environment": "production"
+    },
+    "requiredSecrets": [],
+    "notes": "Map approvals to GitHub environments with required reviewers configured in repository settings."
+  }
+]

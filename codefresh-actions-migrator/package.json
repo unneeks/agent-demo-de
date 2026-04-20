@@ -1,0 +1,155 @@
+{
+  "name": "codefresh-actions-migrator",
+  "displayName": "Codefresh to GitHub Actions Migrator",
+  "description": "Convert local Codefresh pipelines into GitHub Actions workflows with deterministic mappings and Copilot-assisted review.",
+  "version": "0.1.0",
+  "publisher": "local",
+  "private": true,
+  "type": "commonjs",
+  "engines": {
+    "vscode": "^1.99.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onCommand:codefreshMigrator.scanWorkspace",
+    "onCommand:codefreshMigrator.planMigration",
+    "onCommand:codefreshMigrator.generateWorkflow",
+    "onCommand:codefreshMigrator.explainMigration",
+    "onChatParticipant:codefresh-actions-migrator.cfmigrator"
+  ],
+  "main": "./out/src/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "codefreshMigrator.scanWorkspace",
+        "title": "Codefresh Migrator: Scan Workspace"
+      },
+      {
+        "command": "codefreshMigrator.planMigration",
+        "title": "Codefresh Migrator: Plan Migration"
+      },
+      {
+        "command": "codefreshMigrator.generateWorkflow",
+        "title": "Codefresh Migrator: Generate Workflow"
+      },
+      {
+        "command": "codefreshMigrator.explainMigration",
+        "title": "Codefresh Migrator: Explain Migration"
+      }
+    ],
+    "chatParticipants": [
+      {
+        "id": "codefresh-actions-migrator.cfmigrator",
+        "name": "cfmigrator",
+        "fullName": "Codefresh Migrator",
+        "description": "Plan and explain Codefresh to GitHub Actions migrations.",
+        "isSticky": true,
+        "commands": [
+          {
+            "name": "scan",
+            "description": "Scan the workspace for Codefresh pipeline files."
+          },
+          {
+            "name": "plan",
+            "description": "Plan a migration for a Codefresh pipeline."
+          },
+          {
+            "name": "generate",
+            "description": "Generate a GitHub Actions workflow from a Codefresh pipeline."
+          },
+          {
+            "name": "explain",
+            "description": "Explain mapped steps, warnings, and manual follow-ups."
+          }
+        ],
+        "disambiguation": [
+          {
+            "category": "codefresh_migration",
+            "description": "The user wants to convert Codefresh pipeline YAML to GitHub Actions workflows.",
+            "examples": [
+              "Convert this codefresh.yml to GitHub Actions",
+              "Plan a migration from Codefresh to GitHub Actions",
+              "Explain how this Codefresh pipeline maps to Actions"
+            ]
+          }
+        ]
+      }
+    ],
+    "languageModelTools": [
+      {
+        "name": "scan_codefresh_pipelines",
+        "displayName": "Scan Codefresh Pipelines",
+        "toolReferenceName": "scanCodefreshPipelines",
+        "userDescription": "Find Codefresh pipeline YAML files in the workspace.",
+        "canBeReferencedInPrompt": true,
+        "icon": "$(search)",
+        "modelDescription": "Find local Codefresh pipeline YAML files in the current VS Code workspace.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {}
+        }
+      },
+      {
+        "name": "plan_codefresh_migration",
+        "displayName": "Plan Codefresh Migration",
+        "toolReferenceName": "planCodefreshMigration",
+        "userDescription": "Create a migration plan for a Codefresh pipeline.",
+        "canBeReferencedInPrompt": true,
+        "icon": "$(checklist)",
+        "modelDescription": "Create a deterministic migration plan for a local Codefresh pipeline file.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "path": {
+              "type": "string",
+              "description": "Workspace-relative or absolute path to a Codefresh YAML file."
+            }
+          },
+          "required": [
+            "path"
+          ]
+        }
+      },
+      {
+        "name": "validate_github_workflow",
+        "displayName": "Validate GitHub Workflow",
+        "toolReferenceName": "validateGitHubWorkflow",
+        "userDescription": "Validate generated GitHub Actions workflow YAML.",
+        "canBeReferencedInPrompt": true,
+        "icon": "$(verified)",
+        "modelDescription": "Validate GitHub Actions workflow YAML shape for required top-level fields.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "yaml": {
+              "type": "string",
+              "description": "GitHub Actions workflow YAML content."
+            }
+          },
+          "required": [
+            "yaml"
+          ]
+        }
+      }
+    ]
+  },
+  "scripts": {
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "test": "npm run compile && node --test out/test/unit/*.test.js",
+    "test:integration": "npm run compile && node out/test/integration/runIntegration.js",
+    "vscode:prepublish": "npm run compile"
+  },
+  "dependencies": {
+    "yaml": "^2.8.0",
+    "zod": "^3.24.2"
+  },
+  "devDependencies": {
+    "@types/node": "^22.14.0",
+    "@types/vscode": "^1.99.0",
+    "@vscode/test-electron": "^2.5.2",
+    "typescript": "^5.8.3"
+  }
+}

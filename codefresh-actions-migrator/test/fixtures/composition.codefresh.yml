@@ -1,0 +1,13 @@
+version: "1.0"
+steps:
+  integration:
+    type: composition
+    composition:
+      services:
+        postgres:
+          image: postgres:16
+          env:
+            POSTGRES_PASSWORD: postgres
+    composition_candidates:
+      tests:
+        command: npm run test:integration

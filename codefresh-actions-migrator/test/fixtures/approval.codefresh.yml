@@ -1,0 +1,6 @@
+version: "1.0"
+steps:
+  approve_prod:
+    type: pending-approval
+    title: Production approval
+    description: Wait for release manager approval

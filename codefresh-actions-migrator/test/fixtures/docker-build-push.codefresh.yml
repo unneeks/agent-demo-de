@@ -1,0 +1,12 @@
+version: "1.0"
+steps:
+  build_app:
+    type: build
+    image_name: example/app
+    dockerfile: Dockerfile
+    tag: "${{CF_BRANCH_TAG_NORMALIZED}}"
+  push_app:
+    type: push
+    registry: ghcr.io
+    image_name: example/app
+    tag: latest
