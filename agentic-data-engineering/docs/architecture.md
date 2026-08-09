@@ -47,13 +47,13 @@ whole thing worth building. See ADR-0008.
                           │
                      API Gateway                     (later)
                           │
-                 Project Orchestrator                (later)
+                 Project Orchestrator                (Phase 6)
                           │
         ┌─────────────────┼─────────────────┐
         │                 │                 │
    Marketplace      Composition        Evaluation
     Service          Engine              Harness
-    (later)         (Phase 4)            (later)
+    (later)         (Phase 4)           (Phase 5)
         │                 │                 │
         └─────────────────┼─────────────────┘
                           │

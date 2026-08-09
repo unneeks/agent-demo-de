@@ -406,7 +406,7 @@ relationship_types:
 
   - key: EVALUATES
     source_types: [Evaluation, EvaluationSuite]
-    target_types: [Agent, Skill, Workflow, Project, DeliveryContract]
+    target_types: [Agent, Skill, Workflow, Project, DeliveryContract, DeliveryArtifact]
     requires_provenance: false
     dimension: SHARED
 

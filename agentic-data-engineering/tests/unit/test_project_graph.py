@@ -14,7 +14,7 @@ import pytest
 from domain.metamodel.enums import EntityType
 from domain.metamodel.relationships import relationship
 from engines.gates import GateState, assess_gate
-from engines.impact import analyze_impact, trace
+from engines.impact import analyze_impact, trace, traceability_score
 from persistence.memory import InMemoryGraphRepository, InMemoryMetadataRepository
 from project_graph import ProjectGraphService
 from project_graph.errors import IngestionError, SnapshotError, UnknownProjectError
@@ -213,6 +213,19 @@ class TestQueryFacade:
         via_service = service.trace_requirement(requirement)
         via_engine = trace(requirement, graph)
         assert via_service == via_engine
+
+    def test_assess_traceability_matches_calling_the_engine_directly(self, service, graph) -> None:
+        requirement = ref(EntityType.REQUIREMENT, "REQ-1")
+        task = ref(EntityType.DELIVERY_TASK, "task.logical-data-model")
+        graph.upsert_relationship(
+            relationship("TRACED_TO", requirement, task, discovered_by="fixture")
+        )
+        via_service = service.assess_traceability([requirement])
+        via_engine = traceability_score([requirement], graph)
+        assert via_service == via_engine
+
+    def test_assess_traceability_of_nothing_is_fully_traceable(self, service) -> None:
+        assert service.assess_traceability([]) == 1.0
 
     def test_assess_readiness_matches_calling_the_engine_directly(self, service, delivery_model) -> None:
         gate = next(iter(delivery_model.gates.values()))

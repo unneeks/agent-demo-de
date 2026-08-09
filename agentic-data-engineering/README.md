@@ -18,7 +18,7 @@ builds.
 
 ---
 
-## Status: Phase 1–5 — Dual-Twin Metamodel Foundation + Project Graph Service + Discovery + Marketplace + Evaluation Harness
+## Status: Phase 1–6 — Dual-Twin Metamodel Foundation + Project Graph Service + Discovery + Marketplace + Evaluation Harness + Project Orchestrator
 
 Phase 1 deliberately contains **no** document assimilation, composition engine,
 agent runtime, LLM calls, evaluation *execution*, API or UI. Those concepts are
@@ -29,8 +29,11 @@ discovery of code *and* delivery documentation, writing through
 `ProjectGraphService`. Phase 4 adds the marketplace: a populated Agent/Skill/
 Tool catalog and a pure engine that resolves engineering roles against it.
 Phase 5 adds the evaluation harness: a populated evaluation catalog and a pure
-engine that scores a suite and gates the agent lifecycle — still no agent
-runtime, no LLM calls, no orchestration.
+engine that scores a suite and gates the agent lifecycle. Phase 6 adds the
+project orchestrator: `run_cycle()` ties discovery, impact analysis,
+composition and evaluation into one continuous loop over a real project,
+closing the write path composition and evaluation had left deferred — still
+no agent runtime, no LLM calls, no API, no UI.
 
 | Delivered | |
 |---|---|
@@ -42,12 +45,13 @@ runtime, no LLM calls, no orchestration.
 | A worked delivery model | 9 phases · 13 tasks · 6 checklists · 28 items · 10 criteria · 6 gates |
 | Five deterministic engines | context assembly · checklist + gate readiness · dual impact + traceability · marketplace composition · evaluation harness |
 | Two-plane persistence | PostgreSQL (state) + Neo4j (traversal), behind ports |
-| `ProjectGraphService` | registry-validated ingestion, dual-plane consistency, snapshot/restore, project-scoped query facade — [`docs/project-graph.md`](docs/project-graph.md) |
+| `ProjectGraphService` | registry-validated ingestion, dual-plane consistency, snapshot/restore, project-scoped query facade (4 methods) — [`docs/project-graph.md`](docs/project-graph.md) |
 | Discovery | uniform agent-based extraction, code + Markdown, two live backends (Anthropic, Copilot CLI) behind one `ExtractionClient` Protocol — [`docs/discovery.md`](docs/discovery.md) |
 | Marketplace | 14 skills · 7 tools · 5 knowledge packs · 6 worked agents; pure role/agent composition reusing `EngineeringRole.is_satisfied_by()` — [`docs/marketplace.md`](docs/marketplace.md) |
 | Evaluation harness | 2 worked suites (8 metrics, 6 scenarios), closes a real dangling gate reference, gates `Agent` CANDIDATE→EVALUATED→CERTIFIED — [`docs/evaluation.md`](docs/evaluation.md) |
+| Project orchestrator | `run_cycle()` composes OBSERVE→IMPACT→STAFF→EVALUATE→GATE, writes `IMPLEMENTED_BY`/`Evaluation`+`EVALUATES`, wires `GateState.traceability` — [`docs/orchestrator.md`](docs/orchestrator.md) |
 | 79 JSON Schema artifacts | committed, with a drift check |
-| 603 tests | 515 unit with zero infrastructure |
+| 623 tests | 535 unit with zero infrastructure |
 
 ---
 
@@ -60,7 +64,7 @@ pip install -e ".[dev]"
 
 python scripts/validate_registries.py     # registries + the worked delivery model
 python scripts/export_schemas.py --check  # JSON Schema drift check
-pytest tests/unit -q                      # 515 tests, zero infrastructure
+pytest tests/unit -q                      # 535 tests, zero infrastructure
 pytest tests/contract -q                  # in-memory adapters; real stores skip
 ```
 
@@ -215,8 +219,9 @@ engines/composition/       Marketplace role/agent resolution
 engines/evaluation/        Evaluation harness: run a suite, gate the agent lifecycle
 project_graph/             ProjectGraphService: lifecycle, snapshotting, query facade
 discovery/                 Uniform agent-based extraction: walk, resolve, orchestrate, extraction/
+orchestrator/              run_cycle(): composes discovery, impact, composition, evaluation, gates
 scripts/                   validate_registries.py, export_schemas.py, record_extraction_fixtures.py
-docs/                      Architecture, metamodel spec, delivery model, graph model, project graph, discovery, marketplace, evaluation
+docs/                      Architecture, metamodel spec, delivery model, graph model, project graph, discovery, marketplace, evaluation, orchestrator
 tests/unit/                No infrastructure needed
 tests/contract/            One contract, run against every adapter
 tests/integration/         Live discovery backends, independently skippable
@@ -241,20 +246,24 @@ Bumping `METAMODEL_VERSION` without updating the registry fails
 
 ## Next phase
 
-Phase 5 is complete: an evaluation catalog (2 worked suites, 8 metrics, 6
-scenarios) and `engines/evaluation/`, a pure engine that scores a suite from
-caller-supplied observed values by reusing `EvaluationMetric.passes()`/
-`Evaluation.weighted_score()` rather than reimplementing scoring, reduces
-evaluation history into what `GateState` needs, and gates `Agent` lifecycle
-transitions into `EVALUATED`/`CERTIFIED`. It closes a real dangling
-reference — `gate.architecture-review` had declared `required_evaluations:
-[architecture-quality-evaluation]` since Phase 1 with nothing behind the key
-— and proves the seam against the untouched `engines.gates.assess_gate()`.
-See [`docs/evaluation.md`](docs/evaluation.md) and
-[ADR-0015](docs/adr/0015-evaluation-harness.md).
+Phase 6 is complete: `orchestrator/`'s `run_cycle()` composes OBSERVE
+(discovery) → DETECT CHANGE + IMPACT → SELECT AGENTS (composition) →
+EVALUATE → APPROVAL GATE over one real project — every step calling an
+existing Phase 1–5 function, inventing no new logic. It closes the write
+path both `engines/composition` and `engines/evaluation` explicitly deferred
+("future orchestrator work"): staffing decisions are now persisted as real
+`IMPLEMENTED_BY` edges, evaluation runs as real `Evaluation` + `EVALUATES`
+edges. It also wires `engines.impact.traceability_score()` — real, correct,
+and completely unused until now — into `GateState.traceability` via a new
+fourth `ProjectGraphService` facade method, `assess_traceability()`. The
+`gate.architecture-review` worked example goes `BLOCKED → PASS` through
+`run_cycle()` exactly as it did through Phase 5's hand-wired `GateState`. See
+[`docs/orchestrator.md`](docs/orchestrator.md) and
+[ADR-0016](docs/adr/0016-project-orchestrator.md).
 
 Still open, deliberately: no agent runtime, no LLM/Copilot API calls, no API,
-no UI, no orchestration, no write path from any engine to a project's graph,
-and `engines/gates/readiness.py`'s "never evaluated" vs. "evaluated and
-failed" ambiguity remains a named, deliberate non-fix. Nothing beyond this
-foundation should be built until it is reviewed.
+no UI, no scheduled/daemon execution, and four of `GateState`'s six fields
+(`present_artifact_kinds`, `checklist_outcomes`, `satisfied_evidence`,
+`approvals`) remain caller-supplied by design — artifact/evidence/approval
+detection is its own, larger future phase. Nothing beyond this foundation
+should be built until it is reviewed.

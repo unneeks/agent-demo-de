@@ -19,6 +19,7 @@ if str(REPO_ROOT) not in sys.path:
 from domain.metamodel.base import EntityRef, utc_now  # noqa: E402
 from domain.metamodel.entities.evaluation import Evaluation  # noqa: E402
 from domain.metamodel.entities.organization import Agent, Skill, Tool, ToolAction  # noqa: E402
+from domain.metamodel.entities.shared.capability import Requirement  # noqa: E402
 from domain.metamodel.entities.shared.context import ContextItem, ContextPolicy  # noqa: E402
 from domain.metamodel.entities.technical import (  # noqa: E402
     Change,
@@ -161,6 +162,19 @@ def make_change(change_id: str = "PR-1", project_id: str = "demo", **kwargs: obj
             change_id,
             project_ref=ref(EntityType.PROJECT, project_id),
             change_kind="pull_request",
+        ),
+        kwargs,
+    )
+
+
+def make_requirement(requirement_id: str = "REQ-1", project_id: str = "demo", **kwargs: object) -> Requirement:
+    return _build(  # type: ignore[return-value]
+        Requirement,
+        _discovered(
+            EntityType.REQUIREMENT,
+            requirement_id,
+            project_ref=ref(EntityType.PROJECT, project_id),
+            statement=f"Requirement {requirement_id}",
         ),
         kwargs,
     )

@@ -20,6 +20,7 @@ phase can overturn one knowingly rather than by accident.
 | [0013](0013-agent-based-extraction.md) | Agent-based extraction behind an `ExtractionClient` Protocol, uniform across every source kind | No per-source-type parser; two real backends (Anthropic, GitHub Copilot CLI) prove the Protocol earns its keep |
 | [0014](0014-marketplace-catalog-and-role-level-composition.md) | Marketplace catalog + role-level composition, reusing existing role-satisfaction logic | `EngineeringRole.is_satisfied_by()` finally has real data; the three deferred Copilot integration points land as registry/schema facts |
 | [0015](0015-evaluation-harness.md) | Evaluation harness: run a suite, gate the agent lifecycle, reusing existing scoring primitives | Closes the real dangling `gate.architecture-review` evaluation reference; `GateState.passed_evaluations` finally has an assembler |
+| [0016](0016-project-orchestrator.md) | Project orchestrator: composes discovery, impact, composition and evaluation over one project, closes their deferred write path | `IMPLEMENTED_BY`/`Evaluation`+`EVALUATES` are finally persisted; `GateState.traceability` finally has an assembler too |
 
 ## Deferred, and why
 
@@ -38,14 +39,11 @@ extraction, not agentic coding. **Still not started, across all four:** any
 actual Copilot API/CLI/coding-agent call from a live agent runtime — that
 runtime does not exist yet, and none of this phase's work executes anything.
 
-**Agent Runtime and Project Orchestrator** — the two layers `docs/
-architecture.md`'s layered diagram still marks `(later)` above `engines/
-composition`/`engines/evaluation`. Phase 5 (ADR-0015) gives the evaluation
-vocabulary a harness that scores caller-supplied observed values and gates
-`Agent` lifecycle transitions, but nothing in the codebase yet actually
-invokes an LLM, executes an agent's declared skills, or ties discovery +
-composition + evaluation + impact analysis into one continuous loop for a
-real project. Both remain fully unstarted.
+**Agent Runtime** — the one layer `docs/architecture.md`'s layered diagram
+still marks `(later)`. Phase 6 (ADR-0016) ties discovery + composition +
+evaluation + impact analysis into one continuous loop for a real project,
+but nothing in the codebase yet actually invokes an LLM or executes an
+agent's declared skills. Still fully unstarted.
 
 **Document assimilation** (§17–18) — the extraction pipeline that would populate
 a delivery model from Markdown, PDF and DOCX. Phase 3 (ADR-0013,

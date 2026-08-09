@@ -24,7 +24,7 @@ from domain.metamodel.enums import EntityType
 from domain.metamodel.registry import LoadedDeliveryModel, MetamodelRegistry
 from domain.metamodel.relationships import Relationship
 from engines.gates import GateReadiness, GateState, assess_gate
-from engines.impact import ChangeImpact, TraceabilityChain, analyze_impact, trace
+from engines.impact import ChangeImpact, TraceabilityChain, analyze_impact, trace, traceability_score
 from persistence.ports import GraphRepository, MetadataRepository, StoredEntity
 from project_graph.errors import IngestionError, SnapshotError, UnknownProjectError
 from project_graph.snapshot import build_snapshot
@@ -211,15 +211,33 @@ class ProjectGraphService:
         """Traceability chain resolution, scoped to this service's graph."""
         return trace(ref, self._graph, **kwargs)  # type: ignore[arg-type]
 
+    def assess_traceability(self, starts: list[EntityRef], **kwargs: object) -> float:
+        """Mean traceability completeness across several starting points,
+        scoped to this service's graph.
+
+        Thin wrapper over ``engines.impact.traceability_score`` -- the fourth
+        query-facade method, completing the pair with ``trace_requirement``
+        (single ref) the same way ``analyze_change`` and ``assess_readiness``
+        already pair technical/delivery impact with gate readiness. Feeds
+        ``GateState.traceability`` directly (``orchestrator/gate.py``, Phase 6).
+        """
+        return traceability_score(starts, self._graph, **kwargs)  # type: ignore[arg-type]
+
     def assess_readiness(
         self, gate: ApprovalGate, state: GateState, **kwargs: object
     ) -> GateReadiness:
         """Gate readiness assessment.
 
-        ``GateState`` is still assembled by the caller -- the service does not
-        synthesize checklist outcomes or approvals from nothing, since nothing
-        upstream of the evaluation/runtime phases produces those yet. Wrapping
+        ``GateState`` is still assembled by the caller for four of its six
+        fields -- ``present_artifact_kinds``, ``checklist_outcomes``,
+        ``satisfied_evidence`` and ``approvals`` have no real assembler
+        anywhere in this codebase, a deliberate boundary (see
+        ``docs/orchestrator.md``'s "what this is not"). ``passed_evaluations``
+        (``engines.evaluation.passed_evaluation_keys``, Phase 5) and
+        ``traceability`` (this service's own ``assess_traceability``, Phase 6)
+        do have real assemblers now -- ``orchestrator/gate.py`` wires both
+        from actual graph/metadata state before calling this method. Wrapping
         the call is still worth it: one import (``project_graph``) instead of
-        three, and symmetry with the other two facade methods.
+        three, and symmetry with the other three facade methods.
         """
         return assess_gate(gate, state, **kwargs)  # type: ignore[arg-type]
