@@ -38,6 +38,7 @@ class EntityType(StrEnum):
     PIPELINE = "Pipeline"
     DATA_ASSET = "DataAsset"
     SCHEMA_DEFINITION = "SchemaDefinition"
+    DATA_PROFILE = "DataProfile"
     INFRASTRUCTURE = "Infrastructure"
     CLOUD_RESOURCE = "CloudResource"
     ARCHITECTURE_ELEMENT = "ArchitectureElement"
@@ -112,6 +113,9 @@ class EntityType(StrEnum):
     CONTEXT_POLICY = "ContextPolicy"
     CONTEXT_BUNDLE = "ContextBundle"
     CONTEXT_ITEM = "ContextItem"
+
+    # --- Project graph (Phase 2) -------------------------------------------
+    PROJECT_SNAPSHOT = "ProjectSnapshot"
 
 
 class ProvenanceState(StrEnum):

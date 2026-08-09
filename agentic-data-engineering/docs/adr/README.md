@@ -15,6 +15,8 @@ phase can overturn one knowingly rather than by accident.
 | [0008](0008-dual-twin-single-graph.md) | **The two twins are one graph** | Cross-twin questions are traversals, not application-level joins |
 | [0009](0009-four-level-role-chain.md) | Four-level role chain; inferred rules cannot block | Human accountability stays distinguishable from machine capability |
 | [0010](0010-entity-consolidations.md) | Deliberate consolidations vs the specification | Records where the build departs from the literal entity list, and why |
+| [0011](0011-project-graph-thin-front-door.md) | Project graph service is a thin front door | Registry-validated ingestion, dual-plane writes, snapshotting, project-scoped facade — nothing more |
+| [0012](0012-data-profile-and-feasibility-coverage.md) | `DataProfile` entity; feasibility assessment as registry data | Closes three coverage gaps found reviewing the worked model against real delivery activities |
 
 ## Deferred, and why
 

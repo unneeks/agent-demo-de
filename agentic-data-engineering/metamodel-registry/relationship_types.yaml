@@ -53,6 +53,13 @@ relationship_types:
     requires_provenance: true
     dimension: TECHNICAL
 
+  - key: PROFILES
+    description: A profiling result measured against a data asset at a point in time.
+    source_types: [DataProfile]
+    target_types: [DataAsset]
+    requires_provenance: true
+    dimension: TECHNICAL
+
   - key: IMPLEMENTS
     description: Concrete technology realizing an architecture element.
     source_types: [Pipeline, CloudResource, CodeArtifact, Infrastructure]

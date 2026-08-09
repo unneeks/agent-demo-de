@@ -56,12 +56,14 @@ reading of a document cannot be checked by a human.
 
 ### Technical twin — `entities/technical/`
 `Project` · `Repository` · `CodeArtifact` · `Pipeline` · `DataAsset` ·
-`SchemaDefinition` · `Infrastructure` · `CloudResource` · `ArchitectureElement` ·
-`Test` · `Incident` · `Change` · `Deployment`
+`SchemaDefinition` · `DataProfile` · `Infrastructure` · `CloudResource` ·
+`ArchitectureElement` · `Test` · `Incident` · `Change` · `Deployment`
 
 All `ProvenancedEntity`. `DataAsset` covers dataset/table/view/topic/file/column/
 data-product via `asset_kind` and a self-nesting `parent_ref`; `Dependency` and
-`Lineage` are relationship types, not entities (ADR-0010).
+`Lineage` are relationship types, not entities (ADR-0010). `DataProfile` is kept
+separate from `DataAsset` for the same reason `SchemaDefinition` is — profiling
+drift is a first-class, comparable fact, not an overwritten value (ADR-0012).
 
 ### Delivery twin — `entities/delivery/`
 See [`delivery-model.md`](delivery-model.md).
@@ -122,11 +124,11 @@ the contract and pinned component versions — never raw chain-of-thought.
 ## Relationships
 
 Edges are objects with their own provenance (ADR-0004). The natural key is
-`(source, type, target)` on identity refs. 63 types across four dimensions:
+`(source, type, target)` on identity refs. 64 types across four dimensions:
 
 | Dimension | Count | Examples |
 |---|---|---|
-| `TECHNICAL` | 17 | `DEPENDS_ON`, `COVERS`, `HAS_SCHEMA`, `IMPLEMENTS` |
+| `TECHNICAL` | 18 | `DEPENDS_ON`, `COVERS`, `HAS_SCHEMA`, `IMPLEMENTS`, `PROFILES` |
 | `DELIVERY` | 21 | `HAS_PHASE`, `VALIDATED_BY`, `ENDS_AT_GATE`, `REQUIRES_EVIDENCE` |
 | `CROSS` | 19 | `GOVERNS`, `DESCRIBES`, `TRIGGERS_TASK`, `TRACED_TO`, `SATISFIES` |
 | `SHARED` | 6 | `EVALUATES`, `SUPPORTS`, `CITES`, `ASSEMBLED_FROM` |

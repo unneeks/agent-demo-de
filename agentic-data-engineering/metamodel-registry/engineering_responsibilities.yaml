@@ -141,3 +141,19 @@ engineering_responsibilities:
     fulfilled_by_roles: [requirements-engineer]
     risk_level: MEDIUM
     delegable_to_agent: true
+
+  - key: resp.feasibility-assessment
+    name: Feasibility Assessment
+    statement: >
+      Assess the technical, operational and cost feasibility of a proposed
+      solution before requirements and architecture commit resources to it.
+      Unlike resp.architecture-signoff or resp.release-readiness this carries
+      no non-delegable sign-off twin: the discovery phase has no formal
+      approval gate in this delivery model, so the assessment's GO/NO-GO/
+      CONDITIONAL verdict is recorded directly on the produced
+      DeliveryArtifact rather than behind a gate. See ADR-0012.
+    required_capabilities: []
+    required_delivery_capabilities: [feasibility-assessment]
+    fulfilled_by_roles: [requirements-engineer]
+    risk_level: MEDIUM
+    delegable_to_agent: true

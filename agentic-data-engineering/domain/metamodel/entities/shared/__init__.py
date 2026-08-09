@@ -15,6 +15,7 @@ from domain.metamodel.entities.shared.context import (
     Memory,
 )
 from domain.metamodel.entities.shared.platform import Platform, TechnologyBinding
+from domain.metamodel.entities.shared.snapshot import ProjectSnapshot
 from domain.metamodel.entities.shared.work import (
     Artifact,
     Decision,
@@ -39,6 +40,7 @@ __all__ = [
     "Observation",
     "Platform",
     "Problem",
+    "ProjectSnapshot",
     "Requirement",
     "Task",
     "TechnologyBinding",

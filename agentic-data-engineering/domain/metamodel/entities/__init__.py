@@ -70,6 +70,7 @@ from domain.metamodel.entities.shared import (
     Observation,
     Platform,
     Problem,
+    ProjectSnapshot,
     Requirement,
     Task,
     TechnologyBinding,
@@ -81,6 +82,7 @@ from domain.metamodel.entities.technical import (
     CloudResource,
     CodeArtifact,
     DataAsset,
+    DataProfile,
     Deployment,
     Incident,
     Infrastructure,
@@ -99,6 +101,7 @@ _ALL_ENTITIES = (
     Pipeline,
     DataAsset,
     SchemaDefinition,
+    DataProfile,
     Infrastructure,
     CloudResource,
     ArchitectureElement,
@@ -166,6 +169,8 @@ _ALL_ENTITIES = (
     ContextPolicy,
     ContextBundle,
     ContextItem,
+    # Project graph
+    ProjectSnapshot,
 )
 
 #: Every concrete entity class, keyed by its ``EntityType``.

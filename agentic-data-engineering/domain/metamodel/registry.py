@@ -991,6 +991,22 @@ class MetamodelRegistry:
                         f"{role_key!r}, but that role does not list the gate in approves_gates"
                     )
 
+        # The forward direction of the check above: a role that claims it may
+        # approve a gate must be claiming a gate that actually exists. Without
+        # this, `approves_gate_keys: [gate.typo]` loads silently and the role
+        # simply never has anything to approve -- a dangling reference that
+        # looks, at a glance, like real authority. Delivery roles are loaded
+        # once globally rather than per model (registry.py:_load_delivery_roles),
+        # so this check is only sound while a single delivery model is loaded;
+        # it will need scoping by model_key if a second one is ever added.
+        for role_key, delivery_role in self.delivery_roles.items():
+            for gate_key in delivery_role.approves_gate_keys:
+                if gate_key not in loaded.gates:
+                    errors.append(
+                        f"delivery model {model_key!r}: delivery role {role_key!r} claims it "
+                        f"approves gate {gate_key!r}, which does not exist"
+                    )
+
         for checklist_key, checklist in loaded.checklists.items():
             for ref_ in checklist.item_refs:
                 if ref_.id not in loaded.checklist_items:

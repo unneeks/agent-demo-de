@@ -17,6 +17,7 @@ from domain.metamodel.entities.technical.infrastructure import (
     CloudResource,
     Infrastructure,
 )
+from domain.metamodel.entities.technical.profile import DataProfile
 from domain.metamodel.entities.technical.project import CodeArtifact, Project, Repository
 from domain.metamodel.entities.technical.tests import Test
 
@@ -26,6 +27,7 @@ __all__ = [
     "CloudResource",
     "CodeArtifact",
     "DataAsset",
+    "DataProfile",
     "Deployment",
     "Incident",
     "Infrastructure",

@@ -92,6 +92,20 @@ class MetadataRepository(Protocol):
     def delete(self, entity_type: EntityType, entity_id: str, version: str | None = None) -> bool:
         ...
 
+    def upsert_relationship(self, rel: Relationship) -> None:
+        """Write an edge to the durable relationship log.
+
+        This is the metadata plane's half of ADR-0001's "the graph plane is a
+        projection" claim: the graph store can be dropped and rebuilt from what
+        this method persists. Identified by the same natural key as the graph
+        plane -- (source, type, target) -- so re-writing an edge updates it.
+        """
+        ...
+
+    def all_relationships(self) -> list[Relationship]:
+        """Every stored edge -- the input to rebuilding the graph plane."""
+        ...
+
     def append_audit(self, decision: Decision) -> AuditEntry:
         """Append a decision to the ledger. There is deliberately no update."""
         ...

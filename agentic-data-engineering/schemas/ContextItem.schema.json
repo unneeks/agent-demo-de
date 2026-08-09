@@ -68,6 +68,7 @@
         "Pipeline",
         "DataAsset",
         "SchemaDefinition",
+        "DataProfile",
         "Infrastructure",
         "CloudResource",
         "ArchitectureElement",
@@ -127,7 +128,8 @@
         "Memory",
         "ContextPolicy",
         "ContextBundle",
-        "ContextItem"
+        "ContextItem",
+        "ProjectSnapshot"
       ],
       "title": "EntityType",
       "type": "string"

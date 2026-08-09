@@ -14,7 +14,7 @@ from domain.metamodel.entities.evaluation import Evaluation, MetricResult
 from domain.metamodel.entities.organization import ToolAction
 from domain.metamodel.entities.shared.capability import CapabilityGap
 from domain.metamodel.entities.shared.work import Decision
-from domain.metamodel.entities.technical import Deployment
+from domain.metamodel.entities.technical import DataProfile, Deployment
 from domain.metamodel.enums import (
     AGENT_LIFECYCLE_TRANSITIONS,
     ActionClass,
@@ -289,6 +289,37 @@ class TestDeliveryArtifacts:
                 artifact_key="a",
                 artifact_kind="logical-data-model",
                 status="approved",
+            )
+
+
+class TestDataProfile:
+    """Held separate from DataAsset for the same reason SchemaDefinition is:
+    quality drift needs two structured records to compare, not two opaque
+    sentences of Evidence text."""
+
+    def test_constructs_with_free_form_metrics(self) -> None:
+        profile = DataProfile(
+            id="p1",
+            name="raw.customers profile 2026-08-09",
+            entity_type=EntityType.DATA_PROFILE,
+            provenance=ProvenanceState.OBSERVED,
+            discovered_by="great_expectations@0.1",
+            asset_ref=ref(EntityType.DATA_ASSET, "raw.customers"),
+            metrics={"row_count": 48213.0, "null_rate": 0.002, "customer_id.distinct_count": 48213.0},
+            sample_size=48213,
+        )
+        assert profile.twin.value == "TECHNICAL"
+        assert profile.metrics["null_rate"] == 0.002
+
+    def test_inherits_provenance_invariants(self) -> None:
+        """A profile is discovered, not declared, like everything else in the twin."""
+        with fail_on(ValidationError, "must carry a confidence"):
+            DataProfile(
+                id="p2",
+                name="p2",
+                entity_type=EntityType.DATA_PROFILE,
+                provenance=ProvenanceState.INFERRED,
+                asset_ref=ref(EntityType.DATA_ASSET, "raw.customers"),
             )
 
 

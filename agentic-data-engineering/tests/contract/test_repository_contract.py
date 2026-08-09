@@ -96,6 +96,46 @@ class TestMetadataRepositoryContract:
         assert stored.payload["twin"] == "DELIVERY"
 
 
+class TestMetadataRelationshipLogContract:
+    """The durable relationship log ADR-0001 promises: the graph plane's other
+    half. Added in Phase 2 -- Postgres always had it; the in-memory adapter did
+    not until ProjectGraphService.rebuild_graph needed a real reference
+    implementation to test against."""
+
+    def test_upsert_then_list(self, metadata_repo) -> None:
+        rel = relationship(
+            "DEPENDS_ON",
+            ref(EntityType.PIPELINE, "stg_customers"),
+            ref(EntityType.DATA_ASSET, "raw.customers"),
+            discovered_by="dbt@1.0.0",
+        )
+        metadata_repo.upsert_relationship(rel)
+        stored = metadata_repo.all_relationships()
+        assert [r.id for r in stored] == [rel.id]
+
+    def test_rewriting_the_same_edge_updates_it(self, metadata_repo) -> None:
+        source = ref(EntityType.PIPELINE, "p")
+        target = ref(EntityType.DATA_ASSET, "a")
+        metadata_repo.upsert_relationship(
+            relationship(
+                "DEPENDS_ON", source, target,
+                provenance=ProvenanceState.INFERRED, confidence=0.4,
+            )
+        )
+        metadata_repo.upsert_relationship(
+            relationship(
+                "DEPENDS_ON", source, target,
+                provenance=ProvenanceState.INFERRED, confidence=0.9,
+            )
+        )
+        stored = metadata_repo.all_relationships()
+        assert len(stored) == 1
+        assert stored[0].confidence == pytest.approx(0.9)
+
+    def test_empty_log_returns_empty_list(self, metadata_repo) -> None:
+        assert metadata_repo.all_relationships() == []
+
+
 class TestAuditLedgerContract:
     """The ledger only grows, and tampering is detectable."""
 

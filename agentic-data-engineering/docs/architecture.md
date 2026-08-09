@@ -37,7 +37,7 @@ Operating modes, in adoption order:
 
 The two dimensions are **not** separate models. One `EntityType` enum, one
 `Relationship` type, one provenance model, one graph plane, one metadata plane.
-19 of the 63 relationship types are cross-twin joins, and they are what make the
+19 of the 64 relationship types are cross-twin joins, and they are what make the
 whole thing worth building. See ADR-0008.
 
 ## Layered view
@@ -59,10 +59,14 @@ whole thing worth building. See ADR-0008.
                    Agent Runtime                     (later)
                           │
    ╔══════════════════════╧══════════════════════╗
-   ║          ENGINES  (this phase)              ║
+   ║       PROJECT GRAPH SERVICE  (Phase 2)      ║
+   ║   lifecycle · dual-plane writes · snapshot  ║
+   ║   query facade over the engines below       ║
+   ╠═════════════════════════════════════════════╣
+   ║          ENGINES  (Phase 1)                 ║
    ║   context · gates · impact + traceability   ║
    ╠═════════════════════════════════════════════╣
-   ║          METAMODEL  (this phase)            ║
+   ║          METAMODEL  (Phase 1)               ║
    ║   dual twin · relationships · provenance    ║
    ║   registries · delivery model               ║
    ╠═════════════════════════════════════════════╣
@@ -72,7 +76,8 @@ whole thing worth building. See ADR-0008.
 ```
 
 Everything above the double line is replaceable. Everything at and below it is
-the platform.
+the platform. The project graph service does not widen what's replaceable — it
+is a thin front door onto the same ports, not a new layer of infrastructure.
 
 ## The two storage planes
 

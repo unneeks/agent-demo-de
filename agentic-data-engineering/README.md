@@ -18,24 +18,27 @@ builds.
 
 ---
 
-## Status: Phase 1 — Dual-Twin Metamodel Foundation
+## Status: Phase 1 & 2 — Dual-Twin Metamodel Foundation + Project Graph Service
 
-This phase deliberately contains **no** document assimilation, composition
-engine, agent runtime, LLM calls, evaluation *execution*, API or UI. Those
-concepts are *modelled*; their engines come later.
+Phase 1 deliberately contains **no** document assimilation, composition engine,
+agent runtime, LLM calls, evaluation *execution*, API or UI. Those concepts are
+*modelled*; their engines come later. Phase 2 adds the one thing Phase 1 had no
+owner for — a project's twin as a lifecycle — without starting any of them
+either: no discovery, no orchestration.
 
 | Delivered | |
 |---|---|
-| 66 entity types | 11 technical · 24 delivery · 31 shared |
-| 63 relationship types | 19 of them **cross-twin joins** |
+| 68 entity types | 12 technical · 24 delivery · 32 shared |
+| 64 relationship types | 19 of them **cross-twin joins** |
 | Four-state provenance | plus document provenance and the inferred-cannot-block rule |
 | Four-level role chain | DeliveryRole → Responsibility → EngineeringRole → Agent |
 | YAML registries | capabilities (both kinds), the role chain, relationships, platforms, approvals |
-| A worked delivery model | 9 phases · 10 tasks · 5 checklists · 24 items · 8 criteria · 5 gates |
+| A worked delivery model | 9 phases · 13 tasks · 6 checklists · 28 items · 10 criteria · 6 gates |
 | Three deterministic engines | context assembly · checklist + gate readiness · dual impact + traceability |
 | Two-plane persistence | PostgreSQL (state) + Neo4j (traversal), behind ports |
-| 77 JSON Schema artifacts | committed, with a drift check |
-| 394 tests | 335 unit with zero infrastructure |
+| `ProjectGraphService` | registry-validated ingestion, dual-plane consistency, snapshot/restore, project-scoped query facade — [`docs/project-graph.md`](docs/project-graph.md) |
+| 79 JSON Schema artifacts | committed, with a drift check |
+| 456 tests | 370 unit with zero infrastructure |
 
 ---
 
@@ -48,7 +51,7 @@ pip install -e ".[dev]"
 
 python scripts/validate_registries.py     # registries + the worked delivery model
 python scripts/export_schemas.py --check  # JSON Schema drift check
-pytest tests/unit -q                      # 335 tests, zero infrastructure
+pytest tests/unit -q                      # 370 tests, zero infrastructure
 pytest tests/contract -q                  # in-memory adapters; real stores skip
 ```
 
@@ -185,13 +188,14 @@ than dropping them.
 ```
 domain/metamodel/          Entities (both twins), relationships, registry, versioning
 metamodel-registry/        Versioned YAML vocabularies + the worked delivery model
-schemas/                   77 generated JSON Schema artifacts, committed
+schemas/                   79 generated JSON Schema artifacts, committed
 persistence/               ports.py + memory/ + neo4j/ + postgres/
 engines/context/           Deterministic context assembly
 engines/gates/             Checklist evaluation and gate readiness
 engines/impact/            Dual impact analysis and traceability
+project_graph/             ProjectGraphService: lifecycle, snapshotting, query facade
 scripts/                   validate_registries.py, export_schemas.py
-docs/                      Architecture, metamodel spec, delivery model, graph model
+docs/                      Architecture, metamodel spec, delivery model, graph model, project graph
 tests/unit/                No infrastructure needed
 tests/contract/            One contract, run against every adapter
 ```
@@ -215,7 +219,8 @@ Bumping `METAMODEL_VERSION` without updating the registry fails
 
 ## Next phase
 
-Phase 2 populates the project graph; Phase 3 adds discovery — of code *and* of
-delivery documentation (§17–18), whose first target is
-`../agentic-ai-ollama-demo/`, a real dbt + Python + DuckDB project in this
-repository. Nothing beyond this foundation should be built until it is reviewed.
+Phase 3 adds discovery — of code *and* of delivery documentation (§17–18),
+writing through `ProjectGraphService.ingest_entity`/`ingest_relationship`
+rather than the raw ports, whose first target is `../agentic-ai-ollama-demo/`,
+a real dbt + Python + DuckDB project in this repository. Nothing beyond this
+foundation should be built until it is reviewed.

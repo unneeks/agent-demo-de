@@ -206,6 +206,38 @@ class TestWorkedDeliveryModel:
         assert gate.blocking
         assert gate.is_factual
 
+    def test_feasibility_assessment_is_covered(self, delivery_model) -> None:
+        """Closed coverage gap: feasibility was previously absent entirely."""
+        task = delivery_model.tasks["task.feasibility-assessment"]
+        assert task.phase_keys == ["discovery"]
+        assert task.delivery_role_keys == ["business-analyst"]
+        assert [r.id for r in task.checklist_refs] == ["feasibility-checklist"]
+        assert set(delivery_model.criteria) >= {"AC-FEAS-01", "AC-FEAS-02"}
+        # No formal gate: the discovery phase has none in this worked model, and
+        # the verdict is recorded on the produced artifact instead. See ADR-0012.
+        assert not task.approval_gate_refs
+
+    def test_conceptual_model_task_satisfies_the_logical_model_input(self, delivery_model) -> None:
+        """Closed coverage gap: the input existed, nothing produced it."""
+        producing_task = delivery_model.tasks["task.conceptual-model"]
+        assert producing_task.phase_keys == ["architecture"]
+        output_kinds = {o.id for o in producing_task.output_refs}
+        assert "out.conceptual-model" in output_kinds
+        produced_artifact_kind = delivery_model.outputs["out.conceptual-model"].artifact_kind
+
+        consuming_input = delivery_model.inputs["in.conceptual-model"]
+        assert consuming_input.satisfied_by_artifact_kind == produced_artifact_kind
+
+    def test_data_profiling_task_is_covered(self, delivery_model) -> None:
+        """Closed coverage gap: profiling was a skill name with nowhere to land."""
+        task = delivery_model.tasks["task.data-profiling"]
+        assert task.phase_keys == ["testing"]
+        assert "data-profiling" in task.required_skill_keys
+        assert [r.id for r in task.evidence_requirement_refs] == ["ev.profiling-result"]
+
+    def test_gate_count_grew_with_security_review(self, delivery_model) -> None:
+        assert "gate.security-review" in delivery_model.gates
+
 
 class TestValidationFailures:
     """Broken registries fail loudly at load, not silently at query time."""
@@ -407,6 +439,39 @@ class TestValidationFailures:
             encoding="utf-8",
         )
         with pytest.raises(RegistryError, match="accountable roles"):
+            MetamodelRegistry.load(root)
+
+    def test_dangling_approves_gate_reference_is_rejected(self, tmp_path: Path) -> None:
+        """A role claiming authority over a gate that does not exist is a dangling
+        reference that looks, at a glance, like real authority (Phase 2 fix)."""
+        root = self._write(
+            tmp_path / "phantom-gate",
+            **{
+                "delivery_roles.yaml": textwrap.dedent(
+                    """
+                    version: 0.1.0
+                    delivery_roles:
+                      - key: data-engineer
+                        name: Data Engineer
+                        responsibilities: [resp.change]
+                        approves_gates: [gate.phantom]
+                    """
+                )
+            },
+        )
+        models = root / "delivery-models"
+        models.mkdir(exist_ok=True)
+        (models / "phantom.yaml").write_text(
+            textwrap.dedent(
+                """
+                version: 0.1.0
+                model: {key: m, name: M}
+                phases: [{key: p, name: P, sequence: 1}]
+                """
+            ),
+            encoding="utf-8",
+        )
+        with pytest.raises(RegistryError, match="claims it approves gate 'gate.phantom'"):
             MetamodelRegistry.load(root)
 
     def test_all_problems_reported_at_once(self, tmp_path: Path) -> None:

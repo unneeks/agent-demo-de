@@ -45,6 +45,12 @@ capabilities:
     category: quality
     detection_hints: [great_expectations, "dbt test", soda, not_null, unique]
 
+  - key: data-profiling
+    name: Data Profiling
+    category: quality
+    description: Measuring the statistical shape of data -- volume, null rates, cardinality, distributions.
+    detection_hints: [great_expectations, "dbt source freshness", pandas_profiling, "profile.yml"]
+
   - key: testing
     name: Testing
     category: quality

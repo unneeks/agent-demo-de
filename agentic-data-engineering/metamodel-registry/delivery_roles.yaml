@@ -18,7 +18,7 @@ delivery_roles:
     name: Data Architect
     responsibilities: [resp.architecture-integrity, resp.logical-data-design, resp.architecture-signoff]
     approves_gates: [gate.data-architecture-review, gate.architecture-review]
-    accountable_for_tasks: [task.logical-data-model, task.solution-architecture]
+    accountable_for_tasks: [task.logical-data-model, task.solution-architecture, task.conceptual-model]
     is_segregated: false
 
   - key: solution-architect
@@ -62,9 +62,9 @@ delivery_roles:
 
   - key: business-analyst
     name: Business Analyst
-    responsibilities: [resp.requirements-quality]
+    responsibilities: [resp.requirements-quality, resp.feasibility-assessment]
     approves_gates: [gate.requirements-review]
-    accountable_for_tasks: [task.business-requirements]
+    accountable_for_tasks: [task.business-requirements, task.feasibility-assessment]
     is_segregated: false
 
   - key: data-steward

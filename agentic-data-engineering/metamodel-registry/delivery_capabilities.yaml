@@ -19,6 +19,15 @@ delivery_capabilities:
     evidenced_by: [requirement_entities, traceability_edges, acceptance_criteria]
     realized_by_roles: [requirements-engineer]
 
+  - key: feasibility-assessment
+    name: Feasibility Assessment
+    category: definition
+    description: >
+      A proposed solution's technical, operational and cost feasibility is
+      assessed before requirements and architecture commit resources to it.
+    evidenced_by: [feasibility_artifact, feasibility_checklist]
+    realized_by_roles: [requirements-engineer, data-architect]
+
   - key: architecture-assurance
     name: Architecture Assurance
     category: design

@@ -62,7 +62,7 @@ engineering_roles:
       Ensure data flowing through the project is correct, complete and fit for
       purpose, and that violations surface before consumers see them.
     responsibilities: [resp.data-correctness]
-    required_capabilities: [data-quality, testing, metadata-management]
+    required_capabilities: [data-quality, data-profiling, testing, metadata-management]
     required_delivery_capabilities: [data-quality-assurance]
     required_skills: [repository-discovery, dependency-analysis, data-profiling]
     required_tools: [git, bigquery]
@@ -205,14 +205,19 @@ engineering_roles:
 
   - key: requirements-engineer
     name: Requirements Engineer
-    mission: Produce unambiguous, testable, traceable, cited requirements.
-    responsibilities: [resp.requirements-quality]
+    mission: >
+      Produce unambiguous, testable, traceable, cited requirements, and assess
+      the feasibility of proposed solutions before they are committed to.
+    responsibilities: [resp.requirements-quality, resp.feasibility-assessment]
     required_capabilities: [documentation]
-    required_delivery_capabilities: [requirements-management]
-    required_skills: [traceability-mapping]
+    required_delivery_capabilities: [requirements-management, feasibility-assessment]
+    required_skills: [traceability-mapping, feasibility-analysis]
     required_tools: [git]
     required_knowledge: [business-glossary]
-    kpis: [requirement-rework-rate, traceability-completeness]
+    kpis: [requirement-rework-rate, traceability-completeness, feasibility-accuracy]
+    evaluation_criteria:
+      - Feasibility verdicts are traceable to evidence, not opinion
+      - GO verdicts do not omit known technical or cost risk
     minimum_evaluation_score: 0.85
     minimum_delivery_conformance: 0.9
     risk_level: MEDIUM

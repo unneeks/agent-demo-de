@@ -20,6 +20,7 @@ model:
   owner: Head of Data Engineering
   delivery_capabilities:
     - requirements-management
+    - feasibility-assessment
     - architecture-assurance
     - change-assurance
     - regression-assurance
@@ -48,6 +49,7 @@ phases:
     entry_criteria: ["A sponsored business problem exists"]
     exit_criteria: ["Problem statement agreed", "Data sources identified"]
     depends_on: []
+    tasks: [task.feasibility-assessment]
 
   - key: requirements
     name: Requirements
@@ -66,7 +68,7 @@ phases:
     entry_criteria: ["Requirements review passed"]
     exit_criteria: ["Architecture review passed"]
     depends_on: [requirements]
-    tasks: [task.solution-architecture]
+    tasks: [task.solution-architecture, task.conceptual-model]
     gates: [gate.architecture-review]
 
   - key: design
@@ -95,7 +97,7 @@ phases:
     entry_criteria: ["Code complete"]
     exit_criteria: ["Test readiness gate passed"]
     depends_on: [development]
-    tasks: [task.regression-test, task.data-quality-rules]
+    tasks: [task.regression-test, task.data-quality-rules, task.data-profiling]
     gates: [gate.test-readiness]
 
   - key: release
@@ -126,8 +128,51 @@ phases:
 
 # ---------------------------------------------------------------------------
 # Tasks. task.logical-data-model is the worked example from the addendum (§6).
+# task.feasibility-assessment, task.conceptual-model and task.data-profiling
+# close coverage gaps found during Phase 2 review: feasibility assessment had no
+# representation at all, and the conceptual model that task.logical-data-model
+# has always required as an input was never produced by anything in this model.
 # ---------------------------------------------------------------------------
 tasks:
+  - key: task.feasibility-assessment
+    name: Assess Feasibility
+    phases: [discovery]
+    purpose: >
+      Assess the technical, cost and operational feasibility of a proposed
+      solution before requirements and architecture commit resources to it.
+    outputs:
+      - key: out.feasibility-assessment
+        kind: artifact
+        artifact_kind: feasibility-assessment
+        mandatory: true
+        evidence: [ev.feasibility-assessment]
+    skills: [feasibility-analysis]
+    delivery_roles: [business-analyst]
+    checklists: [feasibility-checklist]
+    acceptance_criteria: [AC-FEAS-01, AC-FEAS-02]
+    evidence: [ev.feasibility-assessment]
+    risk_level: MEDIUM
+    automatable: true
+
+  - key: task.conceptual-model
+    name: Create Conceptual Data Model
+    phases: [architecture]
+    purpose: >
+      Define the high-level entities and relationships the logical data model
+      will later elaborate, independent of any target platform.
+    outputs:
+      - key: out.conceptual-model
+        kind: data_model
+        artifact_kind: conceptual-model
+        mandatory: true
+        evidence: [ev.conceptual-model]
+    skills: [conceptual-model-analysis]
+    tools: [modeling-tool]
+    delivery_roles: [data-architect]
+    evidence: [ev.conceptual-model]
+    risk_level: MEDIUM
+    automatable: true
+
   - key: task.logical-data-model
     name: Create Logical Data Model
     phases: [design]
@@ -141,6 +186,7 @@ tasks:
         kind: data_model
         mandatory: true
         source_phase: architecture
+        artifact_kind: conceptual-model
       - key: in.enterprise-data-standards
         kind: policy
         mandatory: true
@@ -231,11 +277,26 @@ tasks:
     evidence: [ev.quality-result]
     risk_level: MEDIUM
 
+  - key: task.data-profiling
+    name: Profile Changed Data Assets
+    phases: [testing]
+    purpose: >
+      Measure the statistical shape of changed data assets -- volume, null
+      rates, cardinality -- as a baseline for quality drift detection. Produces
+      a DataProfile technical entity rather than a delivery artifact; no
+      checklist is defined here for the same reason task.data-quality-rules has
+      none -- this task is control-light by design in this worked model.
+    skills: [data-profiling]
+    delivery_roles: [data-steward]
+    evidence: [ev.profiling-result]
+    risk_level: LOW
+    automatable: true
+
   - key: task.security-assessment
     name: Security Assessment
     phases: [release]
     delivery_roles: [security-architect]
-    gates: [gate.release-readiness]
+    gates: [gate.release-readiness, gate.security-review]
     evidence: [ev.security-assessment]
     risk_level: CRITICAL
     automatable: false
@@ -439,6 +500,34 @@ checklists:
         validation_reference: secret.scan
         blocking: true
 
+  - key: feasibility-checklist
+    name: Feasibility Assessment Checklist
+    applies_to: [task.feasibility-assessment]
+    completion_rule: ALL_MANDATORY
+    items:
+      - key: FEAS-01
+        description: Technical feasibility is assessed against current platform capabilities.
+        mandatory: true
+        validation_method: DOCUMENT_REVIEW
+        blocking: true
+      - key: FEAS-02
+        description: Cost feasibility is estimated.
+        mandatory: true
+        validation_method: DOCUMENT_REVIEW
+        blocking: true
+      - key: FEAS-03
+        description: Operational feasibility (support, monitoring, on-call impact) is assessed.
+        mandatory: true
+        validation_method: DOCUMENT_REVIEW
+        blocking: true
+      - key: FEAS-04
+        description: A clear recommendation (GO, NO-GO or CONDITIONAL) is documented and evidenced.
+        mandatory: true
+        validation_method: METADATA_LOOKUP
+        validation_reference: feasibility.recommendation_recorded
+        evidence_required: true
+        blocking: true
+
 # ---------------------------------------------------------------------------
 # Acceptance criteria (§9, §14). AC-LDM-07 is the addendum's worked example.
 # ---------------------------------------------------------------------------
@@ -496,6 +585,19 @@ acceptance_criteria:
     severity: LOW
     blocking: false
     applies_to: [task.logical-data-model]
+  - key: AC-FEAS-01
+    condition: The feasibility assessment states a clear recommendation with supporting evidence.
+    validation_method: METADATA_LOOKUP
+    validation_reference: feasibility.recommendation_recorded
+    severity: HIGH
+    blocking: true
+    applies_to: [task.feasibility-assessment]
+  - key: AC-FEAS-02
+    condition: Known technical or cost risks are stated even when the recommendation is GO.
+    validation_method: HUMAN_REVIEW
+    severity: MEDIUM
+    blocking: false
+    applies_to: [task.feasibility-assessment]
 
 # ---------------------------------------------------------------------------
 # Gates. gate.architecture-review is the addendum's §10 example.
@@ -541,6 +643,20 @@ gates:
     required_roles: [release-manager, security-architect]
     required_evidence: [ev.security-assessment, ev.runbook, ev.release-record]
     minimum_traceability: 0.9
+    blocking: true
+    risk_level: CRITICAL
+
+  - key: gate.security-review
+    name: Security Review Gate
+    phases: [release]
+    purpose: >
+      A dedicated security sign-off distinct from general release readiness --
+      the security-architect delivery role approves both, but this gate exists
+      so security may block independently of runbook or release-record
+      completeness. Closes a registry validation gap: security-architect's
+      approves_gates always listed this gate, but nothing defined it (Phase 2).
+    required_roles: [security-architect]
+    required_evidence: [ev.security-assessment]
     blocking: true
     risk_level: CRITICAL
 
@@ -608,6 +724,22 @@ evidence_requirements:
     mandatory: true
     validation_method: METADATA_LOOKUP
     retention_days: 2555
+  - key: ev.feasibility-assessment
+    evidence_kind: document_section
+    mandatory: true
+    validation_method: DOCUMENT_REVIEW
+    retention_days: 2555
+  - key: ev.conceptual-model
+    evidence_kind: model
+    mandatory: true
+    validation_method: DOCUMENT_REVIEW
+    retention_days: 2555
+  - key: ev.profiling-result
+    evidence_kind: metric
+    mandatory: true
+    validation_method: METADATA_LOOKUP
+    acceptance_pattern: data-profile
+    retention_days: 365
 
 # ---------------------------------------------------------------------------
 # Standards, templates and controls

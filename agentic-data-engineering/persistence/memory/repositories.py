@@ -41,6 +41,7 @@ class InMemoryMetadataRepository:
     def __init__(self) -> None:
         self._entities: dict[tuple[EntityType, str, str], StoredEntity] = {}
         self._audit: list[AuditEntry] = []
+        self._relationships: dict[tuple[str, str, str], Relationship] = {}
 
     def upsert(self, entity: object) -> StoredEntity:
         payload = entity.model_dump(mode="json")  # type: ignore[attr-defined]
@@ -96,6 +97,18 @@ class InMemoryMetadataRepository:
         for key in keys:
             del self._entities[key]
         return bool(keys)
+
+    def upsert_relationship(self, rel: Relationship) -> None:
+        """Write to the durable relationship log.
+
+        Keyed identically to how the graph plane keys edges -- ``rel.key`` is
+        ``(source identity, type, target identity)`` -- so the two planes agree
+        on what "the same edge" means.
+        """
+        self._relationships[rel.key] = rel
+
+    def all_relationships(self) -> list[Relationship]:
+        return sorted(self._relationships.values(), key=lambda r: r.key)
 
     def append_audit(self, decision: Decision) -> AuditEntry:
         """Append to the hash-chained ledger.
