@@ -11,6 +11,8 @@ no-global discipline every other module in this codebase already follows
 
 from __future__ import annotations
 
+from pathlib import Path
+
 from fastapi import Request
 from fastapi.templating import Jinja2Templates
 
@@ -37,3 +39,7 @@ def get_service(request: Request) -> ProjectGraphService:
 
 def get_templates(request: Request) -> Jinja2Templates:
     return request.app.state.templates
+
+
+def get_agent_fixtures_dir(request: Request) -> Path | None:
+    return request.app.state.agent_fixtures_dir

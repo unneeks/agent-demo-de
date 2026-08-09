@@ -18,7 +18,7 @@ builds.
 
 ---
 
-## Status: Phase 1–8 — Dual-Twin Metamodel Foundation + Project Graph Service + Discovery + Marketplace + Evaluation Harness + Project Orchestrator + Agent Runtime + Web UI
+## Status: Phase 1–9 — Dual-Twin Metamodel Foundation + Project Graph Service + Discovery + Marketplace + Evaluation Harness + Project Orchestrator + Agent Runtime + Web UI + API Gateway
 
 Phase 1 deliberately contains **no** document assimilation, composition engine,
 agent runtime, LLM calls, evaluation *execution*, API or UI. Those concepts are
@@ -39,8 +39,12 @@ composed into `run_cycle()` as a new opt-in step — every tool call it makes
 is answered by a simulated executor, so no real side effect exists anywhere
 in this codebase. Phase 8 adds the Web UI: a server-rendered, read-only
 dashboard whose six routes call `ProjectGraphService`/`MetamodelRegistry`
-directly in-process — no separate API layer, no browser-triggered write.
-Still no API Gateway — the only layer left `(later)`.
+directly in-process. Phase 9 adds the API Gateway: read-write `/api/*`
+routes in the same process, sharing the same backend — register a
+project, ingest entities/relationships, trigger evaluations/gate
+assessments/agent runs/full cycles, translating JSON into the same live
+objects `orchestrator`/`agent_runtime` already require, server-side only.
+Every layer in the layered diagram below is now built.
 
 | Delivered | |
 |---|---|
@@ -59,8 +63,9 @@ Still no API Gateway — the only layer left `(later)`.
 | Project orchestrator | `run_cycle()` composes OBSERVE→IMPACT→STAFF→EVALUATE→GATE, writes `IMPLEMENTED_BY`/`Evaluation`+`EVALUATES`, wires `GateState.traceability` — [`docs/orchestrator.md`](docs/orchestrator.md) |
 | Agent runtime | `run_agent()`: a real multi-turn planner-executor loop, 2 live LLM backends + 1 replay behind `AgentLLMClient`, 1 simulated `ToolExecutor` covering all 7 catalog tools, approval-gated `LOW_RISK_WRITE` — [`docs/agent-runtime.md`](docs/agent-runtime.md) |
 | Web UI | server-rendered, read-only dashboard, 6 routes, in-process against `ProjectGraphService`/`MetamodelRegistry`, zero writes — [`docs/web-ui.md`](docs/web-ui.md) |
+| API Gateway | read-write `/api/*`, same process as the Web UI — register/ingest/relate, trigger evaluations/gate-assessment/agent-runs/cycles — [`docs/api-gateway.md`](docs/api-gateway.md) |
 | 79 JSON Schema artifacts | committed, with a drift check |
-| 682 tests | 592 unit with the `web` extra installed (576 unit, 6 skipped cleanly without it) |
+| 726 tests | 636 unit with the `web` extra installed (576 unit, 14 skipped cleanly without it) |
 
 ---
 
@@ -84,12 +89,12 @@ docker compose up -d
 pytest tests/contract -q                  # same assertions, now on Neo4j + PostgreSQL
 ```
 
-To run the read-only Web UI dashboard, install the `web` extra:
+To run the Web UI dashboard and the `/api/*` gateway, install the `web` extra:
 
 ```bash
 pip install -e ".[web]"
-pytest tests/unit -q                      # 592 tests, webui routes included
-python scripts/run_web.py --seed-demo-project   # http://127.0.0.1:8000
+pytest tests/unit -q                      # 636 tests, webui + API routes included
+python scripts/run_web.py --seed-demo-project   # http://127.0.0.1:8000 (UI) and /api/* (JSON)
 ```
 
 To run discovery against a real project, install the `agent` extra and set an
@@ -238,10 +243,10 @@ project_graph/             ProjectGraphService: lifecycle, snapshotting, query f
 discovery/                 Uniform agent-based extraction: walk, resolve, orchestrate, extraction/
 orchestrator/              run_cycle(): composes discovery, impact, composition, evaluation, agent runs, gates
 agent_runtime/             run_agent(): multi-turn loop, LLM backends, simulated tool execution, approval gating
-webui/                     create_app(): read-only Web UI, 6 routes, in-process, no writes
+webui/                     create_app(): read-only HTML dashboard (routes/) + read-write JSON API (api/)
 scripts/                   validate_registries.py, export_schemas.py, record_extraction_fixtures.py, record_agent_fixtures.py, run_web.py
-docs/                      Architecture, metamodel spec, delivery model, graph model, project graph, discovery, marketplace, evaluation, orchestrator, agent runtime, web UI
-tests/unit/                No infrastructure needed (webui tests skip without the web extra)
+docs/                      Architecture, metamodel spec, delivery model, graph model, project graph, discovery, marketplace, evaluation, orchestrator, agent runtime, web UI, API gateway
+tests/unit/                No infrastructure needed (webui/API tests skip without the web extra)
 tests/contract/            One contract, run against every adapter
 tests/integration/         Live discovery + agent backends, independently skippable
 ```
@@ -263,33 +268,35 @@ Changing an entity without regenerating schemas fails `tests/unit/test_schemas.p
 Bumping `METAMODEL_VERSION` without updating the registry fails
 `tests/unit/test_registries.py`.
 
-## Next phase
+## Status of the layered diagram
 
-Phase 8 is complete: `webui/`'s `create_app()` is a server-rendered,
-read-only dashboard — six `GET` routes, each calling one or two existing
-methods on `ProjectGraphService`/`MetamodelRegistry`/a persistence port/
-`orchestrator.gate.assess_gate_readiness()` directly in-process, and
-rendering the real returned object with Jinja2. No separate API layer, no
-JS frontend, no browser-triggered write anywhere. `/projects/{id}` reuses
-`ProjectGraphService.snapshot()`'s exact traversal shape, read-only. The
-gate-readiness view surfaces a real honesty finding verified against
-`engines/gates/readiness.py`: because four of `GateState`'s six dimensions
-have no real assembler anywhere in this codebase, a live-computed 100% or
-0% for any of them is never a verified finding — the page says so with an
-unconditional banner, not a per-score caveat. See
-[`docs/web-ui.md`](docs/web-ui.md) and
-[ADR-0018](docs/adr/0018-web-ui.md).
+Phase 9 is complete: `webui/api/`'s `/api/*` routes are a read-write JSON
+gateway, mounted in the same `FastAPI` app `webui/routes/`'s dashboard
+already uses — register a project, ingest entities/relationships, trigger
+an evaluation run, trigger a gate assessment with **caller-supplied**
+`GateState` inputs (the one place those four honesty-gap fields become
+real), trigger an agent run, trigger a full `run_cycle()`. Every write
+translates JSON into the same live Python objects `orchestrator`/
+`agent_runtime` already require — never a client-supplied `ToolExecutor`/
+`AgentLLMClient`/filesystem path. See [`docs/api-gateway.md`](docs/api-gateway.md)
+and [ADR-0019](docs/adr/0019-api-gateway.md).
 
-Still open, deliberately: **API Gateway is now the only layer
-`docs/architecture.md`'s layered diagram still marks `(later)`** — no
-`/api/*` route, no JSON endpoint, nothing programmatic can call this
-platform; no cycle/agent-run history (`CycleReport`/`AgentRunReport` stay
-exactly as transient as Phase 7 left them); no authentication or
-authorization; no real-time updates; no pagination; any real tool side
-effect, ever; any live human-in-the-loop approval mechanism;
-`WORKFLOW_DRIVEN`/`EXTERNAL_AGENT` execution; multi-agent coordination;
-scheduled/daemon execution; and four of `GateState`'s six fields
-(`present_artifact_kinds`, `checklist_outcomes`, `satisfied_evidence`,
-`approvals`) still remain caller-supplied by design — artifact/evidence/
-approval detection is its own, larger future phase. Nothing beyond this
-foundation should be built until it is reviewed.
+**Every layer `docs/architecture.md`'s layered diagram names is now
+built**, `(later)` next to none of them. That does not mean the platform
+is production-ready — it means the *architectural skeleton* is complete.
+Still open, deliberately, at the platform level, consolidated across every
+phase's own named gaps: **no authentication or authorization anywhere** —
+every write endpoint (`webui/api/`) is reachable by anyone who can reach
+the process; no real tool side effect, ever (`agent_runtime` always
+simulates); no live human-in-the-loop approval mechanism
+(`AutomationLevelApprovalPolicy` is a synchronous, caller-declared,
+simulated check); no `WORKFLOW_DRIVEN`/`EXTERNAL_AGENT` execution; no
+multi-agent coordination; no scheduled/daemon execution; no OBSERVE/
+discovery over HTTP; no rate limiting; no cycle/agent-run history
+persistence; no deployment story (containerization, secrets, TLS); and
+four of `GateState`'s six fields (`present_artifact_kinds`,
+`checklist_outcomes`, `satisfied_evidence`, `approvals`) remain
+caller-supplied by design outside the one gate-assess endpoint that lets a
+caller populate them — full artifact/evidence/approval *detection* is its
+own, larger future phase. Nothing beyond this foundation should be built
+until it is reviewed.

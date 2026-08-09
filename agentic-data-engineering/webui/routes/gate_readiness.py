@@ -33,16 +33,11 @@ from project_graph.service import ProjectGraphService
 
 from orchestrator.gate import GateRequest, assess_gate_readiness
 
+from webui.constants import UNASSESSABLE_DIMENSIONS
 from webui.context import get_metadata, get_registry, get_service, get_templates
 from webui.errors import UnknownDeliveryModelError
 
 router = APIRouter()
-
-#: Dimensions this dashboard can never honestly assess -- no assembler for
-#: any of them exists anywhere in this codebase (docs/orchestrator.md's
-#: "what this is not"). Named explicitly so the template can single them
-#: out rather than rendering all six dimensions as if equally trustworthy.
-_UNASSESSABLE_DIMENSIONS = {"ARTIFACTS", "CHECKLISTS", "EVIDENCE", "APPROVALS"}
 
 
 @router.get("/projects/{project_id}/gates/{gate_key}")
@@ -85,6 +80,6 @@ async def gate_readiness_view(
             "project_id": project_id,
             "model_key": model_key,
             "readiness": readiness,
-            "unassessable_dimensions": _UNASSESSABLE_DIMENSIONS,
+            "unassessable_dimensions": UNASSESSABLE_DIMENSIONS,
         },
     )

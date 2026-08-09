@@ -1,20 +1,25 @@
 #!/usr/bin/env python3
-"""Run the read-only Web UI dashboard.
+"""Run the Web UI dashboard + API Gateway.
 
 Requires the `web` extra (`pip install -e ".[web]"`). Constructs the chosen
 backend and calls `webui.create_app()`, then runs it with uvicorn -- a
 factory taking constructor arguments is a worse fit for the bare
 `uvicorn module:app` CLI form, so this script is the primary way to run it.
 
-With the default `--backend memory`, the store starts empty: there is no
-register-project route (this is a read-only phase), so nothing will show
-until data exists via discovery, the orchestrator, or an agent run against
-the same repositories -- or pass `--seed-demo-project` to hand-build one
-small project locally for a quick look.
+`webui/routes/` (the HTML dashboard) is read-only; `/api/*`
+(`webui/api/routes/`) is read-write, including `POST /api/projects`. With
+the default `--backend memory`, the store starts empty until a caller
+registers a project via the API, discovery, the orchestrator, or an agent
+run against the same repositories -- or pass `--seed-demo-project` to
+hand-build one small project locally for a quick look. Pass
+`--agent-fixtures-dir` to make the `POST /api/projects/{id}/agent-runs`
+`llm_backend="replay"` option available (see agent_runtime/replay_client.py);
+without it, that backend returns a clean 501.
 
 Usage:
     python scripts/run_web.py
     python scripts/run_web.py --seed-demo-project
+    python scripts/run_web.py --agent-fixtures-dir tests/fixtures/agent_runtime/golden
     python scripts/run_web.py --backend postgres-neo4j \\
         --postgres-dsn postgresql://... --neo4j-uri bolt://... \\
         --neo4j-user neo4j --neo4j-password ...
@@ -97,6 +102,13 @@ def main() -> int:
         action="store_true",
         help="Hand-build one small project so the memory backend shows something.",
     )
+    parser.add_argument(
+        "--agent-fixtures-dir",
+        type=Path,
+        default=None,
+        help="Directory of recorded agent_runtime session fixtures, enabling "
+        "llm_backend='replay' on POST /api/projects/{id}/agent-runs.",
+    )
     args = parser.parse_args()
 
     try:
@@ -113,14 +125,16 @@ def main() -> int:
         _seed_demo_project(service)
     elif args.backend == "memory":
         print(
-            "note: in-memory backend starts empty -- this is a read-only dashboard with no "
-            "register-project route. Load data via discovery/orchestrator/agent runs against "
-            "these same repositories, or pass --seed-demo-project for a quick look."
+            "note: in-memory backend starts empty. POST /api/projects to register one, or "
+            "load data via discovery/orchestrator/agent runs against these same repositories, "
+            "or pass --seed-demo-project for a quick look."
         )
+    if args.agent_fixtures_dir is None:
+        print("note: no --agent-fixtures-dir given -- llm_backend='replay' will 501 on agent-run requests.")
 
     from webui.app import create_app
 
-    app = create_app(registry, metadata, graph)
+    app = create_app(registry, metadata, graph, agent_fixtures_dir=args.agent_fixtures_dir)
     uvicorn.run(app, host=args.host, port=args.port)
     return 0
 

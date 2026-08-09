@@ -45,7 +45,7 @@ whole thing worth building. See ADR-0008.
 ```
                         Web UI                       (Phase 8)
                           │
-                     API Gateway                     (later)
+                     API Gateway                     (Phase 9)
                           │
                  Project Orchestrator                (Phase 6)
                           │
