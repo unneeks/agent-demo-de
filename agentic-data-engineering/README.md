@@ -18,7 +18,7 @@ builds.
 
 ---
 
-## Status: Phase 1, 2 & 3 — Dual-Twin Metamodel Foundation + Project Graph Service + Discovery
+## Status: Phase 1, 2, 3 & 4 — Dual-Twin Metamodel Foundation + Project Graph Service + Discovery + Marketplace
 
 Phase 1 deliberately contains **no** document assimilation, composition engine,
 agent runtime, LLM calls, evaluation *execution*, API or UI. Those concepts are
@@ -26,7 +26,9 @@ agent runtime, LLM calls, evaluation *execution*, API or UI. Those concepts are
 owner for — a project's twin as a lifecycle. Phase 3 adds the first adapter
 layer that turns a real project into real graph state: uniform, agent-based
 discovery of code *and* delivery documentation, writing through
-`ProjectGraphService` — no orchestration, evaluation, or agent runtime yet.
+`ProjectGraphService`. Phase 4 adds the marketplace: a populated Agent/Skill/
+Tool catalog and a pure engine that resolves engineering roles against it —
+still no agent runtime, no evaluation execution, no orchestration.
 
 | Delivered | |
 |---|---|
@@ -34,14 +36,15 @@ discovery of code *and* delivery documentation, writing through
 | 64 relationship types | 19 of them **cross-twin joins** |
 | Four-state provenance | plus document provenance and the inferred-cannot-block rule |
 | Four-level role chain | DeliveryRole → Responsibility → EngineeringRole → Agent |
-| YAML registries | capabilities (both kinds), the role chain, relationships, platforms, approvals |
+| YAML registries | capabilities (both kinds), the role chain, relationships, platforms, approvals, the marketplace catalog |
 | A worked delivery model | 9 phases · 13 tasks · 6 checklists · 28 items · 10 criteria · 6 gates |
-| Three deterministic engines | context assembly · checklist + gate readiness · dual impact + traceability |
+| Four deterministic engines | context assembly · checklist + gate readiness · dual impact + traceability · marketplace composition |
 | Two-plane persistence | PostgreSQL (state) + Neo4j (traversal), behind ports |
 | `ProjectGraphService` | registry-validated ingestion, dual-plane consistency, snapshot/restore, project-scoped query facade — [`docs/project-graph.md`](docs/project-graph.md) |
 | Discovery | uniform agent-based extraction, code + Markdown, two live backends (Anthropic, Copilot CLI) behind one `ExtractionClient` Protocol — [`docs/discovery.md`](docs/discovery.md) |
+| Marketplace | 14 skills · 7 tools · 5 knowledge packs · 6 worked agents; pure role/agent composition reusing `EngineeringRole.is_satisfied_by()` — [`docs/marketplace.md`](docs/marketplace.md) |
 | 79 JSON Schema artifacts | committed, with a drift check |
-| 537 tests | 449 unit with zero infrastructure |
+| 574 tests | 486 unit with zero infrastructure |
 
 ---
 
@@ -54,7 +57,7 @@ pip install -e ".[dev]"
 
 python scripts/validate_registries.py     # registries + the worked delivery model
 python scripts/export_schemas.py --check  # JSON Schema drift check
-pytest tests/unit -q                      # 449 tests, zero infrastructure
+pytest tests/unit -q                      # 486 tests, zero infrastructure
 pytest tests/contract -q                  # in-memory adapters; real stores skip
 ```
 
@@ -205,10 +208,11 @@ persistence/               ports.py + memory/ + neo4j/ + postgres/
 engines/context/           Deterministic context assembly
 engines/gates/             Checklist evaluation and gate readiness
 engines/impact/            Dual impact analysis and traceability
+engines/composition/       Marketplace role/agent resolution
 project_graph/             ProjectGraphService: lifecycle, snapshotting, query facade
 discovery/                 Uniform agent-based extraction: walk, resolve, orchestrate, extraction/
 scripts/                   validate_registries.py, export_schemas.py, record_extraction_fixtures.py
-docs/                      Architecture, metamodel spec, delivery model, graph model, project graph, discovery
+docs/                      Architecture, metamodel spec, delivery model, graph model, project graph, discovery, marketplace
 tests/unit/                No infrastructure needed
 tests/contract/            One contract, run against every adapter
 tests/integration/         Live discovery backends, independently skippable
@@ -233,10 +237,16 @@ Bumping `METAMODEL_VERSION` without updating the registry fails
 
 ## Next phase
 
-Phase 3 is complete: discovery of code *and* delivery documentation (§17–18),
-writing through `ProjectGraphService.ingest_entity`/`ingest_relationship`
-rather than the raw ports, proven as a worked example against
-`../agentic-ai-ollama-demo/`, a real dbt + Python + DuckDB project alongside
-this repository — see [`docs/discovery.md`](docs/discovery.md) and
-[ADR-0013](docs/adr/0013-agent-based-extraction.md). Nothing beyond this
-foundation should be built until it is reviewed.
+Phase 4 is complete: a marketplace catalog (14 skills, 7 tools, 5 knowledge
+packs, 6 agents) and `engines/composition/`, a pure engine that resolves
+engineering roles against it by reusing `EngineeringRole.is_satisfied_by()`
+rather than reimplementing that logic — plus the three GitHub Copilot
+integration points named in `docs/adr/README.md`'s "Deferred, and why"
+section, landed as registry/schema data only. See
+[`docs/marketplace.md`](docs/marketplace.md) and
+[ADR-0014](docs/adr/0014-marketplace-catalog-and-role-level-composition.md).
+
+Still open, deliberately: no agent runtime, no LLM/Copilot API calls, no
+Evaluation Harness / trust-score execution, no API, no UI, no orchestration,
+and no write path from a `RoleResolution` to a specific project's graph.
+Nothing beyond this foundation should be built until it is reviewed.

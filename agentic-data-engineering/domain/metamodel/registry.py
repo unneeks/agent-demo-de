@@ -41,9 +41,15 @@ from domain.metamodel.entities.delivery import (
     Template,
 )
 from domain.metamodel.entities.organization import (
+    Agent,
+    DeliveryCapabilityDeclaration,
     DeliveryRole,
     EngineeringResponsibility,
     EngineeringRole,
+    KnowledgePack,
+    Skill,
+    Tool,
+    ToolAction,
 )
 from domain.metamodel.entities.shared import Platform, TechnologyBinding
 from domain.metamodel.enums import (
@@ -167,6 +173,10 @@ class MetamodelRegistry:
     responsibilities: dict[str, EngineeringResponsibility] = field(default_factory=dict)
     engineering_roles: dict[str, EngineeringRole] = field(default_factory=dict)
     delivery_roles: dict[str, DeliveryRole] = field(default_factory=dict)
+    skills: dict[str, Skill] = field(default_factory=dict)
+    tools: dict[str, Tool] = field(default_factory=dict)
+    knowledge_packs: dict[str, KnowledgePack] = field(default_factory=dict)
+    agents: dict[str, Agent] = field(default_factory=dict)
     relationship_types: dict[str, RelationshipTypeSpec] = field(default_factory=dict)
     platforms: dict[str, Platform] = field(default_factory=dict)
     technology_bindings: list[TechnologyBinding] = field(default_factory=list)
@@ -193,6 +203,10 @@ class MetamodelRegistry:
         registry._load_responsibilities(base / "engineering_responsibilities.yaml")
         registry._load_engineering_roles(base / "engineering_roles.yaml")
         registry._load_delivery_roles(base / "delivery_roles.yaml")
+        registry._load_skills(base / "skills.yaml")
+        registry._load_tools(base / "tools.yaml")
+        registry._load_knowledge_packs(base / "knowledge_packs.yaml")
+        registry._load_agents(base / "agents.yaml")
         registry._load_platforms(base / "platforms.yaml")
         registry._load_provenance(base / "provenance.yaml")
         registry._load_risk(base / "risk.yaml")
@@ -306,6 +320,113 @@ class MetamodelRegistry:
                 incompatible_with=entry.get("incompatible_with", []),
                 **_REGISTRY_PROVENANCE,
             )
+
+    def _load_skills(self, path: Path) -> None:
+        for entry in _read_yaml(path).get("skills", []):
+            key = entry["key"]
+            try:
+                self.skills[key] = Skill(
+                    id=key,
+                    name=entry.get("name", key),
+                    entity_type=EntityType.SKILL,
+                    skill_key=key,
+                    inputs=entry.get("inputs", {}),
+                    outputs=entry.get("outputs", {}),
+                    preconditions=entry.get("preconditions", []),
+                    postconditions=entry.get("postconditions", []),
+                    dependencies=entry.get("dependencies", []),
+                    required_tools=entry.get("required_tools", []),
+                    required_knowledge=entry.get("required_knowledge", []),
+                    risk_level=entry.get("risk_level", "LOW"),
+                    deterministic=entry.get("deterministic", False),
+                    idempotent=entry.get("idempotent", True),
+                    timeout_seconds=entry.get("timeout_seconds", 300),
+                    discharges_checklist_items=entry.get("discharges_checklist_items", []),
+                )
+            except ValidationError as exc:
+                raise RegistryError(f"{path.name}: skill {key!r} is invalid: {exc}") from exc
+
+    def _load_tools(self, path: Path) -> None:
+        for entry in _read_yaml(path).get("tools", []):
+            key = entry["key"]
+            try:
+                actions = [ToolAction(**action) for action in entry.get("actions", [])]
+                self.tools[key] = Tool(
+                    id=key,
+                    name=entry.get("name", key),
+                    entity_type=EntityType.TOOL,
+                    tool_key=key,
+                    provider=entry.get("provider"),
+                    category=entry.get("category"),
+                    platform_key=entry.get("platform_key"),
+                    actions=actions,
+                    authentication=entry.get("authentication"),
+                    required_permissions=entry.get("required_permissions", []),
+                    cost_profile=entry.get("cost_profile"),
+                    rate_limits=entry.get("rate_limits", {}),
+                    security_constraints=entry.get("security_constraints", []),
+                    auditable=entry.get("auditable", True),
+                )
+            except ValidationError as exc:
+                raise RegistryError(f"{path.name}: tool {key!r} is invalid: {exc}") from exc
+
+    def _load_knowledge_packs(self, path: Path) -> None:
+        for entry in _read_yaml(path).get("knowledge_packs", []):
+            key = entry["key"]
+            try:
+                self.knowledge_packs[key] = KnowledgePack(
+                    id=key,
+                    name=entry.get("name", key),
+                    entity_type=EntityType.KNOWLEDGE_PACK,
+                    knowledge_key=key,
+                    scope=entry.get("scope"),
+                    source=entry.get("source"),
+                    content_reference=entry["content_reference"],
+                    authority=entry.get("authority"),
+                    trust_level=entry.get("trust_level", "MEDIUM"),
+                    freshness_days=entry.get("freshness_days"),
+                    index_reference=entry.get("index_reference"),
+                    knowledge_kind=entry.get("knowledge_kind", "reference"),
+                )
+            except ValidationError as exc:
+                raise RegistryError(
+                    f"{path.name}: knowledge pack {key!r} is invalid: {exc}"
+                ) from exc
+
+    def _load_agents(self, path: Path) -> None:
+        for entry in _read_yaml(path).get("agents", []):
+            key = entry["key"]
+            delivery = entry.get("delivery", {})
+            try:
+                self.agents[key] = Agent(
+                    id=key,
+                    name=entry.get("name", key),
+                    entity_type=EntityType.AGENT,
+                    agent_key=key,
+                    role_key=entry["role_key"],
+                    mission=entry.get("mission"),
+                    capabilities=entry.get("capabilities", []),
+                    delivery_capabilities=entry.get("delivery_capabilities", []),
+                    skills=entry.get("skills", []),
+                    tools=entry.get("tools", []),
+                    knowledge_packs=entry.get("knowledge_packs", []),
+                    policies=entry.get("policies", []),
+                    delivery=DeliveryCapabilityDeclaration(
+                        supported_phase_keys=delivery.get("supported_phases", []),
+                        supported_task_keys=delivery.get("supported_tasks", []),
+                        supported_checklist_keys=delivery.get("supported_checklists", []),
+                        supported_artifact_kinds=delivery.get("supported_artifact_kinds", []),
+                        supported_gate_keys=delivery.get("supported_gates", []),
+                        produces_evidence_keys=delivery.get("produces_evidence", []),
+                    ),
+                    execution_model=entry.get("execution_model", "PLANNER_EXECUTOR"),
+                    model_provider=entry.get("model_provider"),
+                    model_name=entry.get("model_name"),
+                    external_provider=entry.get("external_provider"),
+                    status=entry.get("status", "DRAFT"),
+                )
+            except ValidationError as exc:
+                raise RegistryError(f"{path.name}: agent {key!r} is invalid: {exc}") from exc
 
     def _load_platforms(self, path: Path) -> None:
         data = _read_yaml(path)
@@ -878,6 +999,43 @@ class MetamodelRegistry:
                     f"engineering roles {responsibility.fulfilled_by_role_keys}; a "
                     "non-delegable accountability cannot be assigned to an agent-implemented role"
                 )
+
+        # --- the marketplace catalog ---------------------------------------
+        # Deliberately not symmetric: an EngineeringRole's required skill/tool/
+        # knowledge keys are NOT checked against these catalogs. The worked
+        # catalog only covers the roles staffed in the MVP; checking the
+        # other direction would force populating catalog entries for every
+        # unstaffed role too. See ADR-0014.
+        for key, skill in self.skills.items():
+            for tool in skill.required_tools:
+                if tool not in self.tools:
+                    errors.append(f"skill {key!r} requires unknown tool {tool!r}")
+            for pack in skill.required_knowledge:
+                if pack not in self.knowledge_packs:
+                    errors.append(f"skill {key!r} requires unknown knowledge pack {pack!r}")
+
+        for key, agent in self.agents.items():
+            if agent.role_key not in self.engineering_roles:
+                errors.append(
+                    f"agent {key!r} implements unknown engineering role {agent.role_key!r}"
+                )
+            for capability in agent.capabilities:
+                if capability not in self.capabilities:
+                    errors.append(f"agent {key!r} declares unknown capability {capability!r}")
+            for capability in agent.delivery_capabilities:
+                if capability not in self.delivery_capabilities:
+                    errors.append(
+                        f"agent {key!r} declares unknown delivery capability {capability!r}"
+                    )
+            for skill_key in agent.skills:
+                if skill_key not in self.skills:
+                    errors.append(f"agent {key!r} declares unknown skill {skill_key!r}")
+            for tool_key in agent.tools:
+                if tool_key not in self.tools:
+                    errors.append(f"agent {key!r} declares unknown tool {tool_key!r}")
+            for pack in agent.knowledge_packs:
+                if pack not in self.knowledge_packs:
+                    errors.append(f"agent {key!r} declares unknown knowledge pack {pack!r}")
 
         # --- platform bindings --------------------------------------------
         platform_keys = set(self.platforms)

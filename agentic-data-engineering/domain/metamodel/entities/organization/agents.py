@@ -214,6 +214,15 @@ class Agent(MetamodelEntity):
     model_name: str | None = None
     model_configuration: dict[str, float | int | str | bool] = Field(default_factory=dict)
 
+    #: When execution_model is EXTERNAL_AGENT, names the external system that
+    #: owns execution end to end -- e.g. "github-copilot-coding-agent".
+    #: Distinct from model_provider/model_name: those describe which LLM this
+    #: platform's own runtime would call if it executed the agent itself, and
+    #: do not apply when an external system owns the whole loop and this
+    #: platform never picks a model. A mechanism identifier, never a
+    #: credential (same convention as Tool.authentication). See ADR-0014.
+    external_provider: str | None = None
+
     context_policy_ref: EntityRef | None = None
     memory_scopes: list[str] = Field(default_factory=list)
     planning_strategy: str | None = None
@@ -230,6 +239,16 @@ class Agent(MetamodelEntity):
 
     status: AgentLifecycle = AgentLifecycle.DRAFT
     certification_status: str | None = None
+
+    @model_validator(mode="after")
+    def _external_agent_needs_a_provider(self) -> Agent:
+        if self.execution_model is ExecutionModel.EXTERNAL_AGENT and not self.external_provider:
+            raise ValueError(
+                f"agent {self.agent_key!r} has execution_model=EXTERNAL_AGENT but no "
+                "external_provider; the platform must know which external system executes "
+                "this role's work in order to attribute and govern what it produces."
+            )
+        return self
 
     def can_transition_to(self, target: AgentLifecycle) -> bool:
         return target in AGENT_LIFECYCLE_TRANSITIONS[self.status]

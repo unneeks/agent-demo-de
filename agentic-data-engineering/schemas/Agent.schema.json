@@ -180,11 +180,13 @@
       "type": "string"
     },
     "ExecutionModel": {
+      "description": "How an agent runs.\n\nEXTERNAL_AGENT is distinct from the other three: this platform does not\nrun the loop and does not select a model for it -- execution happens\nentirely inside a third-party agent platform (e.g. GitHub Copilot coding\nagent). See ADR-0014 and Agent.external_provider.",
       "enum": [
         "SINGLE_SHOT",
         "ITERATIVE",
         "PLANNER_EXECUTOR",
-        "WORKFLOW_DRIVEN"
+        "WORKFLOW_DRIVEN",
+        "EXTERNAL_AGENT"
       ],
       "title": "ExecutionModel",
       "type": "string"
@@ -325,6 +327,18 @@
     "execution_model": {
       "$ref": "#/$defs/ExecutionModel",
       "default": "PLANNER_EXECUTOR"
+    },
+    "external_provider": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "External Provider"
     },
     "human_approval_required": {
       "default": true,

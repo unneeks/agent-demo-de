@@ -1,0 +1,113 @@
+# Agent catalog -- concrete implementations of engineering roles.
+#
+# One agent per "staffed in the MVP" engineering role (engineering_roles.yaml),
+# each fully satisfying its role's requirements, plus one deliberately
+# incomplete agent (copilot-coding-agent-regression) proving
+# EngineeringRole.missing_requirements() reports real gaps. See ADR-0014.
+#
+# `data-quality-agent`'s model_provider=github-models realizes deferred
+# integration point (b): Agent.model_provider is already a free-form string
+# the runtime resolves, so this needed no code change -- see
+# docs/marketplace.md. `copilot-coding-agent-regression` realizes point (c):
+# execution_model=EXTERNAL_AGENT + external_provider.
+version: 0.1.0
+agents:
+
+  - key: regression-agent
+    name: Regression Agent
+    role_key: regression-engineer
+    mission: Guarantee that a change does not silently break existing behaviour.
+    capabilities: [regression-testing, impact-analysis, testing]
+    delivery_capabilities: [regression-assurance]
+    skills: [repository-discovery, dependency-analysis, impact-analysis, test-selection, test-execution]
+    tools: [git, github, pytest]
+    knowledge_packs: [project-architecture, testing-standards]
+    execution_model: PLANNER_EXECUTOR
+    model_provider: anthropic
+    model_name: claude-sonnet
+    status: CANDIDATE
+    delivery:
+      supported_tasks: [task.regression-test]
+      supported_checklists: [test-checklist]
+      supported_gates: [gate.test-readiness]
+      produces_evidence: [ev.test-result, ev.checklist-result]
+
+  - key: impact-analysis-agent
+    name: Impact Analysis Agent
+    role_key: impact-analysis-engineer
+    mission: Determine, before a change lands, which assets and delivery obligations it affects.
+    capabilities: [impact-analysis, lineage]
+    delivery_capabilities: [change-assurance]
+    skills: [repository-discovery, dependency-analysis, impact-analysis]
+    tools: [git, neo4j]
+    knowledge_packs: [project-architecture]
+    execution_model: PLANNER_EXECUTOR
+    model_provider: anthropic
+    model_name: claude-sonnet
+    status: CANDIDATE
+
+  - key: data-quality-agent
+    name: Data Quality Agent
+    role_key: data-quality-engineer
+    mission: Ensure data flowing through the project is correct, complete and fit for purpose.
+    capabilities: [data-quality, data-profiling, testing, metadata-management]
+    delivery_capabilities: [data-quality-assurance]
+    skills: [repository-discovery, dependency-analysis, data-profiling]
+    tools: [git, bigquery]
+    knowledge_packs: [enterprise-data-standards, project-architecture]
+    execution_model: ITERATIVE
+    model_provider: github-models
+    model_name: gpt-4o-mini
+    status: CANDIDATE
+    delivery:
+      supported_tasks: [task.data-profiling]
+      produces_evidence: [ev.profiling-result]
+
+  - key: data-model-composer
+    name: Data Model Composer
+    role_key: data-model-engineer
+    mission: Produce logical data models traceable to business requirements.
+    capabilities: [data-modelling, metadata-management]
+    delivery_capabilities: [architecture-assurance]
+    skills: [conceptual-model-analysis, logical-model-generation, traceability-mapping]
+    tools: [modeling-tool, metadata-platform]
+    knowledge_packs: [enterprise-data-standards, business-glossary]
+    execution_model: PLANNER_EXECUTOR
+    model_provider: anthropic
+    model_name: claude-sonnet
+    status: CANDIDATE
+    delivery:
+      supported_tasks: [task.logical-data-model]
+      supported_checklists: [logical-model-checklist]
+      supported_artifact_kinds: [logical-data-model]
+      supported_gates: [gate.data-architecture-review]
+      produces_evidence: [ev.logical-model, ev.traceability, ev.checklist-result]
+
+  - key: delivery-compliance-agent
+    name: Delivery Compliance Agent
+    role_key: delivery-compliance-engineer
+    mission: Determine whether a change complies with the organization's delivery model.
+    capabilities: [impact-analysis, governance]
+    delivery_capabilities: [change-assurance, compliance-assurance, release-assurance]
+    skills: [delivery-process-discovery, checklist-validation, gate-readiness-assessment, evidence-validation, traceability-validation]
+    tools: [git, neo4j]
+    knowledge_packs: [delivery-model, project-architecture]
+    execution_model: PLANNER_EXECUTOR
+    model_provider: anthropic
+    model_name: claude-sonnet
+    status: CANDIDATE
+
+  # --- Deferred integration point (c), realized here: EXTERNAL_AGENT, and
+  # deliberately incomplete against its role -- proves missing_requirements().
+  - key: copilot-coding-agent-regression
+    name: Copilot Coding Agent (Regression)
+    role_key: regression-engineer
+    mission: Regression testing performed by GitHub's Copilot coding agent, not this platform's runtime.
+    capabilities: [regression-testing, testing]
+    delivery_capabilities: []
+    skills: [repository-discovery, dependency-analysis, test-selection, test-execution]
+    tools: [git, github, pytest]
+    knowledge_packs: [testing-standards]
+    execution_model: EXTERNAL_AGENT
+    external_provider: github-copilot-coding-agent
+    status: CANDIDATE

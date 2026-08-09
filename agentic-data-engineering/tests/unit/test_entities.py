@@ -22,6 +22,7 @@ from domain.metamodel.enums import (
     ApprovalLevel,
     DeploymentStage,
     EntityType,
+    ExecutionModel,
     GateDecision,
     ProvenanceState,
 )
@@ -54,6 +55,29 @@ class TestAgentLifecycle:
 
     def test_every_state_has_a_rule(self) -> None:
         assert set(AGENT_LIFECYCLE_TRANSITIONS) == set(AgentLifecycle)
+
+
+class TestAgentExternalProvider:
+    """ADR-0014: EXTERNAL_AGENT needs to name which external system executes."""
+
+    def test_external_agent_without_a_provider_is_rejected(self) -> None:
+        with pytest.raises(ValidationError, match="EXTERNAL_AGENT but no external_provider"):
+            make_agent(
+                "a", "regression-engineer", execution_model=ExecutionModel.EXTERNAL_AGENT
+            )
+
+    def test_external_agent_with_a_provider_constructs(self) -> None:
+        agent = make_agent(
+            "a",
+            "regression-engineer",
+            execution_model=ExecutionModel.EXTERNAL_AGENT,
+            external_provider="github-copilot-coding-agent",
+        )
+        assert agent.external_provider == "github-copilot-coding-agent"
+
+    def test_non_external_agent_leaves_provider_unset(self) -> None:
+        agent = make_agent("a", "regression-engineer")
+        assert agent.external_provider is None
 
 
 class TestActionClassification:

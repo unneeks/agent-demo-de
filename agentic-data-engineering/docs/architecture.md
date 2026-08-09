@@ -51,8 +51,9 @@ whole thing worth building. See ADR-0008.
                           │
         ┌─────────────────┼─────────────────┐
         │                 │                 │
-   Marketplace      Composition        Evaluation    (later)
-    Service           Engine             Harness
+   Marketplace      Composition        Evaluation
+    Service          Engine              Harness
+    (later)         (Phase 4)            (later)
         │                 │                 │
         └─────────────────┼─────────────────┘
                           │
@@ -63,8 +64,9 @@ whole thing worth building. See ADR-0008.
    ║   lifecycle · dual-plane writes · snapshot  ║
    ║   query facade over the engines below       ║
    ╠═════════════════════════════════════════════╣
-   ║          ENGINES  (Phase 1)                 ║
-   ║   context · gates · impact + traceability   ║
+   ║      ENGINES  (Phase 1, composition P4)     ║
+   ║  context · gates · impact + traceability    ║
+   ║  composition -- role/agent resolution       ║
    ╠═════════════════════════════════════════════╣
    ║          METAMODEL  (Phase 1)               ║
    ║   dual twin · relationships · provenance    ║
@@ -91,7 +93,7 @@ is a thin front door onto the same ports, not a new layer of infrastructure.
 Nodes are keyed by `(entity_type, entity_id)` and carry no version. A node is
 the *thing*; versioned state lives in PostgreSQL. See ADR-0001.
 
-## The three engines
+## The four engines
 
 Each is a pure function. None calls an LLM. That is what makes them unit
 testable in milliseconds and replayable after the fact.
@@ -101,6 +103,7 @@ testable in milliseconds and replayable after the fact.
 | **Context** (`engines/context/`) | policy + candidates | ordered bundle, drop reasons, stable hash |
 | **Gates** (`engines/gates/`) | gate + observed state | per-dimension scores, PASS/CONDITIONAL/BLOCKED, blockers |
 | **Impact** (`engines/impact/`) | change + graph + delivery model | technical blast radius **and** delivery obligations; traceability chains |
+| **Composition** (`engines/composition/`) | engineering role + agent catalog | matches, near-misses, itemized gaps (Phase 4) |
 
 ## The organization model
 

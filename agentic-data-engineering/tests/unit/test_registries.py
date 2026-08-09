@@ -292,6 +292,10 @@ class TestValidationFailures:
                     responsibilities: [resp.change]
                 """
             ),
+            "skills.yaml": "version: 0.1.0\nskills: []\n",
+            "tools.yaml": "version: 0.1.0\ntools: []\n",
+            "knowledge_packs.yaml": "version: 0.1.0\nknowledge_packs: []\n",
+            "agents.yaml": "version: 0.1.0\nagents: []\n",
             "platforms.yaml": textwrap.dedent(
                 """
                 version: 0.1.0

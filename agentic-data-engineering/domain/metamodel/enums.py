@@ -236,10 +236,19 @@ class DeploymentStage(StrEnum):
 
 
 class ExecutionModel(StrEnum):
+    """How an agent runs.
+
+    EXTERNAL_AGENT is distinct from the other three: this platform does not
+    run the loop and does not select a model for it -- execution happens
+    entirely inside a third-party agent platform (e.g. GitHub Copilot coding
+    agent). See ADR-0014 and Agent.external_provider.
+    """
+
     SINGLE_SHOT = "SINGLE_SHOT"
     ITERATIVE = "ITERATIVE"
     PLANNER_EXECUTOR = "PLANNER_EXECUTOR"
     WORKFLOW_DRIVEN = "WORKFLOW_DRIVEN"
+    EXTERNAL_AGENT = "EXTERNAL_AGENT"
 
 
 class TestType(StrEnum):

@@ -18,21 +18,24 @@ phase can overturn one knowingly rather than by accident.
 | [0011](0011-project-graph-thin-front-door.md) | Project graph service is a thin front door | Registry-validated ingestion, dual-plane writes, snapshotting, project-scoped facade — nothing more |
 | [0012](0012-data-profile-and-feasibility-coverage.md) | `DataProfile` entity; feasibility assessment as registry data | Closes three coverage gaps found reviewing the worked model against real delivery activities |
 | [0013](0013-agent-based-extraction.md) | Agent-based extraction behind an `ExtractionClient` Protocol, uniform across every source kind | No per-source-type parser; two real backends (Anthropic, GitHub Copilot CLI) prove the Protocol earns its keep |
+| [0014](0014-marketplace-catalog-and-role-level-composition.md) | Marketplace catalog + role-level composition, reusing existing role-satisfaction logic | `EngineeringRole.is_satisfied_by()` finally has real data; the three deferred Copilot integration points land as registry/schema facts |
 
 ## Deferred, and why
 
-**GitHub Copilot integration** — largely out of scope still, with one piece
-now delivered. Three future integration points were identified: Copilot code
-review as a marketplace `Tool` (`LOW_RISK_WRITE`, findings consumed as
-`Evidence`); GitHub Models behind the configurable model provider; and Copilot
-coding agent as an `EXTERNAL_AGENT` implementation of an `EngineeringRole`.
-Phase 3 (ADR-0013) adds a fourth, narrower integration point ahead of those
-three — `CopilotCliExtractionClient`, one of two backends behind
-`ExtractionClient`, using the CLI for structured file extraction, not agentic
-coding. The three original integration points are unaffected and still not
-started; the `EXTERNAL_AGENT` execution model and provider binding on `Agent`
-remain a known, accepted refactor of `entities/organization/agents.py` when
-the runtime lands.
+**GitHub Copilot integration** — the three future integration points named
+below (Copilot code review as a marketplace `Tool`; GitHub Models behind the
+configurable model provider; Copilot coding agent as an `EXTERNAL_AGENT`
+implementation of an `EngineeringRole`) are now **delivered as registry/schema
+data** (Phase 4, ADR-0014, `docs/marketplace.md`): a `Tool` action framing
+Copilot review findings as `Evidence`, a worked agent proving
+`model_provider="github-models"` already loads, and `ExecutionModel.
+EXTERNAL_AGENT` + `Agent.external_provider` as the concrete provider binding
+ADR-0009 flagged. Phase 3 (ADR-0013) had already added a narrower, fourth
+integration point ahead of these three — `CopilotCliExtractionClient`, one of
+two backends behind `ExtractionClient`, using the CLI for structured file
+extraction, not agentic coding. **Still not started, across all four:** any
+actual Copilot API/CLI/coding-agent call from a live agent runtime — that
+runtime does not exist yet, and none of this phase's work executes anything.
 
 **Document assimilation** (§17–18) — the extraction pipeline that would populate
 a delivery model from Markdown, PDF and DOCX. Phase 3 (ADR-0013,

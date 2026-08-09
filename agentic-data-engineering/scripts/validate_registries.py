@@ -22,6 +22,7 @@ if str(REPO_ROOT) not in sys.path:
 
 from domain.metamodel.enums import ActionClass, AutomationLevel  # noqa: E402
 from domain.metamodel.registry import MetamodelRegistry, RegistryError  # noqa: E402
+from engines.composition import resolve_catalog  # noqa: E402
 from engines.gates import machine_evaluable_share  # noqa: E402
 
 
@@ -46,12 +47,24 @@ def main() -> int:  # noqa: C901
     print(f"  responsibilities        {len(registry.responsibilities)}")
     print(f"  engineering roles       {len(registry.engineering_roles)}")
     print(f"  delivery roles          {len(registry.delivery_roles)}")
+    print(f"  skills                  {len(registry.skills)}")
+    print(f"  tools                   {len(registry.tools)}")
+    print(f"  knowledge packs         {len(registry.knowledge_packs)}")
+    print(f"  agents                  {len(registry.agents)}")
     print(f"  relationship types      {len(registry.relationship_types)}")
     print(f"  platforms               {len(registry.platforms)}")
     print(f"  technology bindings     {len(registry.technology_bindings)}")
 
     cross = [s for s in registry.relationship_types.values() if s.is_cross_twin]
     print(f"  cross-twin edge types   {len(cross)}")
+
+    print("\nmarketplace resolution:")
+    for role_key, resolution in sorted(resolve_catalog(registry).items()):
+        marker = "staffable" if resolution.is_staffable else "unstaffed"
+        print(
+            f"  {role_key:28} {len(resolution.matches)} match(es), "
+            f"{len(resolution.near_misses)} near-miss(es) -- {marker}"
+        )
 
     print("\napproval matrix:")
     header = "  " + "".ljust(24) + "".join(a.value.ljust(18) for a in ActionClass)
