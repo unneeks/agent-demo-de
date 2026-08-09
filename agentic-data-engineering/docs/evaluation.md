@@ -189,9 +189,12 @@ one of `GateState`'s fields.
 
 ## What this is not
 
-- **No agent runtime, no LLM calls** — `run_suite()` takes `observed_values`
-  as a plain caller-supplied argument; nothing in this phase measures
-  anything itself.
+- **No agent runtime, no LLM calls, from this module** — `run_suite()` takes
+  `observed_values` as a plain caller-supplied argument; nothing here
+  measures anything itself. Phase 7 (`docs/agent-runtime.md`) adds a
+  separate, opt-in runtime that can produce `Evidence` a caller feeds into
+  `observed_values` by hand — `run_suite()` itself is untouched and still
+  never synthesizes a value.
 - **No fix to `engines/gates/readiness.py`'s "never evaluated" vs. "evaluated
   and failed" ambiguity** — `GateState.passed_evaluations` is still a bare
   `set[str]`; a suite key absent because it was never run and one absent

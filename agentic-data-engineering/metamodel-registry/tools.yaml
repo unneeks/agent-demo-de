@@ -26,6 +26,12 @@ tools:
         action_class: READ_ONLY
       - name: comment_on_pull_request
         action_class: LOW_RISK_WRITE
+        # A deliberate floor beneath the approval_matrix's own LOW_RISK_WRITE
+        # result (risk.yaml): a posted comment is visible to humans outside
+        # this platform immediately, so it should never go out unreviewed --
+        # not even under ASSISTED mode, where the matrix alone says NONE.
+        # See docs/agent-runtime.md and ADR-0017.
+        minimum_approval: SINGLE_REVIEWER
         reversible: true
       - name: copilot_code_review
         description: >

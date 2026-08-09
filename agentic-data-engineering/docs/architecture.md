@@ -57,7 +57,7 @@ whole thing worth building. See ADR-0008.
         │                 │                 │
         └─────────────────┼─────────────────┘
                           │
-                   Agent Runtime                     (later)
+                   Agent Runtime                     (Phase 7)
                           │
    ╔══════════════════════╧══════════════════════╗
    ║       PROJECT GRAPH SERVICE  (Phase 2)      ║

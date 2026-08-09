@@ -11,6 +11,7 @@ from dataclasses import dataclass, field
 
 from domain.metamodel.base import EntityRef
 from domain.metamodel.entities.evaluation import Evaluation
+from agent_runtime.result import AgentRunReport
 from discovery.result import DiscoveryReport
 from engines.composition import RoleResolution
 from engines.evaluation import AgentAdvancement
@@ -50,6 +51,21 @@ class EvaluationOutcome:
 
 
 @dataclass(frozen=True)
+class AgentRunOutcome:
+    """One agent actually run, linked back to the staffing decision (if
+    any) that named it. An agent run's rich output is deliberately not
+    auto-translated into an EvaluationRequest -- see docs/orchestrator.md
+    and docs/agent-runtime.md. AgentRunReport.evidence is the bridge a
+    caller can hand-wire into evaluation_requests, exactly as
+    EvaluationRequest.observed_values already stays plain caller input."""
+
+    agent_key: str
+    task: str
+    report: AgentRunReport
+    staffing_outcome: StaffingOutcome | None = None
+
+
+@dataclass(frozen=True)
 class CycleFailure:
     """A step that was attempted and rejected -- never partially applied."""
 
@@ -66,6 +82,7 @@ class CycleReport:
     discovery: DiscoveryReport | None = None
     impact: ChangeImpact | None = None
     staffing: list[StaffingOutcome] = field(default_factory=list)
+    agent_runs: list[AgentRunOutcome] = field(default_factory=list)
     evaluations: list[EvaluationOutcome] = field(default_factory=list)
     gate_readiness: dict[str, GateReadiness] = field(default_factory=dict)
     failed: list[CycleFailure] = field(default_factory=list)

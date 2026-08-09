@@ -18,7 +18,7 @@ builds.
 
 ---
 
-## Status: Phase 1–6 — Dual-Twin Metamodel Foundation + Project Graph Service + Discovery + Marketplace + Evaluation Harness + Project Orchestrator
+## Status: Phase 1–7 — Dual-Twin Metamodel Foundation + Project Graph Service + Discovery + Marketplace + Evaluation Harness + Project Orchestrator + Agent Runtime
 
 Phase 1 deliberately contains **no** document assimilation, composition engine,
 agent runtime, LLM calls, evaluation *execution*, API or UI. Those concepts are
@@ -32,8 +32,12 @@ Phase 5 adds the evaluation harness: a populated evaluation catalog and a pure
 engine that scores a suite and gates the agent lifecycle. Phase 6 adds the
 project orchestrator: `run_cycle()` ties discovery, impact analysis,
 composition and evaluation into one continuous loop over a real project,
-closing the write path composition and evaluation had left deferred — still
-no agent runtime, no LLM calls, no API, no UI.
+closing the write path composition and evaluation had left deferred. Phase 7
+adds the agent runtime: a real multi-turn planner-executor loop behind two
+live LLM backends (Anthropic, Copilot CLI) plus a hermetic replay backend,
+composed into `run_cycle()` as a new opt-in step — every tool call it makes
+is answered by a simulated executor, so no real side effect exists anywhere
+in this codebase. Still no API, no UI.
 
 | Delivered | |
 |---|---|
@@ -50,8 +54,9 @@ no agent runtime, no LLM calls, no API, no UI.
 | Marketplace | 14 skills · 7 tools · 5 knowledge packs · 6 worked agents; pure role/agent composition reusing `EngineeringRole.is_satisfied_by()` — [`docs/marketplace.md`](docs/marketplace.md) |
 | Evaluation harness | 2 worked suites (8 metrics, 6 scenarios), closes a real dangling gate reference, gates `Agent` CANDIDATE→EVALUATED→CERTIFIED — [`docs/evaluation.md`](docs/evaluation.md) |
 | Project orchestrator | `run_cycle()` composes OBSERVE→IMPACT→STAFF→EVALUATE→GATE, writes `IMPLEMENTED_BY`/`Evaluation`+`EVALUATES`, wires `GateState.traceability` — [`docs/orchestrator.md`](docs/orchestrator.md) |
+| Agent runtime | `run_agent()`: a real multi-turn planner-executor loop, 2 live LLM backends + 1 replay behind `AgentLLMClient`, 1 simulated `ToolExecutor` covering all 7 catalog tools, approval-gated `LOW_RISK_WRITE` — [`docs/agent-runtime.md`](docs/agent-runtime.md) |
 | 79 JSON Schema artifacts | committed, with a drift check |
-| 623 tests | 535 unit with zero infrastructure |
+| 666 tests | 576 unit with zero infrastructure |
 
 ---
 
@@ -64,7 +69,7 @@ pip install -e ".[dev]"
 
 python scripts/validate_registries.py     # registries + the worked delivery model
 python scripts/export_schemas.py --check  # JSON Schema drift check
-pytest tests/unit -q                      # 535 tests, zero infrastructure
+pytest tests/unit -q                      # 576 tests, zero infrastructure
 pytest tests/contract -q                  # in-memory adapters; real stores skip
 ```
 
@@ -219,12 +224,13 @@ engines/composition/       Marketplace role/agent resolution
 engines/evaluation/        Evaluation harness: run a suite, gate the agent lifecycle
 project_graph/             ProjectGraphService: lifecycle, snapshotting, query facade
 discovery/                 Uniform agent-based extraction: walk, resolve, orchestrate, extraction/
-orchestrator/              run_cycle(): composes discovery, impact, composition, evaluation, gates
-scripts/                   validate_registries.py, export_schemas.py, record_extraction_fixtures.py
-docs/                      Architecture, metamodel spec, delivery model, graph model, project graph, discovery, marketplace, evaluation, orchestrator
+orchestrator/              run_cycle(): composes discovery, impact, composition, evaluation, agent runs, gates
+agent_runtime/             run_agent(): multi-turn loop, LLM backends, simulated tool execution, approval gating
+scripts/                   validate_registries.py, export_schemas.py, record_extraction_fixtures.py, record_agent_fixtures.py
+docs/                      Architecture, metamodel spec, delivery model, graph model, project graph, discovery, marketplace, evaluation, orchestrator, agent runtime
 tests/unit/                No infrastructure needed
 tests/contract/            One contract, run against every adapter
-tests/integration/         Live discovery backends, independently skippable
+tests/integration/         Live discovery + agent backends, independently skippable
 ```
 
 Start with [`docs/architecture.md`](docs/architecture.md), then
@@ -246,24 +252,31 @@ Bumping `METAMODEL_VERSION` without updating the registry fails
 
 ## Next phase
 
-Phase 6 is complete: `orchestrator/`'s `run_cycle()` composes OBSERVE
-(discovery) → DETECT CHANGE + IMPACT → SELECT AGENTS (composition) →
-EVALUATE → APPROVAL GATE over one real project — every step calling an
-existing Phase 1–5 function, inventing no new logic. It closes the write
-path both `engines/composition` and `engines/evaluation` explicitly deferred
-("future orchestrator work"): staffing decisions are now persisted as real
-`IMPLEMENTED_BY` edges, evaluation runs as real `Evaluation` + `EVALUATES`
-edges. It also wires `engines.impact.traceability_score()` — real, correct,
-and completely unused until now — into `GateState.traceability` via a new
-fourth `ProjectGraphService` facade method, `assess_traceability()`. The
-`gate.architecture-review` worked example goes `BLOCKED → PASS` through
-`run_cycle()` exactly as it did through Phase 5's hand-wired `GateState`. See
-[`docs/orchestrator.md`](docs/orchestrator.md) and
-[ADR-0016](docs/adr/0016-project-orchestrator.md).
+Phase 7 is complete: `agent_runtime/`'s `run_agent()` is a real multi-turn
+planner-executor loop — build context (the first real caller of
+`engines.context.assembler.assemble()`), call an `AgentLLMClient` backend
+for one turn at a time, resolve and approval-gate each requested tool call,
+dispatch approved calls to a `ToolExecutor`, repeat up to `max_iterations`.
+Three backends behind `AgentLLMClient` (Anthropic, Copilot CLI, a hermetic
+session-fixture replay), and exactly one `ToolExecutor`,
+`SimulatedToolExecutor`, covering all 7 catalog tools' 11 actions — every
+tool call in this codebase is still simulated, never a real side effect.
+`ToolAction.minimum_approval` is now load-bearing: `github.
+comment_on_pull_request` carries a `SINGLE_REVIEWER` floor that holds under
+every automation level, combined with the automation-level matrix via a new
+`APPROVAL_ORDER` total order. `orchestrator/`'s `run_cycle()` gains one new,
+opt-in `agent_run_requests` step, composed after SELECT AGENTS and before
+EVALUATE — an agent run's `Evidence` is a real artifact a caller can
+hand-wire into `evaluation_requests`, never auto-synthesized into a score.
+See [`docs/agent-runtime.md`](docs/agent-runtime.md) and
+[ADR-0017](docs/adr/0017-agent-runtime.md).
 
-Still open, deliberately: no agent runtime, no LLM/Copilot API calls, no API,
-no UI, no scheduled/daemon execution, and four of `GateState`'s six fields
-(`present_artifact_kinds`, `checklist_outcomes`, `satisfied_evidence`,
-`approvals`) remain caller-supplied by design — artifact/evidence/approval
-detection is its own, larger future phase. Nothing beyond this foundation
-should be built until it is reviewed.
+Still open, deliberately: any real tool side effect, ever; any live
+human-in-the-loop approval mechanism (`AutomationLevelApprovalPolicy` is a
+synchronous, simulated, caller-declared check, not a real gate a human sits
+in front of); `WORKFLOW_DRIVEN`/`EXTERNAL_AGENT` execution; multi-agent
+coordination; scheduled/daemon execution; no API, no UI; and four of
+`GateState`'s six fields (`present_artifact_kinds`, `checklist_outcomes`,
+`satisfied_evidence`, `approvals`) still remain caller-supplied by design —
+artifact/evidence/approval detection is its own, larger future phase.
+Nothing beyond this foundation should be built until it is reviewed.

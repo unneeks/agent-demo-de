@@ -21,6 +21,7 @@ phase can overturn one knowingly rather than by accident.
 | [0014](0014-marketplace-catalog-and-role-level-composition.md) | Marketplace catalog + role-level composition, reusing existing role-satisfaction logic | `EngineeringRole.is_satisfied_by()` finally has real data; the three deferred Copilot integration points land as registry/schema facts |
 | [0015](0015-evaluation-harness.md) | Evaluation harness: run a suite, gate the agent lifecycle, reusing existing scoring primitives | Closes the real dangling `gate.architecture-review` evaluation reference; `GateState.passed_evaluations` finally has an assembler |
 | [0016](0016-project-orchestrator.md) | Project orchestrator: composes discovery, impact, composition and evaluation over one project, closes their deferred write path | `IMPLEMENTED_BY`/`Evaluation`+`EVALUATES` are finally persisted; `GateState.traceability` finally has an assembler too |
+| [0017](0017-agent-runtime.md) | Agent runtime: a real multi-turn planner-executor loop, all tool execution simulated | `engines/context/assembler.assemble()` finally has a caller; `ToolAction.minimum_approval` finally gates a call; the last named gap short of API/UI |
 
 ## Deferred, and why
 
@@ -40,10 +41,15 @@ actual Copilot API/CLI/coding-agent call from a live agent runtime — that
 runtime does not exist yet, and none of this phase's work executes anything.
 
 **Agent Runtime** — the one layer `docs/architecture.md`'s layered diagram
-still marks `(later)`. Phase 6 (ADR-0016) ties discovery + composition +
-evaluation + impact analysis into one continuous loop for a real project,
-but nothing in the codebase yet actually invokes an LLM or executes an
-agent's declared skills. Still fully unstarted.
+marked `(later)` through Phase 6. Phase 7 (ADR-0017, `docs/agent-runtime.md`)
+delivers a real multi-turn planner-executor loop (`agent_runtime.run_agent()`)
+behind two live LLM backends (Anthropic, Copilot CLI) plus a hermetic replay
+backend, composed into `run_cycle()` as a new opt-in RUN AGENT step. **Still
+not started:** any real tool side effect — every one of the 7 catalog tools'
+actions is answered by `SimulatedToolExecutor`'s canned data, always — and
+any live human-in-the-loop approval mechanism; `AutomationLevelApprovalPolicy`
+is a synchronous, caller-declared, simulated authorization check, not a real
+gate a human sits in front of.
 
 **Document assimilation** (§17–18) — the extraction pipeline that would populate
 a delivery model from Markdown, PDF and DOCX. Phase 3 (ADR-0013,

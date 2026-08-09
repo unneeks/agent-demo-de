@@ -21,7 +21,15 @@ agent = ["anthropic>=0.40"]
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["domain*", "persistence*", "engines*", "project_graph*", "discovery*"]
+include = [
+    "domain*",
+    "persistence*",
+    "engines*",
+    "project_graph*",
+    "discovery*",
+    "orchestrator*",
+    "agent_runtime*",
+]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

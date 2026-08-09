@@ -26,6 +26,9 @@ from persistence.ports import MetadataRepository
 from project_graph.errors import IngestionError
 from project_graph.service import ProjectGraphService
 
+from agent_runtime.errors import AgentRuntimeError
+
+from orchestrator.agent_step import AgentRunRequest, run_agents
 from orchestrator.errors import OrchestratorError
 from orchestrator.evaluate import EvaluationRequest, run_evaluations
 from orchestrator.gate import GateRequest, assess_gate_readiness
@@ -57,6 +60,7 @@ def run_cycle(
     change_seeds: list[EntityRef] | None = None,
     max_depth: int = 5,
     min_confidence: float = 0.0,
+    agent_run_requests: list[AgentRunRequest] | None = None,
     evaluation_requests: list[EvaluationRequest] | None = None,
     gates: list[GateRequest] | None = None,
     on_error: Literal["fail_fast", "collect"] = "collect",
@@ -102,6 +106,15 @@ def run_cycle(
                 service, registry, delivery_model, project_ref, impact.delivery.all_obligations()
             )
 
+    agent_runs = []
+    for request in agent_run_requests or []:
+        try:
+            [outcome] = run_agents(registry, [request])
+        except (AgentRuntimeError, KeyError) as exc:
+            _record("agent_run_failed", str(exc), request.agent_key)
+            continue
+        agent_runs.append(outcome)
+
     evaluations = []
     for request in evaluation_requests or []:
         try:
@@ -125,6 +138,7 @@ def run_cycle(
         discovery=discovery_report,
         impact=impact,
         staffing=staffing,
+        agent_runs=agent_runs,
         evaluations=evaluations,
         gate_readiness=gate_readiness,
         failed=failed,

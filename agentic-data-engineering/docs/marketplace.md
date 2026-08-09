@@ -148,8 +148,10 @@ same discipline every other registry follows.
 ## What this is not
 
 - **No agent runtime, no LLM/Copilot API calls, no execution of any `Tool`
-  action, ever** — `copilot_code_review` is catalog data; nothing in this
-  phase invokes it.
+  action, ever, from this module** — `copilot_code_review` is catalog data;
+  nothing in `engines/composition` invokes it. Phase 7 (`docs/agent-runtime.md`)
+  adds a separate, opt-in runtime that *simulates* tool execution — still no
+  real `Tool` action call anywhere in this codebase.
 - **No Evaluation Harness / trust score / evaluation execution** —
   `Evaluation`/`EvaluationSuite`/`MetricResult` (Phase 1,
   `domain/metamodel/entities/evaluation/evaluation.py`) are untouched and not

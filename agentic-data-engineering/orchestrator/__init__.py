@@ -8,14 +8,23 @@ EVALUATES, the advanced Agent's status) and the two GateState assemblers
 caller-supplied but never had a caller. See docs/orchestrator.md.
 """
 
+from orchestrator.agent_step import AgentRunRequest, run_agents
 from orchestrator.cycle import ObserveRequest, run_cycle
 from orchestrator.errors import OrchestratorError, UnknownGateError
 from orchestrator.evaluate import EvaluationRequest, run_evaluations
 from orchestrator.gate import GateRequest, assemble_gate_state, assess_gate_readiness
-from orchestrator.result import CycleFailure, CycleReport, EvaluationOutcome, StaffingOutcome
+from orchestrator.result import (
+    AgentRunOutcome,
+    CycleFailure,
+    CycleReport,
+    EvaluationOutcome,
+    StaffingOutcome,
+)
 from orchestrator.staffing import engineering_roles_for_obligation, select_agents
 
 __all__ = [
+    "AgentRunOutcome",
+    "AgentRunRequest",
     "CycleFailure",
     "CycleReport",
     "EvaluationOutcome",
@@ -28,6 +37,7 @@ __all__ = [
     "assemble_gate_state",
     "assess_gate_readiness",
     "engineering_roles_for_obligation",
+    "run_agents",
     "run_cycle",
     "run_evaluations",
     "select_agents",

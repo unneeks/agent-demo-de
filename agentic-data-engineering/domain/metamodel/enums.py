@@ -387,6 +387,17 @@ TRUST_ORDER: dict[TrustLevel, int] = {
 }
 
 
+#: Total order over ApprovalLevel, so two independently-sourced levels (a
+#: risk-matrix result and a ToolAction's own minimum_approval floor) can be
+#: combined with max(). Mirrors TRUST_ORDER's shape and purpose exactly.
+APPROVAL_ORDER: dict[ApprovalLevel, int] = {
+    ApprovalLevel.NONE: 0,
+    ApprovalLevel.SAMPLED_QA: 1,
+    ApprovalLevel.SINGLE_REVIEWER: 2,
+    ApprovalLevel.MAKER_CHECKER: 3,
+}
+
+
 class ContextItemKind(StrEnum):
     """What kind of thing a candidate context item is.
 

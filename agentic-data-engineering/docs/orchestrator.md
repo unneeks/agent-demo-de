@@ -163,10 +163,15 @@ by design.
 
 ## What this is not
 
-- **No agent runtime, no live LLM calls.** `run_cycle()` calls
+- **No agent runtime, no live LLM calls, from these Phase 6 steps.**
+  OBSERVE, DETECT CHANGE + IMPACT, SELECT AGENTS and APPROVAL GATE call
   `discover_project()` (itself unchanged, only calling an
   `ExtractionClient`), `run_suite()`, `resolve_role()`, `assess_gate()` — all
-  pre-existing. Nothing new invokes a model.
+  pre-existing, none of them invoking a model. Phase 7 (`docs/agent-runtime.md`)
+  adds a separate, new, opt-in RUN AGENT step
+  (`agent_run_requests`, composed after SELECT AGENTS and before EVALUATE)
+  that does invoke a real `AgentLLMClient` backend — every tool call it makes
+  is still answered by `SimulatedToolExecutor`, never a real side effect.
 - **No live measurement.** `EvaluationRequest.observed_values` stays a plain
   caller-supplied dict, exactly as `run_suite()` itself already requires.
 - **No autonomous artifact/evidence/approval/checklist-result detection.**
@@ -182,5 +187,5 @@ by design.
 - **No scheduled/continuous/daemon execution.** `run_cycle()` is one call,
   one cycle, over one project, triggered by a caller. No polling, no loop
   that runs itself.
-- **No API, no UI.** Only `Agent Runtime` remains fully unstarted among the
-  layers `docs/architecture.md`'s layered diagram still marks `(later)`.
+- **No API, no UI.** These are the only two layers `docs/architecture.md`'s
+  layered diagram still marks `(later)` as of Phase 7.
