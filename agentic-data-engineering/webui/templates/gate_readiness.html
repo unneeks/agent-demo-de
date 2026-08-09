@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block title %}{{ readiness.gate_key }}{% endblock %}
+{% block content %}
+<h1>Gate readiness: <code>{{ readiness.gate_key }}</code></h1>
+<p class="muted">Project <code>{{ project_id }}</code> &middot; delivery model <code>{{ model_key }}</code></p>
+
+<p>
+  Overall:
+  {% if readiness.status.value == "PASS" %}<span class="pill pass">{{ "%.0f%%"|format(readiness.overall_score * 100) }} -- PASS</span>
+  {% elif readiness.status.value == "CONDITIONAL" %}<span class="pill conditional">{{ "%.0f%%"|format(readiness.overall_score * 100) }} -- CONDITIONAL</span>
+  {% else %}<span class="pill blocked">{{ "%.0f%%"|format(readiness.overall_score * 100) }} -- BLOCKED</span>
+  {% endif %}
+</p>
+
+<div class="notice">
+  <strong>ARTIFACTS, CHECKLISTS, EVIDENCE and APPROVALS are always assessed against
+  empty state here</strong> -- no assembler for any of them exists anywhere in this
+  codebase (see docs/orchestrator.md's "what this is not"). A resulting 100% for one
+  of these four means the gate happens to require nothing in that dimension
+  (trivially satisfied, not verified); any other score reflects zero real detection
+  capability, not an actual finding. Only EVALUATIONS (<code>passed_evaluation_keys</code>)
+  and TRACEABILITY (<code>service.assess_traceability</code>) below reflect real
+  persisted/graph state.
+</div>
+
+<h2>Dimensions</h2>
+<table>
+  <tr><th>Dimension</th><th>Satisfied / Required</th><th>Score</th><th>Live-assessed?</th></tr>
+  {% for d in readiness.dimensions %}
+  <tr>
+    <td>{{ d.dimension.value }}</td>
+    <td>{{ d.satisfied }} / {{ d.required }}</td>
+    <td>{{ "%.0f%%"|format(d.score * 100) }}</td>
+    <td>
+      {% if d.dimension.value in unassessable_dimensions %}
+        <span class="pill blocked">no</span>
+      {% else %}
+        <span class="pill pass">yes</span>
+      {% endif %}
+    </td>
+  </tr>
+  {% endfor %}
+</table>
+
+<h2>Blocking items</h2>
+{% if readiness.blocking_items %}
+<ul>
+  {% for item in readiness.blocking_items %}
+  <li><code>{{ item.dimension.value }}</code>: {{ item.requirement }}{% if item.detail %} -- {{ item.detail }}{% endif %}</li>
+  {% endfor %}
+</ul>
+{% else %}
+<p class="empty">None.</p>
+{% endif %}
+
+<h2>Advisory items</h2>
+{% if readiness.advisory_items %}
+<ul>
+  {% for item in readiness.advisory_items %}
+  <li><code>{{ item.dimension.value }}</code>: {{ item.requirement }}{% if item.detail %} -- {{ item.detail }}{% endif %}</li>
+  {% endfor %}
+</ul>
+{% else %}
+<p class="empty">None.</p>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}Evaluations{% endblock %}
+{% block content %}
+<h1>Evaluations</h1>
+<form method="get" action="/evaluations">
+  <label>Filter by subject (e.g. <code>Agent:regression-agent</code>):
+    <input type="text" name="subject" value="{{ subject }}">
+  </label>
+  <button type="submit">Filter</button>
+  {% if subject %}<a href="/evaluations">clear</a>{% endif %}
+</form>
+{% if subject_error %}
+<div class="notice">Could not parse subject filter: {{ subject_error }}</div>
+{% endif %}
+
+{% if evaluations %}
+<table>
+  <tr><th>Suite</th><th>Subject</th><th>Score</th><th>Delivery score</th><th>Trust score</th><th>Passed</th><th>Evaluated at</th></tr>
+  {% for e in evaluations %}
+  <tr>
+    <td>{{ e.suite_ref }}</td>
+    <td>{{ e.subject_ref }}</td>
+    <td>{{ "%.0f%%"|format(e.score * 100) }}</td>
+    <td>{{ "%.0f%%"|format(e.delivery_score * 100) }}</td>
+    <td>{{ "%.0f%%"|format(e.trust_score * 100) }}</td>
+    <td>{% if e.passed %}<span class="pill pass">passed</span>{% else %}<span class="pill blocked">failed</span>{% endif %}</td>
+    <td>{{ e.evaluated_at }}</td>
+  </tr>
+  {% endfor %}
+</table>
+{% else %}
+<p class="empty">No evaluations found.</p>
+{% endif %}
+{% endblock %}

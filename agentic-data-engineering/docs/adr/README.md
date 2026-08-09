@@ -22,6 +22,7 @@ phase can overturn one knowingly rather than by accident.
 | [0015](0015-evaluation-harness.md) | Evaluation harness: run a suite, gate the agent lifecycle, reusing existing scoring primitives | Closes the real dangling `gate.architecture-review` evaluation reference; `GateState.passed_evaluations` finally has an assembler |
 | [0016](0016-project-orchestrator.md) | Project orchestrator: composes discovery, impact, composition and evaluation over one project, closes their deferred write path | `IMPLEMENTED_BY`/`Evaluation`+`EVALUATES` are finally persisted; `GateState.traceability` finally has an assembler too |
 | [0017](0017-agent-runtime.md) | Agent runtime: a real multi-turn planner-executor loop, all tool execution simulated | `engines/context/assembler.assemble()` finally has a caller; `ToolAction.minimum_approval` finally gates a call; the last named gap short of API/UI |
+| [0018](0018-web-ui.md) | Web UI: a server-rendered, read-only dashboard, in-process, no API Gateway | Every `ProjectGraphService` method and the full marketplace/delivery-model catalog now has a human-visible viewer; API Gateway is the last layer still `(later)` |
 
 ## Deferred, and why
 
@@ -50,6 +51,16 @@ actions is answered by `SimulatedToolExecutor`'s canned data, always — and
 any live human-in-the-loop approval mechanism; `AutomationLevelApprovalPolicy`
 is a synchronous, caller-declared, simulated authorization check, not a real
 gate a human sits in front of.
+
+**API Gateway** — now the only layer `docs/architecture.md`'s layered
+diagram still marks `(later)`. Phase 8 (ADR-0018, `docs/web-ui.md`) builds a
+Web UI, but a deliberately server-rendered, in-process one — its route
+handlers call `ProjectGraphService`/`MetamodelRegistry` directly, with no
+JSON endpoint anywhere. **Still not started:** any machine-consumable
+endpoint at all. No `/api/*` route, no `response_model`, nothing in this
+repo — or outside it — can call this platform programmatically. A future
+API Gateway phase would need to decide whether it fronts the same backend
+`webui/` calls, or replaces `webui/`'s in-process calls with HTTP ones.
 
 **Document assimilation** (§17–18) — the extraction pipeline that would populate
 a delivery model from Markdown, PDF and DOCX. Phase 3 (ADR-0013,

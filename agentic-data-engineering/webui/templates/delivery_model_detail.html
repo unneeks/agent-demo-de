@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}{{ model.name }}{% endblock %}
+{% block content %}
+<h1>{{ model.name }} <span class="muted">({{ model_key }})</span></h1>
+
+<h2>Phases</h2>
+{% for entry in phases %}
+<h3>{{ entry.phase.sequence }}. {{ entry.phase.name }} <span class="muted">({{ entry.phase.phase_key }})</span></h3>
+<p class="muted">{{ entry.phase.purpose or "" }}</p>
+<p><strong>Tasks:</strong>
+  {% if entry.tasks %}
+    {% for t in entry.tasks %}<code>{{ t.task_key }}</code> ({{ t.name }}){% if not loop.last %}, {% endif %}{% endfor %}
+  {% else %}<span class="empty">none</span>{% endif %}
+</p>
+<p><strong>Gates:</strong>
+  {% if entry.gates %}
+    {% for g in entry.gates %}<a href="#gate-{{ g.gate_key }}"><code>{{ g.gate_key }}</code></a>{% if not loop.last %}, {% endif %}{% endfor %}
+  {% else %}<span class="empty">none</span>{% endif %}
+</p>
+{% endfor %}
+
+<h2>Checklists</h2>
+{% for entry in checklists %}
+<h3>{{ entry.checklist.checklist_key }}</h3>
+<p class="muted">completion_rule={{ entry.checklist.completion_rule.value }} &middot;
+  machine-evaluable share: {{ "%.0f%%"|format(entry.machine_evaluable_share * 100) }}</p>
+<table>
+  <tr><th>Item</th><th>Mandatory</th><th>Blocking</th><th>Validation</th></tr>
+  {% for item in entry.checklist_items %}
+  <tr>
+    <td><code>{{ item.item_key }}</code> -- {{ item.description or "" }}</td>
+    <td>{{ item.mandatory }}</td>
+    <td>{{ item.blocking }}</td>
+    <td>{{ item.validation_method.value }}</td>
+  </tr>
+  {% endfor %}
+</table>
+{% endfor %}
+
+<h2>Gates</h2>
+{% for gate in gates %}
+<h3 id="gate-{{ gate.gate_key }}"><code>{{ gate.gate_key }}</code> -- {{ gate.name }}</h3>
+<table>
+  <tr><th>Field</th><th>Value</th></tr>
+  <tr><td>Blocking</td><td>{{ gate.blocking }}</td></tr>
+  <tr><td>Risk level</td><td>{{ gate.risk_level.value }}</td></tr>
+  <tr><td>Minimum traceability</td><td>{{ "%.0f%%"|format(gate.minimum_traceability * 100) }}</td></tr>
+  <tr><td>Required artifact kinds</td><td>{{ gate.required_artifact_kinds|join(", ") or "--" }}</td></tr>
+  <tr><td>Required checklists</td><td>{{ gate.required_checklist_refs|map(attribute="id")|join(", ") or "--" }}</td></tr>
+  <tr><td>Required evaluations</td><td>{{ gate.required_evaluation_refs|map(attribute="id")|join(", ") or "--" }}</td></tr>
+  <tr><td>Required evidence</td><td>{{ gate.required_evidence_refs|map(attribute="id")|join(", ") or "--" }}</td></tr>
+  <tr><td>Required roles</td><td>{{ gate.required_role_keys|join(", ") or "--" }}</td></tr>
+</table>
+{% endfor %}
+{% endblock %}

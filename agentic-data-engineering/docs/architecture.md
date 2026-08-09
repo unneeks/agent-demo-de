@@ -43,7 +43,7 @@ whole thing worth building. See ADR-0008.
 ## Layered view
 
 ```
-                        Web UI                       (later)
+                        Web UI                       (Phase 8)
                           │
                      API Gateway                     (later)
                           │
