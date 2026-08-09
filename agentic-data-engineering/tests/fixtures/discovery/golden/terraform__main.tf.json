@@ -1,0 +1,19 @@
+{
+  "backend": "manually-authored",
+  "raw_response": {
+    "entities": [
+      {
+        "confidence": 0.85,
+        "entity_type": "Infrastructure",
+        "infrastructure_kind": "terraform_module",
+        "local_id": "i1",
+        "source_path": "terraform/main.tf",
+        "suggested_id": "aws_s3_bucket.raw_data"
+      }
+    ],
+    "relationships": []
+  },
+  "recorded_at": "2026-08-09T00:00:00+00:00",
+  "request_hash": "291f87446319212b741dbe487b9f34ad2db89b029c3ce30d64e106323f222e85",
+  "source_path": "terraform/main.tf"
+}

@@ -1,0 +1,55 @@
+{
+  "backend": "manually-authored",
+  "raw_response": {
+    "entities": [
+      {
+        "asset_kind": "dataset",
+        "confidence": 0.85,
+        "entity_type": "DataAsset",
+        "local_id": "a1",
+        "suggested_id": "bank_customers"
+      },
+      {
+        "asset_ref_local_id": "a1",
+        "confidence": 0.8,
+        "entity_type": "SchemaDefinition",
+        "fields": [
+          {
+            "data_type": "string",
+            "name": "customer_id"
+          },
+          {
+            "data_type": "string",
+            "name": "customer_name"
+          },
+          {
+            "data_type": "string",
+            "name": "segment"
+          },
+          {
+            "data_type": "string",
+            "name": "risk_band"
+          },
+          {
+            "data_type": "string",
+            "name": "kyc_score"
+          }
+        ],
+        "local_id": "s1",
+        "suggested_id": "bank_customers.schema"
+      }
+    ],
+    "relationships": [
+      {
+        "confidence": 0.9,
+        "source_local_id": "a1",
+        "target_kind": "SchemaDefinition",
+        "target_symbolic_name": "bank_customers.schema",
+        "type": "HAS_SCHEMA"
+      }
+    ]
+  },
+  "recorded_at": "2026-08-09T00:00:00+00:00",
+  "request_hash": "37effd0181feda8a171d34f9221497aff6c036eb1a564e8d76d40ea4ef48c86a",
+  "source_path": "dbt_demo/seeds/generated/bank_customers.csv"
+}

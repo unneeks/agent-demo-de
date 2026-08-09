@@ -18,13 +18,15 @@ builds.
 
 ---
 
-## Status: Phase 1 & 2 — Dual-Twin Metamodel Foundation + Project Graph Service
+## Status: Phase 1, 2 & 3 — Dual-Twin Metamodel Foundation + Project Graph Service + Discovery
 
 Phase 1 deliberately contains **no** document assimilation, composition engine,
 agent runtime, LLM calls, evaluation *execution*, API or UI. Those concepts are
 *modelled*; their engines come later. Phase 2 adds the one thing Phase 1 had no
-owner for — a project's twin as a lifecycle — without starting any of them
-either: no discovery, no orchestration.
+owner for — a project's twin as a lifecycle. Phase 3 adds the first adapter
+layer that turns a real project into real graph state: uniform, agent-based
+discovery of code *and* delivery documentation, writing through
+`ProjectGraphService` — no orchestration, evaluation, or agent runtime yet.
 
 | Delivered | |
 |---|---|
@@ -37,8 +39,9 @@ either: no discovery, no orchestration.
 | Three deterministic engines | context assembly · checklist + gate readiness · dual impact + traceability |
 | Two-plane persistence | PostgreSQL (state) + Neo4j (traversal), behind ports |
 | `ProjectGraphService` | registry-validated ingestion, dual-plane consistency, snapshot/restore, project-scoped query facade — [`docs/project-graph.md`](docs/project-graph.md) |
+| Discovery | uniform agent-based extraction, code + Markdown, two live backends (Anthropic, Copilot CLI) behind one `ExtractionClient` Protocol — [`docs/discovery.md`](docs/discovery.md) |
 | 79 JSON Schema artifacts | committed, with a drift check |
-| 456 tests | 370 unit with zero infrastructure |
+| 537 tests | 449 unit with zero infrastructure |
 
 ---
 
@@ -51,7 +54,7 @@ pip install -e ".[dev]"
 
 python scripts/validate_registries.py     # registries + the worked delivery model
 python scripts/export_schemas.py --check  # JSON Schema drift check
-pytest tests/unit -q                      # 370 tests, zero infrastructure
+pytest tests/unit -q                      # 449 tests, zero infrastructure
 pytest tests/contract -q                  # in-memory adapters; real stores skip
 ```
 
@@ -60,6 +63,15 @@ To exercise the adapters against real databases:
 ```bash
 docker compose up -d
 pytest tests/contract -q                  # same assertions, now on Neo4j + PostgreSQL
+```
+
+To run discovery against a real project, install the `agent` extra and set an
+API key (or have `copilot`/`gh` on `PATH`):
+
+```bash
+pip install -e ".[agent]"
+export ANTHROPIC_API_KEY=...
+pytest tests/integration -q -m agent_integration  # skips cleanly without either backend
 ```
 
 ---
@@ -194,10 +206,12 @@ engines/context/           Deterministic context assembly
 engines/gates/             Checklist evaluation and gate readiness
 engines/impact/            Dual impact analysis and traceability
 project_graph/             ProjectGraphService: lifecycle, snapshotting, query facade
-scripts/                   validate_registries.py, export_schemas.py
-docs/                      Architecture, metamodel spec, delivery model, graph model, project graph
+discovery/                 Uniform agent-based extraction: walk, resolve, orchestrate, extraction/
+scripts/                   validate_registries.py, export_schemas.py, record_extraction_fixtures.py
+docs/                      Architecture, metamodel spec, delivery model, graph model, project graph, discovery
 tests/unit/                No infrastructure needed
 tests/contract/            One contract, run against every adapter
+tests/integration/         Live discovery backends, independently skippable
 ```
 
 Start with [`docs/architecture.md`](docs/architecture.md), then
@@ -219,8 +233,10 @@ Bumping `METAMODEL_VERSION` without updating the registry fails
 
 ## Next phase
 
-Phase 3 adds discovery — of code *and* of delivery documentation (§17–18),
+Phase 3 is complete: discovery of code *and* delivery documentation (§17–18),
 writing through `ProjectGraphService.ingest_entity`/`ingest_relationship`
-rather than the raw ports, whose first target is `../agentic-ai-ollama-demo/`,
-a real dbt + Python + DuckDB project in this repository. Nothing beyond this
+rather than the raw ports, proven as a worked example against
+`../agentic-ai-ollama-demo/`, a real dbt + Python + DuckDB project alongside
+this repository — see [`docs/discovery.md`](docs/discovery.md) and
+[ADR-0013](docs/adr/0013-agent-based-extraction.md). Nothing beyond this
 foundation should be built until it is reviewed.

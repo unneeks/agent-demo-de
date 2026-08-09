@@ -17,21 +17,32 @@ phase can overturn one knowingly rather than by accident.
 | [0010](0010-entity-consolidations.md) | Deliberate consolidations vs the specification | Records where the build departs from the literal entity list, and why |
 | [0011](0011-project-graph-thin-front-door.md) | Project graph service is a thin front door | Registry-validated ingestion, dual-plane writes, snapshotting, project-scoped facade — nothing more |
 | [0012](0012-data-profile-and-feasibility-coverage.md) | `DataProfile` entity; feasibility assessment as registry data | Closes three coverage gaps found reviewing the worked model against real delivery activities |
+| [0013](0013-agent-based-extraction.md) | Agent-based extraction behind an `ExtractionClient` Protocol, uniform across every source kind | No per-source-type parser; two real backends (Anthropic, GitHub Copilot CLI) prove the Protocol earns its keep |
 
 ## Deferred, and why
 
-**GitHub Copilot integration** — out of scope by decision. Three future
-integration points: Copilot code review as a marketplace `Tool`
-(`LOW_RISK_WRITE`, findings consumed as `Evidence`); GitHub Models behind the
-configurable model provider; and Copilot coding agent as an `EXTERNAL_AGENT`
-implementation of an `EngineeringRole`. The third needs an `EXTERNAL_AGENT`
-execution model and a provider binding on `Agent` — a known, accepted refactor
-of `entities/organization/agents.py` when the runtime lands.
+**GitHub Copilot integration** — largely out of scope still, with one piece
+now delivered. Three future integration points were identified: Copilot code
+review as a marketplace `Tool` (`LOW_RISK_WRITE`, findings consumed as
+`Evidence`); GitHub Models behind the configurable model provider; and Copilot
+coding agent as an `EXTERNAL_AGENT` implementation of an `EngineeringRole`.
+Phase 3 (ADR-0013) adds a fourth, narrower integration point ahead of those
+three — `CopilotCliExtractionClient`, one of two backends behind
+`ExtractionClient`, using the CLI for structured file extraction, not agentic
+coding. The three original integration points are unaffected and still not
+started; the `EXTERNAL_AGENT` execution model and provider binding on `Agent`
+remain a known, accepted refactor of `entities/organization/agents.py` when
+the runtime lands.
 
 **Document assimilation** (§17–18) — the extraction pipeline that would populate
-a delivery model from Markdown, PDF and DOCX. The metamodel is ready for it:
-`source_document`, `source_section` and `extraction_method` exist, and ADR-0009
-guarantees extracted rules start advisory.
+a delivery model from Markdown, PDF and DOCX. Phase 3 (ADR-0013,
+`docs/discovery.md`) delivers the code-discovery half and the Markdown slice of
+this — `DeliveryArtifact` extraction and `DESCRIBES` edges to technical
+entities, uniformly through the same agent-based `ExtractionClient` this note
+originally anticipated. PDF and DOCX remain not started: the metamodel is
+ready for them (`source_document`, `source_section` and `extraction_method`
+already exist, and ADR-0009 guarantees extracted rules start advisory), but no
+adapter reads either format yet.
 
 ## Writing a new ADR
 
