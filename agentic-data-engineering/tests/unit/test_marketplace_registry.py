@@ -192,6 +192,9 @@ class TestValidationFailures:
             "tools.yaml": "version: 0.1.0\ntools: []\n",
             "knowledge_packs.yaml": "version: 0.1.0\nknowledge_packs: []\n",
             "agents.yaml": "version: 0.1.0\nagents: []\n",
+            "evaluation_metrics.yaml": "version: 0.1.0\nevaluation_metrics: []\n",
+            "evaluation_scenarios.yaml": "version: 0.1.0\nevaluation_scenarios: []\n",
+            "evaluation_suites.yaml": "version: 0.1.0\nevaluation_suites: []\n",
             "platforms.yaml": textwrap.dedent(
                 """
                 version: 0.1.0

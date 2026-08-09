@@ -17,6 +17,7 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 from domain.metamodel.base import EntityRef, utc_now  # noqa: E402
+from domain.metamodel.entities.evaluation import Evaluation  # noqa: E402
 from domain.metamodel.entities.organization import Agent, Skill, Tool, ToolAction  # noqa: E402
 from domain.metamodel.entities.shared.context import ContextItem, ContextPolicy  # noqa: E402
 from domain.metamodel.entities.technical import (  # noqa: E402
@@ -201,6 +202,32 @@ def make_tool(tool_id: str, actions: list[ToolAction] | None = None, **kwargs: o
             "entity_type": EntityType.TOOL,
             "tool_key": tool_id,
             "actions": actions or [ToolAction(name="read", action_class=ActionClass.READ_ONLY)],
+        },
+        kwargs,
+    )
+
+
+def make_evaluation(
+    evaluation_id: str = "eval-1",
+    *,
+    suite_key: str = "s",
+    subject_ref: EntityRef,
+    score: float = 1.0,
+    delivery_score: float = 1.0,
+    passed: bool = True,
+    **kwargs: object,
+) -> Evaluation:
+    return _build(  # type: ignore[return-value]
+        Evaluation,
+        {
+            "id": evaluation_id,
+            "name": evaluation_id,
+            "entity_type": EntityType.EVALUATION,
+            "suite_ref": ref(EntityType.EVALUATION_SUITE, suite_key),
+            "subject_ref": subject_ref,
+            "score": score,
+            "delivery_score": delivery_score,
+            "passed": passed,
         },
         kwargs,
     )

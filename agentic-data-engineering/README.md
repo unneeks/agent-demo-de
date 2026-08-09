@@ -18,7 +18,7 @@ builds.
 
 ---
 
-## Status: Phase 1, 2, 3 & 4 — Dual-Twin Metamodel Foundation + Project Graph Service + Discovery + Marketplace
+## Status: Phase 1–5 — Dual-Twin Metamodel Foundation + Project Graph Service + Discovery + Marketplace + Evaluation Harness
 
 Phase 1 deliberately contains **no** document assimilation, composition engine,
 agent runtime, LLM calls, evaluation *execution*, API or UI. Those concepts are
@@ -27,8 +27,10 @@ owner for — a project's twin as a lifecycle. Phase 3 adds the first adapter
 layer that turns a real project into real graph state: uniform, agent-based
 discovery of code *and* delivery documentation, writing through
 `ProjectGraphService`. Phase 4 adds the marketplace: a populated Agent/Skill/
-Tool catalog and a pure engine that resolves engineering roles against it —
-still no agent runtime, no evaluation execution, no orchestration.
+Tool catalog and a pure engine that resolves engineering roles against it.
+Phase 5 adds the evaluation harness: a populated evaluation catalog and a pure
+engine that scores a suite and gates the agent lifecycle — still no agent
+runtime, no LLM calls, no orchestration.
 
 | Delivered | |
 |---|---|
@@ -36,15 +38,16 @@ still no agent runtime, no evaluation execution, no orchestration.
 | 64 relationship types | 19 of them **cross-twin joins** |
 | Four-state provenance | plus document provenance and the inferred-cannot-block rule |
 | Four-level role chain | DeliveryRole → Responsibility → EngineeringRole → Agent |
-| YAML registries | capabilities (both kinds), the role chain, relationships, platforms, approvals, the marketplace catalog |
+| YAML registries | capabilities (both kinds), the role chain, relationships, platforms, approvals, the marketplace catalog, the evaluation catalog |
 | A worked delivery model | 9 phases · 13 tasks · 6 checklists · 28 items · 10 criteria · 6 gates |
-| Four deterministic engines | context assembly · checklist + gate readiness · dual impact + traceability · marketplace composition |
+| Five deterministic engines | context assembly · checklist + gate readiness · dual impact + traceability · marketplace composition · evaluation harness |
 | Two-plane persistence | PostgreSQL (state) + Neo4j (traversal), behind ports |
 | `ProjectGraphService` | registry-validated ingestion, dual-plane consistency, snapshot/restore, project-scoped query facade — [`docs/project-graph.md`](docs/project-graph.md) |
 | Discovery | uniform agent-based extraction, code + Markdown, two live backends (Anthropic, Copilot CLI) behind one `ExtractionClient` Protocol — [`docs/discovery.md`](docs/discovery.md) |
 | Marketplace | 14 skills · 7 tools · 5 knowledge packs · 6 worked agents; pure role/agent composition reusing `EngineeringRole.is_satisfied_by()` — [`docs/marketplace.md`](docs/marketplace.md) |
+| Evaluation harness | 2 worked suites (8 metrics, 6 scenarios), closes a real dangling gate reference, gates `Agent` CANDIDATE→EVALUATED→CERTIFIED — [`docs/evaluation.md`](docs/evaluation.md) |
 | 79 JSON Schema artifacts | committed, with a drift check |
-| 574 tests | 486 unit with zero infrastructure |
+| 603 tests | 515 unit with zero infrastructure |
 
 ---
 
@@ -57,7 +60,7 @@ pip install -e ".[dev]"
 
 python scripts/validate_registries.py     # registries + the worked delivery model
 python scripts/export_schemas.py --check  # JSON Schema drift check
-pytest tests/unit -q                      # 486 tests, zero infrastructure
+pytest tests/unit -q                      # 515 tests, zero infrastructure
 pytest tests/contract -q                  # in-memory adapters; real stores skip
 ```
 
@@ -209,10 +212,11 @@ engines/context/           Deterministic context assembly
 engines/gates/             Checklist evaluation and gate readiness
 engines/impact/            Dual impact analysis and traceability
 engines/composition/       Marketplace role/agent resolution
+engines/evaluation/        Evaluation harness: run a suite, gate the agent lifecycle
 project_graph/             ProjectGraphService: lifecycle, snapshotting, query facade
 discovery/                 Uniform agent-based extraction: walk, resolve, orchestrate, extraction/
 scripts/                   validate_registries.py, export_schemas.py, record_extraction_fixtures.py
-docs/                      Architecture, metamodel spec, delivery model, graph model, project graph, discovery, marketplace
+docs/                      Architecture, metamodel spec, delivery model, graph model, project graph, discovery, marketplace, evaluation
 tests/unit/                No infrastructure needed
 tests/contract/            One contract, run against every adapter
 tests/integration/         Live discovery backends, independently skippable
@@ -237,16 +241,20 @@ Bumping `METAMODEL_VERSION` without updating the registry fails
 
 ## Next phase
 
-Phase 4 is complete: a marketplace catalog (14 skills, 7 tools, 5 knowledge
-packs, 6 agents) and `engines/composition/`, a pure engine that resolves
-engineering roles against it by reusing `EngineeringRole.is_satisfied_by()`
-rather than reimplementing that logic — plus the three GitHub Copilot
-integration points named in `docs/adr/README.md`'s "Deferred, and why"
-section, landed as registry/schema data only. See
-[`docs/marketplace.md`](docs/marketplace.md) and
-[ADR-0014](docs/adr/0014-marketplace-catalog-and-role-level-composition.md).
+Phase 5 is complete: an evaluation catalog (2 worked suites, 8 metrics, 6
+scenarios) and `engines/evaluation/`, a pure engine that scores a suite from
+caller-supplied observed values by reusing `EvaluationMetric.passes()`/
+`Evaluation.weighted_score()` rather than reimplementing scoring, reduces
+evaluation history into what `GateState` needs, and gates `Agent` lifecycle
+transitions into `EVALUATED`/`CERTIFIED`. It closes a real dangling
+reference — `gate.architecture-review` had declared `required_evaluations:
+[architecture-quality-evaluation]` since Phase 1 with nothing behind the key
+— and proves the seam against the untouched `engines.gates.assess_gate()`.
+See [`docs/evaluation.md`](docs/evaluation.md) and
+[ADR-0015](docs/adr/0015-evaluation-harness.md).
 
-Still open, deliberately: no agent runtime, no LLM/Copilot API calls, no
-Evaluation Harness / trust-score execution, no API, no UI, no orchestration,
-and no write path from a `RoleResolution` to a specific project's graph.
-Nothing beyond this foundation should be built until it is reviewed.
+Still open, deliberately: no agent runtime, no LLM/Copilot API calls, no API,
+no UI, no orchestration, no write path from any engine to a project's graph,
+and `engines/gates/readiness.py`'s "never evaluated" vs. "evaluated and
+failed" ambiguity remains a named, deliberate non-fix. Nothing beyond this
+foundation should be built until it is reviewed.

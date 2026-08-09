@@ -40,6 +40,7 @@ from domain.metamodel.entities.delivery import (
     Standard,
     Template,
 )
+from domain.metamodel.entities.evaluation import EvaluationMetric, EvaluationScenario, EvaluationSuite
 from domain.metamodel.entities.organization import (
     Agent,
     DeliveryCapabilityDeclaration,
@@ -177,6 +178,9 @@ class MetamodelRegistry:
     tools: dict[str, Tool] = field(default_factory=dict)
     knowledge_packs: dict[str, KnowledgePack] = field(default_factory=dict)
     agents: dict[str, Agent] = field(default_factory=dict)
+    evaluation_metrics: dict[str, EvaluationMetric] = field(default_factory=dict)
+    evaluation_scenarios: dict[str, EvaluationScenario] = field(default_factory=dict)
+    evaluation_suites: dict[str, EvaluationSuite] = field(default_factory=dict)
     relationship_types: dict[str, RelationshipTypeSpec] = field(default_factory=dict)
     platforms: dict[str, Platform] = field(default_factory=dict)
     technology_bindings: list[TechnologyBinding] = field(default_factory=list)
@@ -207,6 +211,9 @@ class MetamodelRegistry:
         registry._load_tools(base / "tools.yaml")
         registry._load_knowledge_packs(base / "knowledge_packs.yaml")
         registry._load_agents(base / "agents.yaml")
+        registry._load_evaluation_metrics(base / "evaluation_metrics.yaml")
+        registry._load_evaluation_scenarios(base / "evaluation_scenarios.yaml")
+        registry._load_evaluation_suites(base / "evaluation_suites.yaml")
         registry._load_platforms(base / "platforms.yaml")
         registry._load_provenance(base / "provenance.yaml")
         registry._load_risk(base / "risk.yaml")
@@ -427,6 +434,76 @@ class MetamodelRegistry:
                 )
             except ValidationError as exc:
                 raise RegistryError(f"{path.name}: agent {key!r} is invalid: {exc}") from exc
+
+    def _load_evaluation_metrics(self, path: Path) -> None:
+        for entry in _read_yaml(path).get("evaluation_metrics", []):
+            key = entry["key"]
+            try:
+                self.evaluation_metrics[key] = EvaluationMetric(
+                    id=key,
+                    name=entry.get("name", key),
+                    entity_type=EntityType.EVALUATION_METRIC,
+                    metric_key=key,
+                    dimension=entry.get("dimension", "technical"),
+                    threshold=entry["threshold"],
+                    higher_is_better=entry.get("higher_is_better", True),
+                    weight=entry.get("weight", 1.0),
+                    unit=entry.get("unit"),
+                    blocking=entry.get("blocking", True),
+                )
+            except ValidationError as exc:
+                raise RegistryError(
+                    f"{path.name}: evaluation metric {key!r} is invalid: {exc}"
+                ) from exc
+
+    def _load_evaluation_scenarios(self, path: Path) -> None:
+        for entry in _read_yaml(path).get("evaluation_scenarios", []):
+            key = entry["key"]
+            try:
+                self.evaluation_scenarios[key] = EvaluationScenario(
+                    id=key,
+                    name=entry.get("name", key),
+                    entity_type=EntityType.EVALUATION_SCENARIO,
+                    scenario_key=key,
+                    inputs=entry.get("inputs", {}),
+                    expected_behavior=entry.get("expected_behavior"),
+                    expected_output=entry.get("expected_output"),
+                    expects_refusal=entry.get("expects_refusal", False),
+                    expects_gate_respected=entry.get("expected_gate_respected"),
+                    metric_keys=entry.get("metric_keys", []),
+                    tags=entry.get("tags", []),
+                )
+            except ValidationError as exc:
+                raise RegistryError(
+                    f"{path.name}: evaluation scenario {key!r} is invalid: {exc}"
+                ) from exc
+
+    def _load_evaluation_suites(self, path: Path) -> None:
+        for entry in _read_yaml(path).get("evaluation_suites", []):
+            key = entry["key"]
+            try:
+                self.evaluation_suites[key] = EvaluationSuite(
+                    id=key,
+                    name=entry.get("name", key),
+                    entity_type=EntityType.EVALUATION_SUITE,
+                    suite_key=key,
+                    level=entry["level"],
+                    scenario_refs=[
+                        EntityRef(type=EntityType.EVALUATION_SCENARIO, id=s)
+                        for s in entry.get("scenarios", [])
+                    ],
+                    metric_refs=[
+                        EntityRef(type=EntityType.EVALUATION_METRIC, id=m)
+                        for m in entry.get("metrics", [])
+                    ],
+                    passing_score=entry.get("passing_score", 0.8),
+                    passing_delivery_score=entry.get("passing_delivery_score", 0.9),
+                    applies_to=entry.get("applies_to", []),
+                )
+            except ValidationError as exc:
+                raise RegistryError(
+                    f"{path.name}: evaluation suite {key!r} is invalid: {exc}"
+                ) from exc
 
     def _load_platforms(self, path: Path) -> None:
         data = _read_yaml(path)
@@ -1037,6 +1114,31 @@ class MetamodelRegistry:
                 if pack not in self.knowledge_packs:
                     errors.append(f"agent {key!r} declares unknown knowledge pack {pack!r}")
 
+        # --- the evaluation catalog ------------------------------------------
+        # Deliberately not checked: EvaluationSuite.applies_to against roles/
+        # tasks -- its semantics are level-dependent (a workflow-level suite's
+        # applies_to names task keys, an agent-level suite's names role keys)
+        # and the field is untyped list[str], so one generic check would be
+        # wrong for one level or the other. See ADR-0015.
+        for key, suite in self.evaluation_suites.items():
+            for ref_ in suite.scenario_refs:
+                if ref_.id not in self.evaluation_scenarios:
+                    errors.append(
+                        f"evaluation suite {key!r} references unknown scenario {ref_.id!r}"
+                    )
+            for ref_ in suite.metric_refs:
+                if ref_.id not in self.evaluation_metrics:
+                    errors.append(
+                        f"evaluation suite {key!r} references unknown metric {ref_.id!r}"
+                    )
+
+        for key, scenario in self.evaluation_scenarios.items():
+            for metric_key in scenario.metric_keys:
+                if metric_key not in self.evaluation_metrics:
+                    errors.append(
+                        f"evaluation scenario {key!r} references unknown metric {metric_key!r}"
+                    )
+
         # --- platform bindings --------------------------------------------
         platform_keys = set(self.platforms)
         seen_bindings: set[str] = set()
@@ -1137,6 +1239,9 @@ class MetamodelRegistry:
             for ref_ in gate.required_evidence_refs:
                 if ref_.id not in loaded.evidence_requirements:
                     errors.append(missing("evidence requirement", f"gate {gate_key}", ref_.id))
+            for ref_ in gate.required_evaluation_refs:
+                if ref_.id not in self.evaluation_suites:
+                    errors.append(missing("evaluation suite", f"gate {gate_key}", ref_.id))
             for role_key in gate.required_role_keys:
                 if role_key not in self.delivery_roles:
                     errors.append(missing("delivery role", f"gate {gate_key}", role_key))
