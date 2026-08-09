@@ -1,0 +1,184 @@
+# Platforms and technology bindings -- the vendor firewall.
+#
+# The only file in the metamodel allowed to name a cloud service. The AWS
+# entries exist so portability is demonstrated rather than asserted: the tests
+# resolve the same capability under both platforms and require the
+# capability-level answer to be identical.
+version: 0.1.0
+
+platforms:
+  - key: gcp
+    name: Google Cloud Platform
+    vendor: Google
+  - key: aws
+    name: Amazon Web Services
+    vendor: Amazon
+  - key: neutral
+    name: Platform Neutral
+    vendor: null
+
+technology_bindings:
+
+  - capability_key: streaming
+    platform_key: gcp
+    technologies: [pubsub, dataflow]
+    detection_hints: [google.cloud.pubsub, apache_beam, dataflow]
+  - capability_key: streaming
+    platform_key: aws
+    technologies: [kinesis, lambda]
+    detection_hints: [kinesis, firehose]
+
+  - capability_key: batch-ingestion
+    platform_key: gcp
+    technologies: [cloud-storage, bigquery-load]
+    detection_hints: ["gs://", "bq load"]
+  - capability_key: batch-ingestion
+    platform_key: aws
+    technologies: [s3, glue]
+    detection_hints: ["s3://", glue_job]
+
+  - capability_key: change-data-capture
+    platform_key: gcp
+    technologies: [datastream]
+    detection_hints: [datastream]
+  - capability_key: change-data-capture
+    platform_key: aws
+    technologies: [dms]
+    detection_hints: [dms, database-migration]
+
+  - capability_key: transformation
+    platform_key: gcp
+    technologies: [bigquery, dataform, dbt]
+    detection_hints: [bigquery, "dbt_project.yml", dataform]
+  - capability_key: transformation
+    platform_key: aws
+    technologies: [redshift, glue, dbt]
+    detection_hints: [redshift, glue, "dbt_project.yml"]
+  - capability_key: transformation
+    platform_key: neutral
+    technologies: [dbt, duckdb, spark]
+    detection_hints: ["dbt_project.yml", duckdb, pyspark]
+
+  - capability_key: orchestration
+    platform_key: gcp
+    technologies: [composer, cloud-scheduler]
+    detection_hints: [composer, airflow]
+  - capability_key: orchestration
+    platform_key: aws
+    technologies: [mwaa, step-functions]
+    detection_hints: [mwaa, step_functions]
+  - capability_key: orchestration
+    platform_key: neutral
+    technologies: [airflow, dagster, prefect]
+    detection_hints: [airflow, dagster, prefect]
+
+  - capability_key: data-modelling
+    platform_key: neutral
+    technologies: [erwin, dbt-docs, sqldbm]
+    detection_hints: ["schema.yml", erd]
+
+  - capability_key: metadata-management
+    platform_key: gcp
+    technologies: [dataplex, data-catalog]
+    detection_hints: [dataplex, data_catalog]
+  - capability_key: metadata-management
+    platform_key: aws
+    technologies: [glue-catalog, lake-formation]
+    detection_hints: [glue_catalog, lakeformation]
+
+  - capability_key: lineage
+    platform_key: gcp
+    technologies: [dataplex-lineage]
+    detection_hints: [lineage]
+  - capability_key: lineage
+    platform_key: neutral
+    technologies: [dbt-manifest, openlineage]
+    detection_hints: [manifest.json, openlineage, "ref("]
+
+  - capability_key: governance
+    platform_key: gcp
+    technologies: [dataplex, policy-tags]
+    detection_hints: [policy_tag, dataplex]
+  - capability_key: governance
+    platform_key: aws
+    technologies: [lake-formation]
+    detection_hints: [lakeformation]
+
+  - capability_key: security
+    platform_key: gcp
+    technologies: [iam, kms, secret-manager]
+    detection_hints: [service_account, "roles/", secretmanager]
+  - capability_key: security
+    platform_key: aws
+    technologies: [iam, kms, secrets-manager]
+    detection_hints: [iam_role, secretsmanager]
+
+  - capability_key: monitoring
+    platform_key: gcp
+    technologies: [cloud-logging, cloud-monitoring]
+    detection_hints: [stackdriver, cloud logging]
+  - capability_key: monitoring
+    platform_key: aws
+    technologies: [cloudwatch]
+    detection_hints: [cloudwatch]
+  - capability_key: monitoring
+    platform_key: neutral
+    technologies: [prometheus, grafana]
+    detection_hints: [prometheus, grafana]
+
+  - capability_key: cost-management
+    platform_key: gcp
+    technologies: [bigquery-slots, billing-export]
+    detection_hints: [slot, "partition by"]
+  - capability_key: cost-management
+    platform_key: aws
+    technologies: [cost-explorer]
+    detection_hints: [cost_explorer]
+
+  - capability_key: data-serving
+    platform_key: gcp
+    technologies: [bigquery, looker]
+    detection_hints: [bigquery, looker]
+  - capability_key: data-serving
+    platform_key: aws
+    technologies: [redshift, quicksight]
+    detection_hints: [redshift, quicksight]
+
+  - capability_key: data-quality
+    platform_key: neutral
+    technologies: [dbt-tests, great-expectations, soda]
+    detection_hints: ["dbt test", great_expectations, soda]
+
+  - capability_key: testing
+    platform_key: neutral
+    technologies: [pytest, dbt-tests]
+    detection_hints: [pytest, "tests/", conftest.py]
+
+  - capability_key: regression-testing
+    platform_key: neutral
+    technologies: [pytest, dbt-snapshot, reconciliation]
+    detection_hints: [baseline, snapshot, golden]
+
+  - capability_key: impact-analysis
+    platform_key: neutral
+    technologies: [dbt-state, git-diff, graph-traversal]
+    detection_hints: ["state:modified", "dbt ls"]
+
+  - capability_key: documentation
+    platform_key: neutral
+    technologies: [markdown, dbt-docs]
+    detection_hints: [README, "docs/"]
+
+  - capability_key: ci-cd
+    platform_key: gcp
+    technologies: [cloud-build]
+    detection_hints: [cloudbuild.yaml]
+  - capability_key: ci-cd
+    platform_key: neutral
+    technologies: [github-actions, gitlab-ci]
+    detection_hints: [.github/workflows, .gitlab-ci.yml]
+
+  - capability_key: infrastructure-as-code
+    platform_key: neutral
+    technologies: [terraform]
+    detection_hints: [".tf", terraform]

@@ -1,0 +1,173 @@
+# Architecture
+
+## What this system is
+
+A virtual engineering organization attached to an existing data engineering
+project. It reads the project as it actually is — *and reads how the
+organization actually delivers changes to it* — then works out what engineering
+functions are needed, staffs them with agents, proves those agents are fit
+before trusting them, and keeps validating changes against both dimensions.
+
+Operating modes, in adoption order:
+
+| Mode | Behaviour |
+|---|---|
+| **Assisted** | Agents analyse and recommend. Humans approve everything consequential. |
+| **Supervised autonomous** | Agents execute pre-approved low-risk actions within policy. |
+| Autonomous | Only certified actions execute automatically. Out of MVP scope. |
+
+## The dual twin
+
+```
+                        PROJECT DIGITAL TWIN
+                                 │
+              ┌──────────────────┴──────────────────┐
+              ▼                                     ▼
+      TECHNICAL TWIN                          DELIVERY TWIN
+   what has been built                 how the org governs change
+              │                                     │
+   Code · Pipelines · Assets            Phases · Tasks · Contracts
+   Schemas · Infra · Tests              Checklists · Gates · Approvals
+   Architecture · Changes               Standards · Controls · Evidence
+              │                                     │
+              └──────────────────┬──────────────────┘
+                                 ▼
+                          ONE PROJECT GRAPH
+```
+
+The two dimensions are **not** separate models. One `EntityType` enum, one
+`Relationship` type, one provenance model, one graph plane, one metadata plane.
+19 of the 63 relationship types are cross-twin joins, and they are what make the
+whole thing worth building. See ADR-0008.
+
+## Layered view
+
+```
+                        Web UI                       (later)
+                          │
+                     API Gateway                     (later)
+                          │
+                 Project Orchestrator                (later)
+                          │
+        ┌─────────────────┼─────────────────┐
+        │                 │                 │
+   Marketplace      Composition        Evaluation    (later)
+    Service           Engine             Harness
+        │                 │                 │
+        └─────────────────┼─────────────────┘
+                          │
+                   Agent Runtime                     (later)
+                          │
+   ╔══════════════════════╧══════════════════════╗
+   ║          ENGINES  (this phase)              ║
+   ║   context · gates · impact + traceability   ║
+   ╠═════════════════════════════════════════════╣
+   ║          METAMODEL  (this phase)            ║
+   ║   dual twin · relationships · provenance    ║
+   ║   registries · delivery model               ║
+   ╠═════════════════════════════════════════════╣
+   ║   PostgreSQL              Neo4j             ║
+   ║   metadata plane          graph plane       ║
+   ╚═════════════════════════════════════════════╝
+```
+
+Everything above the double line is replaceable. Everything at and below it is
+the platform.
+
+## The two storage planes
+
+| | **PostgreSQL — metadata plane** | **Neo4j — graph plane** |
+|---|---|---|
+| System of record for | entity **state** | relationship **traversal** |
+| Holds | versioned rows (both twins), relationship log, gate assessments, checklist outcomes, audit ledger | the dual twin: nodes and provenanced edges |
+| Answers | "what is this contract's configuration?" | "what breaks, and what does the process now require?" |
+| Rebuildable? | No — the durable copy | **Yes**, by projection |
+
+Nodes are keyed by `(entity_type, entity_id)` and carry no version. A node is
+the *thing*; versioned state lives in PostgreSQL. See ADR-0001.
+
+## The three engines
+
+Each is a pure function. None calls an LLM. That is what makes them unit
+testable in milliseconds and replayable after the fact.
+
+| Engine | Input | Output |
+|---|---|---|
+| **Context** (`engines/context/`) | policy + candidates | ordered bundle, drop reasons, stable hash |
+| **Gates** (`engines/gates/`) | gate + observed state | per-dimension scores, PASS/CONDITIONAL/BLOCKED, blockers |
+| **Impact** (`engines/impact/`) | change + graph + delivery model | technical blast radius **and** delivery obligations; traceability chains |
+
+## The organization model
+
+```
+Problem ──REQUIRES──▶ Capability ─┐
+                                  ├─REALIZED_BY──▶ EngineeringResponsibility
+Problem ──REQUIRES──▶ DeliveryCapability ─┘                  │
+                                                        FULFILLED_BY
+DeliveryRole ──ACCOUNTABLE_FOR──▶ EngineeringResponsibility  ▼
+   (who answers                                        EngineeringRole
+    in the org)                                             │
+                                                      IMPLEMENTED_BY
+                                                            ▼
+                                                          Agent
+                                          ┌─────────────────┼──────────────────┐
+                                      HAS_SKILL        USES_TOOL      CONSUMES_KNOWLEDGE
+```
+
+Four levels, not two. A delivery role is an organizational accountability that
+exists whether or not this platform does; an engineering role is a marketplace
+abstraction an agent implements. Naming the responsibility between them is what
+lets an organization reshuffle its job titles without invalidating the agent
+ecosystem. See ADR-0009.
+
+## The continuous loop
+
+```
+OBSERVE → DETECT CHANGE → TECHNICAL IMPACT + DELIVERY IMPACT → UPDATE CONTRACTS
+   ▲                                                                 │
+   │                                                                 ▼
+OBSERVE ← DELIVER ← APPROVAL GATE ← EVALUATE ← COLLECT EVIDENCE ← SELECT AGENTS
+                                                              ← RUN CHECKLISTS
+                                                              ← RUN TESTS
+```
+
+Phase 1 supplies the vocabulary this loop is recorded in and three of the steps
+as working code (impact, checklists + gates, context). It does not run the loop.
+
+## How governance is enforced
+
+Governance that cannot be enforced by the pipeline is decorative, so each rule
+is structural, and each has a test asserting the violation is refused.
+
+| Rule | Where enforced |
+|---|---|
+| Inference is never stated as fact | `Provenanced` validator + PostgreSQL `CHECK` |
+| **An inferred rule cannot block delivery** | `Blockable` mixin |
+| **Semantically extracted facts must name their document** | `Provenanced` validator + `CHECK` |
+| Every tool action is classified | `ToolAction.action_class` required, no default |
+| High-risk actions need a human | `ToolAction` validator |
+| Destructive actions always need two humans | `registry.validate()` |
+| **A waiver must carry reason, approver, timestamp and evidence** | `Waiver` + `ChecklistItemResult` |
+| **An expired waiver stops counting** | `evaluate_checklist` |
+| **A gate requiring nothing is rejected** | `ApprovalGate` validator |
+| **An advisory gate can never report BLOCKED** | `assess_gate` |
+| **A contract with no controls is rejected** | `DeliveryContract` validator |
+| **A non-delegable responsibility may name no engineering role** | `registry.validate()` |
+| **Exactly one accountable role per task** | `registry.validate()` |
+| **Phase dependency graphs must be acyclic** | `registry.validate()` |
+| No production deployment without certification *and* approval | `Deployment` validator |
+| Blocking metric failure cannot be outvoted | `Evaluation` validator |
+| Trust score is limited by the weaker dimension | `Evaluation.trust_score` |
+| No uncited findings | `Finding` validator |
+| Conditional approval must state conditions | `Approval` validator |
+| Audit ledger cannot be rewritten | hash chain + PostgreSQL `DO INSTEAD NOTHING` |
+
+## What Phase 1 does not do
+
+Document assimilation (§17–18) · marketplace resolution · composition engine ·
+agent runtime · any LLM call · evaluation execution · API · UI · autonomous
+production writes.
+
+The question this phase answers is narrower: *is there a metamodel precise
+enough — across both twins — that the rest can be built on it without being
+rewritten?*

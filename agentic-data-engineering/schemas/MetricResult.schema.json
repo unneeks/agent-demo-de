@@ -1,0 +1,62 @@
+{
+  "$id": "https://agentic-data-engineering/schemas/MetricResult.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "The measured value of one metric in one evaluation run.",
+  "properties": {
+    "blocking": {
+      "default": true,
+      "title": "Blocking",
+      "type": "boolean"
+    },
+    "detail": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Detail"
+    },
+    "dimension": {
+      "default": "technical",
+      "title": "Dimension",
+      "type": "string"
+    },
+    "metric_key": {
+      "minLength": 1,
+      "title": "Metric Key",
+      "type": "string"
+    },
+    "passed": {
+      "title": "Passed",
+      "type": "boolean"
+    },
+    "threshold": {
+      "title": "Threshold",
+      "type": "number"
+    },
+    "value": {
+      "title": "Value",
+      "type": "number"
+    },
+    "weight": {
+      "default": 1.0,
+      "minimum": 0.0,
+      "title": "Weight",
+      "type": "number"
+    }
+  },
+  "required": [
+    "metric_key",
+    "value",
+    "threshold",
+    "passed"
+  ],
+  "title": "MetricResult",
+  "type": "object",
+  "x-metamodel-version": "0.1.0"
+}

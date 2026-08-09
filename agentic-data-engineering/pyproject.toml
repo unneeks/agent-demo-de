@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "agentic-data-engineering"
+version = "0.1.0"
+description = "Dual-twin metamodel foundation for the Agentic Data Engineering Evolution Platform"
+requires-python = ">=3.11"
+dependencies = [
+    "pydantic>=2.6",
+    "PyYAML>=6.0",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0"]
+neo4j = ["neo4j>=5.14"]
+postgres = ["psycopg[binary]>=3.1"]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["domain*", "persistence*", "engines*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+markers = ["integration: requires a live Neo4j or PostgreSQL instance"]
+filterwarnings = ["error::DeprecationWarning"]
