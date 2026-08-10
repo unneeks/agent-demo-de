@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}{{ project_id }}{% endblock %}
+{% block content %}
+<h1>Project: {{ project_id }}</h1>
+<p class="muted">
+  {{ catalog_reference_count }} graph node(s) reached that are catalog references
+  (e.g. an EngineeringRole or Capability definition), not project-owned data --
+  omitted from the entity tables below.
+</p>
+
+<h2>Entities</h2>
+{% if entities_by_type %}
+  {% for entity_type, entities in entities_by_type.items() %}
+  <h3>{{ entity_type.value }} ({{ entities|length }})</h3>
+  <table>
+    <tr><th>ID</th><th>Name</th><th>Provenance</th></tr>
+    {% for e in entities %}
+    <tr><td>{{ e.id }}</td><td>{{ e.name }}</td><td>{{ e.provenance.value if e.provenance else "" }}</td></tr>
+    {% endfor %}
+  </table>
+  {% endfor %}
+{% else %}
+<p class="empty">No project-owned entities found.</p>
+{% endif %}
+
+<h2>Relationships</h2>
+{% if relationships_by_type %}
+  {% for rel_type, rels in relationships_by_type.items() %}
+  <h3>{{ rel_type }} ({{ rels|length }})</h3>
+  <table>
+    <tr><th>Source</th><th>Target</th><th>Provenance</th><th>Confidence</th><th>Discovered by</th></tr>
+    {% for r in rels %}
+    <tr>
+      <td>{{ r.source }}</td>
+      <td>{{ r.target }}</td>
+      <td>{{ r.provenance.value }}</td>
+      <td>{{ "%.2f"|format(r.confidence) if r.confidence is not none else "--" }}</td>
+      <td>{{ r.discovered_by or "--" }}</td>
+    </tr>
+    {% endfor %}
+  </table>
+  {% endfor %}
+{% else %}
+<p class="empty">No relationships found.</p>
+{% endif %}
+{% endblock %}

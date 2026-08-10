@@ -1,0 +1,91 @@
+# Skill catalog -- reusable, independently testable units of agent capability.
+#
+# Built exactly from the required_skills keys already declared across the 5
+# "staffed in the MVP" engineering roles in engineering_roles.yaml
+# (regression-engineer, impact-analysis-engineer, data-quality-engineer,
+# data-model-engineer, delivery-compliance-engineer). See ADR-0014: the 7
+# "catalogued, not staffed" roles' skill keys are deliberately not covered.
+#
+# discharges_checklist_items cites real item keys from the worked delivery
+# model (metamodel-registry/delivery-models/data-engineering.yaml) -- TST-01/
+# TST-02 on test-checklist, LMC-03 through LMC-07 on logical-model-checklist.
+version: 0.1.0
+skills:
+
+  - key: repository-discovery
+    name: Repository Discovery
+    required_tools: [git]
+    outputs:
+      repo_index: "path -> discovered entity map"
+    risk_level: LOW
+    deterministic: true
+
+  - key: dependency-analysis
+    name: Dependency Analysis
+    dependencies: [repository-discovery]
+    required_tools: [git]
+    risk_level: LOW
+
+  - key: impact-analysis
+    name: Impact Analysis
+    dependencies: [dependency-analysis]
+    required_tools: [git, neo4j]
+    risk_level: MEDIUM
+
+  - key: test-selection
+    name: Test Selection
+    dependencies: [impact-analysis]
+    required_tools: [git, pytest]
+    discharges_checklist_items: [TST-01]
+
+  - key: test-execution
+    name: Test Execution
+    required_tools: [pytest]
+    discharges_checklist_items: [TST-02]
+    risk_level: MEDIUM
+
+  - key: data-profiling
+    name: Data Profiling
+    required_tools: [bigquery]
+    outputs:
+      profile: "DataProfile-shaped statistics"
+
+  - key: conceptual-model-analysis
+    name: Conceptual Model Analysis
+    required_knowledge: [business-glossary]
+
+  - key: logical-model-generation
+    name: Logical Model Generation
+    dependencies: [conceptual-model-analysis]
+    required_tools: [modeling-tool, metadata-platform]
+    required_knowledge: [enterprise-data-standards, business-glossary]
+    discharges_checklist_items: [LMC-03, LMC-04, LMC-05, LMC-06]
+
+  - key: traceability-mapping
+    name: Traceability Mapping
+    required_knowledge: [business-glossary]
+    discharges_checklist_items: [LMC-07]
+
+  - key: delivery-process-discovery
+    name: Delivery Process Discovery
+    required_tools: [git]
+    required_knowledge: [delivery-model]
+
+  - key: checklist-validation
+    name: Checklist Validation
+    required_knowledge: [delivery-model]
+
+  - key: gate-readiness-assessment
+    name: Gate Readiness Assessment
+    dependencies: [checklist-validation]
+    required_tools: [neo4j]
+    required_knowledge: [delivery-model]
+
+  - key: evidence-validation
+    name: Evidence Validation
+    required_knowledge: [delivery-model]
+
+  - key: traceability-validation
+    name: Traceability Validation
+    required_tools: [neo4j]
+    required_knowledge: [delivery-model]

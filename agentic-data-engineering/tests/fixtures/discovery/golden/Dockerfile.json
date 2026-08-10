@@ -1,0 +1,19 @@
+{
+  "backend": "manually-authored",
+  "raw_response": {
+    "entities": [
+      {
+        "confidence": 0.85,
+        "entity_type": "Infrastructure",
+        "infrastructure_kind": "container_image",
+        "local_id": "i1",
+        "source_path": "Dockerfile",
+        "suggested_id": "agentic-ai-ollama-demo-image"
+      }
+    ],
+    "relationships": []
+  },
+  "recorded_at": "2026-08-09T00:00:00+00:00",
+  "request_hash": "f48a45524baa394389392003e2e10a5d6139c08dcfa8c0fbcb33fc59f3f1838e",
+  "source_path": "Dockerfile"
+}

@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>{% block title %}Agentic Data Engineering{% endblock %} -- Web UI</title>
+  <style>
+    body { font-family: -apple-system, Segoe UI, Helvetica, Arial, sans-serif; margin: 0; color: #1a1a2e; background: #fafafa; }
+    header { background: #1a1a2e; color: #fff; padding: 0.75rem 1.5rem; display: flex; align-items: center; gap: 1.5rem; }
+    header a { color: #f0f0f5; text-decoration: none; font-size: 0.95rem; }
+    header a:hover { text-decoration: underline; }
+    header .brand { font-weight: 600; margin-right: 1rem; }
+    main { padding: 1.5rem; max-width: 1100px; margin: 0 auto; }
+    h1 { font-size: 1.4rem; margin-top: 0; }
+    h2 { font-size: 1.1rem; margin-top: 2rem; border-bottom: 1px solid #ddd; padding-bottom: 0.25rem; }
+    table { border-collapse: collapse; width: 100%; margin: 0.5rem 0 1rem; font-size: 0.9rem; }
+    th, td { text-align: left; padding: 0.35rem 0.6rem; border-bottom: 1px solid #e5e5ea; vertical-align: top; }
+    th { background: #f0f0f5; font-weight: 600; }
+    tr:hover { background: #f5f5fa; }
+    .pill { display: inline-block; padding: 0.1rem 0.5rem; border-radius: 999px; font-size: 0.75rem; background: #e5e5ea; }
+    .pill.pass { background: #d4f4dd; color: #146c2e; }
+    .pill.conditional { background: #fff3cd; color: #8a6100; }
+    .pill.blocked { background: #f8d7da; color: #842029; }
+    .notice { background: #fff3cd; border: 1px solid #f0c14b; padding: 0.75rem 1rem; border-radius: 4px; margin: 0.75rem 0; font-size: 0.88rem; }
+    .muted { color: #6b6b78; font-size: 0.85rem; }
+    code { background: #eee; padding: 0.05rem 0.3rem; border-radius: 3px; font-size: 0.85em; }
+    .empty { color: #6b6b78; font-style: italic; padding: 0.5rem 0; }
+  </style>
+</head>
+<body>
+  <header>
+    <span class="brand">Agentic Data Engineering -- Web UI (read-only)</span>
+    <a href="/">Projects</a>
+    <a href="/delivery-models">Delivery Models</a>
+    <a href="/marketplace">Marketplace</a>
+    <a href="/evaluations">Evaluations</a>
+  </header>
+  <main>
+    {% block content %}{% endblock %}
+  </main>
+</body>
+</html>

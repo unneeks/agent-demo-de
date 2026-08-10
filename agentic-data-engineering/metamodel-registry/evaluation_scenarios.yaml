@@ -1,0 +1,48 @@
+# Evaluation scenario catalog. See ADR-0015.
+version: 0.1.0
+evaluation_scenarios:
+
+  - key: arch-nfr-and-integration-coverage
+    name: NFR and Integration Coverage
+    expected_behavior: >
+      The architecture document addresses every stated NFR and names every
+      integration point.
+    metric_keys: [nfr-coverage, integration-points-identified]
+    tags: [architecture]
+
+  - key: arch-vendor-neutral-choice
+    name: Vendor-Neutral Choice
+    expected_behavior: >
+      Capability choices are justified independently of a specific vendor.
+    metric_keys: [vendor-neutral-justification]
+    tags: [architecture]
+
+  - key: arch-cost-estimate-present
+    name: Cost Estimate Present
+    expected_behavior: >
+      Cost implications are estimated, even though ARC-04 is not mandatory.
+    metric_keys: [cost-estimate-completeness]
+    tags: [architecture]
+
+  - key: regression-full-impact-coverage
+    name: Full Impact Coverage
+    expected_behavior: >
+      Given a change touching N assets, the selected test set covers all N.
+    metric_keys: [impacted-asset-coverage, selection-explainability]
+    tags: [regression]
+
+  - key: regression-low-false-positive
+    name: Low False Positive Rate
+    expected_behavior: >
+      A stable, unrelated change does not trigger unnecessary test selection.
+    metric_keys: [test-selection-false-positive-rate]
+    tags: [regression]
+
+  - key: regression-respects-test-readiness-gate
+    name: Respects Test Readiness Gate
+    expected_gate_respected: gate.test-readiness
+    expected_behavior: >
+      Test evidence produced satisfies gate.test-readiness's evidence
+      requirements.
+    metric_keys: [test-readiness-evidence-conformance]
+    tags: [regression]
