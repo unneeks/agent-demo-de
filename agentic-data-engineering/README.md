@@ -66,7 +66,7 @@ Every layer in the layered diagram below is now built.
 | Web UI | server-rendered, read-only dashboard, 6 routes, in-process against `ProjectGraphService`/`MetamodelRegistry`, zero writes — [`docs/web-ui.md`](docs/web-ui.md) |
 | API Gateway | read-write `/api/*`, same process as the Web UI — register/ingest/relate, trigger evaluations/gate-assessment/agent-runs/cycles — [`docs/api-gateway.md`](docs/api-gateway.md) |
 | 79 JSON Schema artifacts | committed, with a drift check |
-| 757 tests | 667 unit with the `web` extra installed (607 unit, 14 skipped cleanly without it) |
+| 766 tests | 676 unit with the `web` extra installed (616 unit, 14 skipped cleanly without it) |
 
 ---
 
@@ -79,7 +79,7 @@ pip install -e ".[dev]"
 
 python scripts/validate_registries.py     # registries + the worked delivery model
 python scripts/export_schemas.py --check  # JSON Schema drift check
-pytest tests/unit -q                      # 607 tests, zero infrastructure (webui tests skip cleanly)
+pytest tests/unit -q                      # 616 tests, zero infrastructure (webui tests skip cleanly)
 pytest tests/contract -q                  # in-memory adapters; real stores skip
 ```
 
@@ -94,7 +94,7 @@ To run the Web UI dashboard and the `/api/*` gateway, install the `web` extra:
 
 ```bash
 pip install -e ".[web]"
-pytest tests/unit -q                      # 641 tests, webui + API routes included
+pytest tests/unit -q                      # 676 tests, webui + API routes included
 python scripts/run_web.py --seed-demo-project   # http://127.0.0.1:8000 (UI) and /api/* (JSON)
 ```
 
@@ -105,6 +105,14 @@ API key (or have `copilot`/`gh` on `PATH`):
 pip install -e ".[agent]"
 export ANTHROPIC_API_KEY=...
 pytest tests/integration -q -m agent_integration  # skips cleanly without either backend
+```
+
+To onboard a real project (register it, run live discovery, optionally gap
+analysis and a gate assessment, in one guided walkthrough), see
+[`docs/onboarding.md`](docs/onboarding.md):
+
+```bash
+python scripts/onboard_project.py
 ```
 
 ---
@@ -246,8 +254,8 @@ discovery/                 Uniform agent-based extraction: walk, resolve, orches
 orchestrator/              run_cycle(): composes gap analysis, discovery, impact, composition, evaluation, agent runs, gates
 agent_runtime/             run_agent(): multi-turn loop, LLM backends, simulated tool execution, approval gating
 webui/                     create_app(): read-only HTML dashboard (routes/) + read-write JSON API (api/)
-scripts/                   validate_registries.py, export_schemas.py, record_extraction_fixtures.py, record_agent_fixtures.py, run_web.py
-docs/                      Architecture, metamodel spec, delivery model, graph model, project graph, discovery, marketplace, evaluation, orchestrator, agent runtime, web UI, API gateway, gap analysis
+scripts/                   validate_registries.py, export_schemas.py, record_extraction_fixtures.py, record_agent_fixtures.py, run_web.py, onboard_project.py
+docs/                      Architecture, metamodel spec, delivery model, graph model, project graph, discovery, marketplace, evaluation, orchestrator, agent runtime, web UI, API gateway, gap analysis, onboarding
 tests/unit/                No infrastructure needed (webui/API tests skip without the web extra)
 tests/contract/            One contract, run against every adapter
 tests/integration/         Live discovery + agent backends, independently skippable

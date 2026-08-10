@@ -26,6 +26,7 @@ phase can overturn one knowingly rather than by accident.
 | [0019](0019-api-gateway.md) | API Gateway: read-write `/api/*` routes, same process as the Web UI | Every write path `orchestrator`/`agent_runtime` left as a plain function call now has an HTTP caller; every layer in `docs/architecture.md`'s diagram is now built |
 | [0020](0020-composition-conformance.md) | Composition calls `DeliveryContract.conformance_of()` for real, via an optional `contract` parameter on `resolve_role()` | Closes a real, self-acknowledged gap between `contracts.py`'s stated purpose and what Phase 4 actually wired up; a role-satisfying but non-conformant agent is now correctly rejected from real project staffing |
 | [0021](0021-capability-gap-analysis.md) | Capability gap analysis with coarse automatic maturity inference, wired into `run_cycle()` as a new optional step | Closes the other half of the Composition Engine's original spec line; `capabilities.yaml`/`delivery_capabilities.yaml`'s `detection_hints`/`realized_by_roles` finally have a consumer |
+| [0022](0022-onboarding-script.md) | Interactive `scripts/onboard_project.py`, composing existing calls, no new engine code | Onboarding a real project is now one guided command instead of four docs and hand-written glue; surfaced (and cleanly handled, not fixed) a real uncaught-`ExtractionError` boundary gap in `discover_project`/`run_cycle` |
 
 ## Deferred, and why
 
