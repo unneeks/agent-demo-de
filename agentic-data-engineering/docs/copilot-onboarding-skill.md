@@ -25,6 +25,6 @@ The Copilot agent does not attempt to reinvent or write custom Python code for i
 6. It will then optionally help you launch the Web UI to view your new project graph.
 
 ## File Locations
-- **Prompt Definition**: `.github/prompts/onboard-project.prompt.md`
+- **Prompt Definition**: `agentic-data-engineering/.github/prompts/onboard-project.prompt.md`
 - **Underlying Script**: `scripts/onboard_project.py`
 - **ADR**: [ADR-0023: Copilot Onboarding Skill](adr/0023-copilot-onboarding-skill.md)

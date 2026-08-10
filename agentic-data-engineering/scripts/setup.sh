@@ -18,7 +18,7 @@ rm -f AGENTS.md
 ln -s CLAUDE.md AGENTS.md
 
 # Link GitHub Copilot rule file to CLAUDE.md
-mkdir -p ../.github
-ln -sf ../agentic-data-engineering/CLAUDE.md ../.github/copilot-instructions.md
+mkdir -p .github
+ln -sf ../CLAUDE.md .github/copilot-instructions.md
 
 echo "Setup complete! All AI assistants now share CLAUDE.md."
