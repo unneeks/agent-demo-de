@@ -12,6 +12,12 @@ from orchestrator.agent_step import AgentRunRequest, run_agents
 from orchestrator.cycle import ObserveRequest, run_cycle
 from orchestrator.errors import OrchestratorError, UnknownGateError
 from orchestrator.evaluate import EvaluationRequest, run_evaluations
+from orchestrator.gap_analysis import (
+    GapAnalysisOutcome,
+    GapAnalysisRequest,
+    GapStaffingRecommendation,
+    analyze_project_capability_gaps,
+)
 from orchestrator.gate import GateRequest, assemble_gate_state, assess_gate_readiness
 from orchestrator.result import (
     AgentRunOutcome,
@@ -29,11 +35,15 @@ __all__ = [
     "CycleReport",
     "EvaluationOutcome",
     "EvaluationRequest",
+    "GapAnalysisOutcome",
+    "GapAnalysisRequest",
+    "GapStaffingRecommendation",
     "GateRequest",
     "ObserveRequest",
     "OrchestratorError",
     "StaffingOutcome",
     "UnknownGateError",
+    "analyze_project_capability_gaps",
     "assemble_gate_state",
     "assess_gate_readiness",
     "engineering_roles_for_obligation",

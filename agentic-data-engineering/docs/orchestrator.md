@@ -37,6 +37,10 @@ were always documented as caller-supplied but never had a caller.
 ```
 run_cycle(service, registry, delivery_model, project_ref, metadata, ...)
 
+  GAP ANALYSIS (optional)     analyze_project_capability_gaps()     ADR-0021
+                              -- runs independently of change/observe
+        │
+        ▼
   OBSERVE (optional)         discover_project()                    Phase 3
         │
         ▼
@@ -129,6 +133,20 @@ def assess_traceability(self, starts: list[EntityRef], **kwargs) -> float:
 their refs through this method — real, graph-sourced traceability, not a
 literal.
 
+## Capability gap analysis (ADR-0021)
+
+`run_cycle(..., gap_analysis=GapAnalysisRequest(desired_maturity=...))`
+infers coarse `Capability`/`DeliveryCapability` maturity from real
+project facts, diffs it against the caller-supplied desired maturity, and
+persists itemized `CapabilityGap`s plus advisory (never
+`IMPLEMENTED_BY`-writing) role recommendations. `orchestrator/
+gap_analysis.py`'s fetch follows `orchestrator/gate.py`'s own
+`metadata.list(...)`-and-filter idiom, not a graph traversal — so this
+step needed no new `graph: GraphRepository` parameter on `run_cycle()`.
+See [`docs/gap-analysis.md`](gap-analysis.md) for the full design,
+including the honesty-gap finding that shaped its delivery-maturity
+signal.
+
 ## The four-level staffing chain, worked
 
 `select_agents()` walks the real, already-modeled chain from a
@@ -192,7 +210,9 @@ by design.
   a deliberate boundary — not silently ignored. `evaluate_checklist()`'s
   `ChecklistItemResult` input is technically as wireable as
   `passed_evaluation_keys()` was, and is deliberately **not** wired here to
-  keep the boundary crisp rather than fuzzy.
+  keep the boundary crisp rather than fuzzy. This same finding is why
+  `docs/gap-analysis.md` (ADR-0021) does not reuse `assess_readiness()`/
+  `GateReadiness.status` as its delivery-capability maturity signal.
 - **No `Deployment`/DELIVER-step automation.** Deploying stays a separate,
   human/future-phase-triggered action; `Deployment.evaluation_ref`/
   `approval_ref` still aren't checked for resolving to anything real.

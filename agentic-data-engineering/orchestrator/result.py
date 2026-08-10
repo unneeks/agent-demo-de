@@ -17,6 +17,7 @@ from engines.composition import RoleResolution
 from engines.evaluation import AgentAdvancement
 from engines.gates import GateReadiness
 from engines.impact import ChangeImpact
+from orchestrator.gap_analysis import GapAnalysisOutcome
 
 
 @dataclass(frozen=True)
@@ -85,4 +86,5 @@ class CycleReport:
     agent_runs: list[AgentRunOutcome] = field(default_factory=list)
     evaluations: list[EvaluationOutcome] = field(default_factory=list)
     gate_readiness: dict[str, GateReadiness] = field(default_factory=dict)
+    gap_analysis: GapAnalysisOutcome | None = None
     failed: list[CycleFailure] = field(default_factory=list)

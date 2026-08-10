@@ -19,7 +19,11 @@ if str(REPO_ROOT) not in sys.path:
 from domain.metamodel.base import EntityRef, utc_now  # noqa: E402
 from domain.metamodel.entities.evaluation import Evaluation  # noqa: E402
 from domain.metamodel.entities.organization import Agent, Skill, Tool, ToolAction  # noqa: E402
-from domain.metamodel.entities.shared.capability import Requirement  # noqa: E402
+from domain.metamodel.entities.shared.capability import (  # noqa: E402
+    Capability,
+    DeliveryCapability,
+    Requirement,
+)
 from domain.metamodel.entities.shared.context import ContextItem, ContextPolicy  # noqa: E402
 from domain.metamodel.entities.technical import (  # noqa: E402
     Change,
@@ -259,6 +263,38 @@ def make_policy(
             "policy_key": policy_id,
             "max_tokens": max_tokens,
         },
+        kwargs,
+    )
+
+
+def make_capability(
+    capability_key: str, project_id: str = "demo", *, maturity: int = 0, **kwargs: object
+) -> Capability:
+    return _build(  # type: ignore[return-value]
+        Capability,
+        _discovered(
+            EntityType.CAPABILITY,
+            f"{project_id}:{capability_key}",
+            project_ref=ref(EntityType.PROJECT, project_id),
+            capability_key=capability_key,
+            maturity=maturity,
+        ),
+        kwargs,
+    )
+
+
+def make_delivery_capability(
+    delivery_capability_key: str, project_id: str = "demo", *, maturity: int = 0, **kwargs: object
+) -> DeliveryCapability:
+    return _build(  # type: ignore[return-value]
+        DeliveryCapability,
+        _discovered(
+            EntityType.DELIVERY_CAPABILITY,
+            f"{project_id}:{delivery_capability_key}",
+            project_ref=ref(EntityType.PROJECT, project_id),
+            delivery_capability_key=delivery_capability_key,
+            maturity=maturity,
+        ),
         kwargs,
     )
 

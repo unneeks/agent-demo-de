@@ -25,6 +25,7 @@ from project_graph.service import ProjectGraphService
 
 from orchestrator import (
     EvaluationRequest,
+    GapAnalysisRequest,
     GateRequest,
     OrchestratorError,
     run_cycle,
@@ -32,7 +33,7 @@ from orchestrator import (
 from orchestrator.gate import assemble_gate_state, assess_gate_readiness
 from orchestrator.staffing import engineering_roles_for_obligation, select_agents
 
-from tests.conftest import make_change, make_project, make_requirement, ref
+from tests.conftest import make_change, make_evaluation, make_pipeline, make_project, make_requirement, make_test, ref
 
 PROJECT_REF = ref(EntityType.PROJECT, "demo")
 
@@ -416,3 +417,113 @@ class TestObserveProjectMismatch:
                     project=other_project, client=_FakeClient(), repository_root=Path(".")
                 ),
             )
+
+
+class TestGapAnalysisStep:
+    """ADR-0021: the other half of the Composition Engine's original
+    intent -- 'given a project's capability gaps, resolves which
+    Engineering Roles are needed' -- run end to end through `run_cycle`,
+    not just its pure pieces in isolation."""
+
+    def test_gap_analysis_runs_independently_of_change_and_observe(
+        self, service, registry, metadata, delivery_model
+    ) -> None:
+        pipeline = make_pipeline("stg_customers", pipeline_kind="dbt_model")
+        test = make_test("regression_stg_customers", covers_refs=[ref(EntityType.PIPELINE, "stg_customers")])
+        service.ingest_entity(pipeline)
+        service.ingest_entity(test)
+
+        contract = delivery_model.contract_for("task.regression-test")
+        evaluation_request_subject = ref(EntityType.DELIVERY_CONTRACT, contract.contract_key)
+        service.ingest_entity(
+            make_evaluation("eval-regression-contract", subject_ref=evaluation_request_subject, passed=True)
+        )
+
+        report = run_cycle(
+            service,
+            registry,
+            delivery_model,
+            PROJECT_REF,
+            metadata,
+            gap_analysis=GapAnalysisRequest(
+                desired_maturity={"transformation": 1, "regression-assurance": 1}
+            ),
+        )
+
+        assert report.failed == []
+        assert report.gap_analysis is not None
+        # Real Pipeline/Test evidence gets transformation to a non-zero
+        # inferred maturity, and the real passing Evaluation against
+        # task.regression-test's real DeliveryContract gets
+        # regression-assurance to a non-zero one too -- both clear the
+        # low desired bar, so no gap. The worked example proves the whole
+        # chain wires up end to end, not that a gap exists.
+        assert report.gap_analysis.gaps == []
+
+        capabilities = metadata.list(EntityType.CAPABILITY)
+        assert any(c.payload["capability_key"] == "transformation" for c in capabilities)
+        delivery_capabilities = metadata.list(EntityType.DELIVERY_CAPABILITY)
+        assert any(
+            c.payload["delivery_capability_key"] == "regression-assurance" for c in delivery_capabilities
+        )
+
+    def test_a_real_gap_produces_a_persisted_capability_gap_and_recommendation(
+        self, service, registry, metadata, delivery_model
+    ) -> None:
+        report = run_cycle(
+            service,
+            registry,
+            delivery_model,
+            PROJECT_REF,
+            metadata,
+            gap_analysis=GapAnalysisRequest(desired_maturity={"regression-assurance": 4}),
+        )
+
+        assert report.failed == []
+        [gap] = report.gap_analysis.gaps
+        assert gap.capability_key == "regression-assurance"
+        assert gap.current_maturity == 0  # no pipelines/evaluations ingested this test
+        assert gap.desired_maturity == 4
+        assert gap.recommended_role_keys == ["regression-engineer"]
+
+        stored_gaps = metadata.list(EntityType.CAPABILITY_GAP)
+        assert len(stored_gaps) == 1
+
+        [recommendation] = report.gap_analysis.recommendations
+        assert recommendation.role_key == "regression-engineer"
+        assert recommendation.resolution.is_staffable  # regression-agent, unchanged Phase 4 logic
+
+    def test_out_of_range_desired_maturity_is_recorded_not_raised(
+        self, service, registry, metadata, delivery_model
+    ) -> None:
+        """`CapabilityGap.desired_maturity` is bounded 0-5 by the entity
+        itself; a caller-supplied value outside that range fails
+        `CapabilityGap` construction, and `run_cycle` records that as a
+        CycleFailure rather than propagating a raw ValidationError."""
+        report = run_cycle(
+            service,
+            registry,
+            delivery_model,
+            PROJECT_REF,
+            metadata,
+            gap_analysis=GapAnalysisRequest(desired_maturity={"regression-assurance": 9}),
+        )
+        assert report.gap_analysis is None
+        assert report.failed
+        assert report.failed[0].kind == "gap_analysis_failed"
+
+    def test_no_project_registration_required(self, service, registry, metadata, delivery_model) -> None:
+        """Unlike staffing/evaluate/gate, this step never calls
+        `_require_project` -- it completes even for a project no other
+        step in this cycle has touched."""
+        unregistered = ref(EntityType.PROJECT, "never-registered")
+        report = run_cycle(
+            service,
+            registry,
+            delivery_model,
+            unregistered,
+            metadata,
+            gap_analysis=GapAnalysisRequest(desired_maturity={"regression-assurance": 4}),
+        )
+        assert report.gap_analysis is not None
+        assert report.failed == []

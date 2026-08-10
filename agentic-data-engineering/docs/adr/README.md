@@ -25,6 +25,7 @@ phase can overturn one knowingly rather than by accident.
 | [0018](0018-web-ui.md) | Web UI: a server-rendered, read-only dashboard, in-process, no API Gateway | Every `ProjectGraphService` method and the full marketplace/delivery-model catalog now has a human-visible viewer; API Gateway is the last layer still `(later)` |
 | [0019](0019-api-gateway.md) | API Gateway: read-write `/api/*` routes, same process as the Web UI | Every write path `orchestrator`/`agent_runtime` left as a plain function call now has an HTTP caller; every layer in `docs/architecture.md`'s diagram is now built |
 | [0020](0020-composition-conformance.md) | Composition calls `DeliveryContract.conformance_of()` for real, via an optional `contract` parameter on `resolve_role()` | Closes a real, self-acknowledged gap between `contracts.py`'s stated purpose and what Phase 4 actually wired up; a role-satisfying but non-conformant agent is now correctly rejected from real project staffing |
+| [0021](0021-capability-gap-analysis.md) | Capability gap analysis with coarse automatic maturity inference, wired into `run_cycle()` as a new optional step | Closes the other half of the Composition Engine's original spec line; `capabilities.yaml`/`delivery_capabilities.yaml`'s `detection_hints`/`realized_by_roles` finally have a consumer |
 
 ## Deferred, and why
 
@@ -68,13 +69,14 @@ endpoint accepts a filesystem path from a remote caller; rate limiting;
 run-history persistence.
 
 **Composition — capability-gap-driven role resolution** (§ per the
-original spec's Composition Engine line) — ADR-0020 wires the
-`conformance_of()` half of that line for real. **Still not started:**
-the "given a project's capability gaps, resolves which roles are needed"
-half — no code anywhere constructs a `Capability`/`DeliveryCapability`/
-`CapabilityGap` instance for a real project, and the registry has no
-"desired maturity" data to compare an observed one against. A real
-gap-analysis engine, not a wiring change, would be needed to close it.
+original spec's Composition Engine line) — ADR-0020 wired the
+`conformance_of()` half of that line for real; ADR-0021
+(`docs/gap-analysis.md`) delivers the other half — `engines/gap_analysis/`
+infers coarse `Capability`/`DeliveryCapability` maturity from real project
+facts, diffs it against a caller-supplied desired maturity, and persists
+itemized `CapabilityGap`s plus advisory role recommendations, wired into
+`run_cycle()` as a new optional step. Both halves of the original spec
+line are now delivered.
 
 **Document assimilation** (§17–18) — the extraction pipeline that would populate
 a delivery model from Markdown, PDF and DOCX. Phase 3 (ADR-0013,

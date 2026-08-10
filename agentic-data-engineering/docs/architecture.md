@@ -93,17 +93,20 @@ is a thin front door onto the same ports, not a new layer of infrastructure.
 Nodes are keyed by `(entity_type, entity_id)` and carry no version. A node is
 the *thing*; versioned state lives in PostgreSQL. See ADR-0001.
 
-## The four engines
+## The engines
 
 Each is a pure function. None calls an LLM. That is what makes them unit
-testable in milliseconds and replayable after the fact.
+testable in milliseconds and replayable after the fact. (Phase 1 shipped the
+first four; `engines/gap_analysis/` closes ADR-0021's deferred half of the
+Composition Engine.)
 
 | Engine | Input | Output |
 |---|---|---|
 | **Context** (`engines/context/`) | policy + candidates | ordered bundle, drop reasons, stable hash |
 | **Gates** (`engines/gates/`) | gate + observed state | per-dimension scores, PASS/CONDITIONAL/BLOCKED, blockers |
 | **Impact** (`engines/impact/`) | change + graph + delivery model | technical blast radius **and** delivery obligations; traceability chains |
-| **Composition** (`engines/composition/`) | engineering role + agent catalog | matches, near-misses, itemized gaps (Phase 4) |
+| **Composition** (`engines/composition/`) | engineering role + agent catalog | matches, near-misses, itemized gaps (Phase 4); delivery conformance (ADR-0020) |
+| **Gap Analysis** (`engines/gap_analysis/`) | observed + desired capability maturity | itemized `CapabilityGap`s, recommended engineering roles (ADR-0021) |
 
 ## The organization model
 
