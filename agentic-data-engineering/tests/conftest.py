@@ -18,6 +18,14 @@ if str(REPO_ROOT) not in sys.path:
 
 from domain.metamodel.base import EntityRef, utc_now  # noqa: E402
 from domain.metamodel.entities.evaluation import Evaluation  # noqa: E402
+from domain.metamodel.entities.foundry import (  # noqa: E402
+    CandidateAgent,
+    CandidateReview,
+    CandidateSkill,
+    CandidateTool,
+    EngineeringObservation,
+    EngineeringPattern,
+)
 from domain.metamodel.entities.organization import Agent, Skill, Tool, ToolAction  # noqa: E402
 from domain.metamodel.entities.shared.capability import Requirement  # noqa: E402
 from domain.metamodel.entities.shared.context import ContextItem, ContextPolicy  # noqa: E402
@@ -289,4 +297,138 @@ def make_context_item(
         as_of=reference - timedelta(days=age_days),
         content=content,
         content_reference=f"ref://{item_id}" if citable else None,
+    )
+
+
+def make_observation(
+    observation_id: str, project_id: str = "demo", **kwargs: object
+) -> EngineeringObservation:
+    return _build(  # type: ignore[return-value]
+        EngineeringObservation,
+        _discovered(
+            EntityType.ENGINEERING_OBSERVATION,
+            observation_id,
+            project_ref=ref(EntityType.PROJECT, project_id),
+            source_ref=ref(EntityType.PIPELINE, "p1"),
+            source_type="pipeline",
+            activity="dbt_model",
+        ),
+        kwargs,
+    )
+
+
+def make_pattern(
+    pattern_id: str,
+    project_id: str = "demo",
+    *,
+    observation_refs: list[EntityRef] | None = None,
+    **kwargs: object,
+) -> EngineeringPattern:
+    refs = observation_refs or [
+        ref(EntityType.ENGINEERING_OBSERVATION, "o1"),
+        ref(EntityType.ENGINEERING_OBSERVATION, "o2"),
+    ]
+    return _build(  # type: ignore[return-value]
+        EngineeringPattern,
+        {
+            "id": pattern_id,
+            "name": pattern_id,
+            "entity_type": EntityType.ENGINEERING_PATTERN,
+            "provenance": ProvenanceState.INFERRED,
+            "confidence": 1.0,
+            "discovered_by": DISCOVERER,
+            "project_ref": ref(EntityType.PROJECT, project_id),
+            "pattern_key": pattern_id,
+            "category": "pipeline_shape",
+            "observation_refs": refs,
+            "frequency": len(refs),
+            "common_activity": "dbt_model",
+            "similarity_score": 1.0,
+        },
+        kwargs,
+    )
+
+
+def make_candidate_skill(
+    candidate_id: str,
+    *,
+    proposed_key: str | None = None,
+    pattern_refs: list[EntityRef] | None = None,
+    proposed_skill: Skill | None = None,
+    **kwargs: object,
+) -> CandidateSkill:
+    key = proposed_key or candidate_id
+    refs = pattern_refs or [ref(EntityType.ENGINEERING_PATTERN, "pattern-1")]
+    return _build(  # type: ignore[return-value]
+        CandidateSkill,
+        {
+            "id": candidate_id,
+            "name": candidate_id,
+            "entity_type": EntityType.CANDIDATE_SKILL,
+            "provenance": ProvenanceState.INFERRED,
+            "confidence": 1.0,
+            "discovered_by": DISCOVERER,
+            "review": CandidateReview(
+                proposed_key=key, derived_from_pattern_refs=refs, rationale="test rationale"
+            ),
+            "proposed_skill": proposed_skill or make_skill(key),
+        },
+        kwargs,
+    )
+
+
+def make_candidate_tool(
+    candidate_id: str,
+    *,
+    proposed_key: str | None = None,
+    pattern_refs: list[EntityRef] | None = None,
+    proposed_tool: Tool | None = None,
+    **kwargs: object,
+) -> CandidateTool:
+    key = proposed_key or candidate_id
+    refs = pattern_refs or [ref(EntityType.ENGINEERING_PATTERN, "pattern-1")]
+    return _build(  # type: ignore[return-value]
+        CandidateTool,
+        {
+            "id": candidate_id,
+            "name": candidate_id,
+            "entity_type": EntityType.CANDIDATE_TOOL,
+            "provenance": ProvenanceState.INFERRED,
+            "confidence": 1.0,
+            "discovered_by": DISCOVERER,
+            "review": CandidateReview(
+                proposed_key=key, derived_from_pattern_refs=refs, rationale="test rationale"
+            ),
+            "proposed_tool": proposed_tool or make_tool(key),
+        },
+        kwargs,
+    )
+
+
+def make_candidate_agent(
+    candidate_id: str,
+    *,
+    proposed_key: str | None = None,
+    pattern_refs: list[EntityRef] | None = None,
+    proposed_agent: Agent | None = None,
+    role_key: str = "data-model-engineer",
+    **kwargs: object,
+) -> CandidateAgent:
+    key = proposed_key or candidate_id
+    refs = pattern_refs or [ref(EntityType.ENGINEERING_PATTERN, "pattern-1")]
+    return _build(  # type: ignore[return-value]
+        CandidateAgent,
+        {
+            "id": candidate_id,
+            "name": candidate_id,
+            "entity_type": EntityType.CANDIDATE_AGENT,
+            "provenance": ProvenanceState.INFERRED,
+            "confidence": 1.0,
+            "discovered_by": DISCOVERER,
+            "review": CandidateReview(
+                proposed_key=key, derived_from_pattern_refs=refs, rationale="test rationale"
+            ),
+            "proposed_agent": proposed_agent or make_agent(key, role_key),
+        },
+        kwargs,
     )

@@ -81,7 +81,7 @@ class EvaluationSuite(MetamodelEntity):
     twin: Twin = Twin.SHARED
 
     suite_key: str = Field(min_length=1)
-    level: str = Field(description="skill | agent | workflow | ecosystem")
+    level: str = Field(description="skill | tool | agent | workflow | ecosystem")
     scenario_refs: list[EntityRef] = Field(default_factory=list)
     metric_refs: list[EntityRef] = Field(default_factory=list)
     passing_score: float = Field(default=0.8, ge=0.0, le=1.0)
@@ -92,7 +92,7 @@ class EvaluationSuite(MetamodelEntity):
 
     @model_validator(mode="after")
     def _level_must_be_known(self) -> EvaluationSuite:
-        allowed = {"skill", "agent", "workflow", "ecosystem"}
+        allowed = {"skill", "tool", "agent", "workflow", "ecosystem"}
         if self.level not in allowed:
             raise ValueError(f"level must be one of {sorted(allowed)}, got {self.level!r}")
         return self

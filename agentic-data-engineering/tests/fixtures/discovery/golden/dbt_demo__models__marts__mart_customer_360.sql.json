@@ -36,6 +36,6 @@
     ]
   },
   "recorded_at": "2026-08-09T00:00:00+00:00",
-  "request_hash": "fac0c30e3de65fa35fef404cf5687e5ccd78e7a09ed3d1418839ac1e5fdf082b",
+  "request_hash": "a708bc6d9c82e0d6772be277bdad526befb3b54083aa300c1af1a91b1f2b6fab",
   "source_path": "dbt_demo/models/marts/mart_customer_360.sql"
 }

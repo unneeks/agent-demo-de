@@ -1,0 +1,772 @@
+{
+  "$defs": {
+    "ActionClass": {
+      "description": "Blast radius of one tool action. Required on every action.",
+      "enum": [
+        "READ_ONLY",
+        "LOW_RISK_WRITE",
+        "HIGH_RISK_WRITE",
+        "DESTRUCTIVE"
+      ],
+      "title": "ActionClass",
+      "type": "string"
+    },
+    "ApprovalLevel": {
+      "enum": [
+        "NONE",
+        "SAMPLED_QA",
+        "SINGLE_REVIEWER",
+        "MAKER_CHECKER"
+      ],
+      "title": "ApprovalLevel",
+      "type": "string"
+    },
+    "CandidateReview": {
+      "additionalProperties": false,
+      "description": "Review-workflow state shared by all three candidate kinds.\n\nKept as a shared value object rather than duplicated three times, and\nkept strictly separate from ``ProvenanceState``: provenance says how\nmuch to trust the *fact* that this candidate was synthesized this way\n(INFERRED, from a pattern); ``candidate_status`` says how far the\n*proposal itself* has progressed through human review.",
+      "properties": {
+        "candidate_status": {
+          "$ref": "#/$defs/CandidateStatus",
+          "default": "CANDIDATE"
+        },
+        "derived_from_pattern_refs": {
+          "items": {
+            "$ref": "#/$defs/EntityRef"
+          },
+          "minItems": 1,
+          "title": "Derived From Pattern Refs",
+          "type": "array"
+        },
+        "evaluation_ref": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/EntityRef"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "proposed_key": {
+          "minLength": 1,
+          "title": "Proposed Key",
+          "type": "string"
+        },
+        "rationale": {
+          "minLength": 1,
+          "title": "Rationale",
+          "type": "string"
+        },
+        "rejection_reason": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Rejection Reason"
+        },
+        "reviewed_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Reviewed At"
+        },
+        "reviewed_by": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Reviewed By"
+        }
+      },
+      "required": [
+        "proposed_key",
+        "derived_from_pattern_refs",
+        "rationale"
+      ],
+      "title": "CandidateReview",
+      "type": "object"
+    },
+    "CandidateStatus": {
+      "description": "Review progress of an unpublished marketplace candidate (Foundry).\n\nDeliberately NOT ``AgentLifecycle``: ``advance_agent()`` is structurally\nbound to a *registered* Agent's ``agent_key``, and ``Skill``/``Tool``\nhave no lifecycle field at all. A candidate before publish has no\nregistry identity, so it needs its own, smaller lifecycle.\n``CERTIFIED`` is terminal here -- publish-to-YAML is a human act\noutside the system this phase builds.",
+      "enum": [
+        "CANDIDATE",
+        "EVALUATED",
+        "CERTIFIED",
+        "REJECTED"
+      ],
+      "title": "CandidateStatus",
+      "type": "string"
+    },
+    "EntityRef": {
+      "additionalProperties": false,
+      "description": "A typed, optionally version-pinned pointer to another entity.",
+      "properties": {
+        "id": {
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "Id",
+          "type": "string"
+        },
+        "type": {
+          "$ref": "#/$defs/EntityType"
+        },
+        "version": {
+          "anyOf": [
+            {
+              "examples": [
+                "1.0.0",
+                "2.1.0-rc.1"
+              ],
+              "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-((?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+([0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Pin to an exact version. None means 'whatever is current'.",
+          "title": "Version"
+        }
+      },
+      "required": [
+        "type",
+        "id"
+      ],
+      "title": "EntityRef",
+      "type": "object"
+    },
+    "EntityType": {
+      "description": "Every entity type in the metamodel, across both twins.\n\n``EntityRef`` and the relationship-type registry validate against this, so a\ntypo in a reference or a registry file fails loudly instead of creating a\ndangling edge.",
+      "enum": [
+        "Project",
+        "Repository",
+        "CodeArtifact",
+        "Pipeline",
+        "DataAsset",
+        "SchemaDefinition",
+        "DataProfile",
+        "Infrastructure",
+        "CloudResource",
+        "ArchitectureElement",
+        "Test",
+        "Incident",
+        "Change",
+        "Deployment",
+        "DeliveryModel",
+        "DeliveryPhase",
+        "DeliveryTask",
+        "DeliveryActivity",
+        "DeliveryArtifact",
+        "DeliveryInput",
+        "DeliveryOutput",
+        "DeliveryProcess",
+        "DeliveryContract",
+        "Checklist",
+        "ChecklistItem",
+        "AcceptanceCriterion",
+        "ApprovalGate",
+        "ApprovalRule",
+        "Approval",
+        "EvidenceRequirement",
+        "DefinitionOfDone",
+        "Standard",
+        "Template",
+        "Methodology",
+        "Control",
+        "RaciAssignment",
+        "DeliveryRole",
+        "EngineeringResponsibility",
+        "EngineeringRole",
+        "Agent",
+        "Skill",
+        "Tool",
+        "KnowledgePack",
+        "Policy",
+        "Problem",
+        "Requirement",
+        "Capability",
+        "DeliveryCapability",
+        "CapabilityGap",
+        "Workflow",
+        "Task",
+        "Artifact",
+        "Event",
+        "Decision",
+        "Observation",
+        "Evaluation",
+        "EvaluationSuite",
+        "EvaluationScenario",
+        "EvaluationMetric",
+        "Evidence",
+        "Finding",
+        "Platform",
+        "TechnologyBinding",
+        "Memory",
+        "ContextPolicy",
+        "ContextBundle",
+        "ContextItem",
+        "ProjectSnapshot",
+        "EngineeringObservation",
+        "EngineeringPattern",
+        "CandidateSkill",
+        "CandidateTool",
+        "CandidateAgent"
+      ],
+      "title": "EntityType",
+      "type": "string"
+    },
+    "ExtractionMethod": {
+      "description": "How a delivery fact was obtained from a document.\n\nDelivery metadata is largely extracted from prose, so the extraction method\ntravels with the fact: a heading match and an LLM reading of a paragraph\nwarrant different scepticism.",
+      "enum": [
+        "DIRECT_DECLARATION",
+        "STRUCTURED_PARSE",
+        "PATTERN_MATCH",
+        "SEMANTIC_EXTRACTION",
+        "HUMAN_ENTRY"
+      ],
+      "title": "ExtractionMethod",
+      "type": "string"
+    },
+    "ProvenanceState": {
+      "description": "How a fact came to be believed. See ADR-0003.",
+      "enum": [
+        "OBSERVED",
+        "INFERRED",
+        "HUMAN_VERIFIED",
+        "CERTIFIED"
+      ],
+      "title": "ProvenanceState",
+      "type": "string"
+    },
+    "Tool": {
+      "additionalProperties": false,
+      "description": "An external executable capability the platform can invoke.",
+      "properties": {
+        "actions": {
+          "items": {
+            "$ref": "#/$defs/ToolAction"
+          },
+          "title": "Actions",
+          "type": "array"
+        },
+        "attributes": {
+          "additionalProperties": true,
+          "description": "Adapter-specific detail that has not earned a first-class field yet.",
+          "title": "Attributes",
+          "type": "object"
+        },
+        "auditable": {
+          "default": true,
+          "title": "Auditable",
+          "type": "boolean"
+        },
+        "authentication": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Mechanism, never a secret.",
+          "title": "Authentication"
+        },
+        "category": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Category"
+        },
+        "cost_profile": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Cost Profile"
+        },
+        "created_at": {
+          "format": "date-time",
+          "title": "Created At",
+          "type": "string"
+        },
+        "description": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Description"
+        },
+        "entity_type": {
+          "$ref": "#/$defs/EntityType",
+          "default": "Tool"
+        },
+        "id": {
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "Id",
+          "type": "string"
+        },
+        "labels": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Labels",
+          "type": "array"
+        },
+        "metamodel_version": {
+          "default": "0.1.0",
+          "examples": [
+            "1.0.0",
+            "2.1.0-rc.1"
+          ],
+          "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-((?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+([0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?$",
+          "title": "Metamodel Version",
+          "type": "string"
+        },
+        "name": {
+          "maxLength": 512,
+          "minLength": 1,
+          "title": "Name",
+          "type": "string"
+        },
+        "platform_key": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Platform Key"
+        },
+        "provider": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Provider"
+        },
+        "rate_limits": {
+          "additionalProperties": {
+            "type": "integer"
+          },
+          "title": "Rate Limits",
+          "type": "object"
+        },
+        "required_permissions": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Required Permissions",
+          "type": "array"
+        },
+        "security_constraints": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Security Constraints",
+          "type": "array"
+        },
+        "tool_key": {
+          "minLength": 1,
+          "title": "Tool Key",
+          "type": "string"
+        },
+        "twin": {
+          "$ref": "#/$defs/Twin",
+          "default": "SHARED"
+        },
+        "updated_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Updated At"
+        },
+        "version": {
+          "default": "0.1.0",
+          "examples": [
+            "1.0.0",
+            "2.1.0-rc.1"
+          ],
+          "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-((?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+([0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?$",
+          "title": "Version",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "tool_key"
+      ],
+      "title": "Tool",
+      "type": "object"
+    },
+    "ToolAction": {
+      "additionalProperties": false,
+      "description": "One callable operation on a tool.\n\n``action_class`` has no default on purpose: an unclassified action cannot be\nconstructed, so none can slip past an approval policy by omission.",
+      "properties": {
+        "action_class": {
+          "$ref": "#/$defs/ActionClass"
+        },
+        "description": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Description"
+        },
+        "input_schema": {
+          "additionalProperties": true,
+          "title": "Input Schema",
+          "type": "object"
+        },
+        "minimum_approval": {
+          "$ref": "#/$defs/ApprovalLevel",
+          "default": "NONE"
+        },
+        "name": {
+          "minLength": 1,
+          "title": "Name",
+          "type": "string"
+        },
+        "output_schema": {
+          "additionalProperties": true,
+          "title": "Output Schema",
+          "type": "object"
+        },
+        "rate_limit_per_minute": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Rate Limit Per Minute"
+        },
+        "required_permissions": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Required Permissions",
+          "type": "array"
+        },
+        "reversible": {
+          "default": true,
+          "title": "Reversible",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "name",
+        "action_class"
+      ],
+      "title": "ToolAction",
+      "type": "object"
+    },
+    "Twin": {
+      "description": "Which dimension of the digital twin an entity belongs to.\n\nBoth dimensions share one graph and one provenance model; this is a label\nfor navigation and reporting, not a partition. See ADR-0008.",
+      "enum": [
+        "TECHNICAL",
+        "DELIVERY",
+        "SHARED"
+      ],
+      "title": "Twin",
+      "type": "string"
+    }
+  },
+  "$id": "https://agentic-data-engineering/schemas/CandidateTool.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "An unpublished, synthesized Tool proposal.",
+  "properties": {
+    "attributes": {
+      "additionalProperties": true,
+      "description": "Adapter-specific detail that has not earned a first-class field yet.",
+      "title": "Attributes",
+      "type": "object"
+    },
+    "confidence": {
+      "anyOf": [
+        {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Confidence"
+    },
+    "created_at": {
+      "format": "date-time",
+      "title": "Created At",
+      "type": "string"
+    },
+    "description": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Description"
+    },
+    "discovered_at": {
+      "format": "date-time",
+      "title": "Discovered At",
+      "type": "string"
+    },
+    "discovered_by": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Adapter, skill or agent that produced this, e.g. 'git-discovery@0.1.0'.",
+      "title": "Discovered By"
+    },
+    "entity_type": {
+      "$ref": "#/$defs/EntityType",
+      "default": "CandidateTool"
+    },
+    "evidence_refs": {
+      "items": {
+        "$ref": "#/$defs/EntityRef"
+      },
+      "title": "Evidence Refs",
+      "type": "array"
+    },
+    "extraction_method": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/ExtractionMethod"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "human_verified_at": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Human Verified At"
+    },
+    "human_verified_by": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Human Verified By"
+    },
+    "id": {
+      "maxLength": 256,
+      "minLength": 1,
+      "title": "Id",
+      "type": "string"
+    },
+    "labels": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Labels",
+      "type": "array"
+    },
+    "metamodel_version": {
+      "default": "0.1.0",
+      "examples": [
+        "1.0.0",
+        "2.1.0-rc.1"
+      ],
+      "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-((?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+([0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?$",
+      "title": "Metamodel Version",
+      "type": "string"
+    },
+    "name": {
+      "maxLength": 512,
+      "minLength": 1,
+      "title": "Name",
+      "type": "string"
+    },
+    "proposed_tool": {
+      "$ref": "#/$defs/Tool"
+    },
+    "provenance": {
+      "$ref": "#/$defs/ProvenanceState"
+    },
+    "review": {
+      "$ref": "#/$defs/CandidateReview"
+    },
+    "source_document": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Document this was extracted from -- path, URI or document id.",
+      "title": "Source Document"
+    },
+    "source_section": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Section, heading or page within the source document.",
+      "title": "Source Section"
+    },
+    "twin": {
+      "$ref": "#/$defs/Twin",
+      "default": "SHARED"
+    },
+    "updated_at": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Updated At"
+    },
+    "valid_from": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Valid From"
+    },
+    "valid_until": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Valid Until"
+    },
+    "version": {
+      "default": "0.1.0",
+      "examples": [
+        "1.0.0",
+        "2.1.0-rc.1"
+      ],
+      "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-((?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+([0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?$",
+      "title": "Version",
+      "type": "string"
+    }
+  },
+  "required": [
+    "provenance",
+    "name",
+    "review",
+    "proposed_tool"
+  ],
+  "title": "CandidateTool",
+  "type": "object",
+  "x-metamodel-version": "0.1.0",
+  "x-twin": "SHARED"
+}

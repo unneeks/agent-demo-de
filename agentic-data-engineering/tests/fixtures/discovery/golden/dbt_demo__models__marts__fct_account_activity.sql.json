@@ -29,6 +29,6 @@
     ]
   },
   "recorded_at": "2026-08-09T00:00:00+00:00",
-  "request_hash": "cb7397e1a05b4c8e685c9128637eb13bf379ef60b6d951ad6c3c85af9a970737",
+  "request_hash": "6acba0f3273a47f54ae0aaa66d06c43ccb952fd040b73d0c828865c7bef25019",
   "source_path": "dbt_demo/models/marts/fct_account_activity.sql"
 }

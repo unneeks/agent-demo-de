@@ -119,7 +119,12 @@
         "ContextPolicy",
         "ContextBundle",
         "ContextItem",
-        "ProjectSnapshot"
+        "ProjectSnapshot",
+        "EngineeringObservation",
+        "EngineeringPattern",
+        "CandidateSkill",
+        "CandidateTool",
+        "CandidateAgent"
       ],
       "title": "EntityType",
       "type": "string"

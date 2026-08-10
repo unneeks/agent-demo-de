@@ -67,6 +67,7 @@ whole thing worth building. See ADR-0008.
    ║      ENGINES  (Phase 1, composition P4)     ║
    ║  context · gates · impact + traceability    ║
    ║  composition -- role/agent resolution       ║
+   ║  foundry -- mining, pattern discovery (P10) ║
    ╠═════════════════════════════════════════════╣
    ║          METAMODEL  (Phase 1)               ║
    ║   dual twin · relationships · provenance    ║
@@ -80,6 +81,12 @@ whole thing worth building. See ADR-0008.
 Everything above the double line is replaceable. Everything at and below it is
 the platform. The project graph service does not widen what's replaceable — it
 is a thin front door onto the same ports, not a new layer of infrastructure.
+
+Marketplace Foundry (Phase 10) reads through the same Project Graph Service
+every other consumer does, but is not a Project Orchestrator step and is not
+drawn in the vertical chain above it — it is triggered independently, any
+time a project's graph already exists, via `scripts/run_foundry.py`. See
+[`docs/marketplace-foundry.md`](marketplace-foundry.md).
 
 ## The two storage planes
 
@@ -104,6 +111,7 @@ testable in milliseconds and replayable after the fact.
 | **Gates** (`engines/gates/`) | gate + observed state | per-dimension scores, PASS/CONDITIONAL/BLOCKED, blockers |
 | **Impact** (`engines/impact/`) | change + graph + delivery model | technical blast radius **and** delivery obligations; traceability chains |
 | **Composition** (`engines/composition/`) | engineering role + agent catalog | matches, near-misses, itemized gaps (Phase 4) |
+| **Foundry** (`engines/foundry/`) | mined observations | recurring patterns, candidate completeness scores (Phase 10; `foundry/synthesis/` layers one LLM call on top, independently invoked) |
 
 ## The organization model
 

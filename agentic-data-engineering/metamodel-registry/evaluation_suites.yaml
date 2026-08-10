@@ -49,3 +49,38 @@ evaluation_suites:
     passing_score: 0.85
     passing_delivery_score: 0.95
     applies_to: [regression-engineer]
+
+  # Marketplace Foundry (Phase 10): structural completeness only, no
+  # scenarios -- engines/foundry/evaluation.py::score_candidate_completeness()
+  # scores a candidate's own declared shape, not a simulated run against
+  # scenarios. passing_delivery_score defaults to 0.9 (EvaluationSuite's
+  # own default) but candidate-checklist-traceability is non-blocking, so a
+  # candidate with no checklist story can still pass the technical bar.
+
+  - key: foundry-candidate-skill-completeness
+    name: Foundry Candidate Skill Completeness
+    level: skill
+    metrics:
+      - candidate-io-contract-completeness
+      - candidate-checklist-traceability
+      - candidate-pattern-support
+    passing_score: 0.7
+    passing_delivery_score: 0.0
+
+  - key: foundry-candidate-tool-completeness
+    name: Foundry Candidate Tool Completeness
+    level: tool
+    metrics:
+      - candidate-io-contract-completeness
+      - candidate-pattern-support
+    passing_score: 0.7
+    passing_delivery_score: 0.0
+
+  - key: foundry-candidate-agent-completeness
+    name: Foundry Candidate Agent Completeness
+    level: agent
+    metrics:
+      - candidate-io-contract-completeness
+      - candidate-pattern-support
+    passing_score: 0.7
+    passing_delivery_score: 0.0

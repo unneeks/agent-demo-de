@@ -38,6 +38,6 @@
     "relationships": []
   },
   "recorded_at": "2026-08-09T00:00:00+00:00",
-  "request_hash": "852a32e9b70b16b20138a29b8e1e036c78c815343ba9204db47d25fa361e942e",
+  "request_hash": "cd271451b6afe4742e73fa9325ddf89a231aca199a10c102960c25b91fbee97f",
   "source_path": "docker-compose.yml"
 }

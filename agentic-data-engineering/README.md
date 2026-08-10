@@ -18,7 +18,7 @@ builds.
 
 ---
 
-## Status: Phase 1–9 — Dual-Twin Metamodel Foundation + Project Graph Service + Discovery + Marketplace + Evaluation Harness + Project Orchestrator + Agent Runtime + Web UI + API Gateway
+## Status: Phase 1–10 — Dual-Twin Metamodel Foundation + Project Graph Service + Discovery + Marketplace + Evaluation Harness + Project Orchestrator + Agent Runtime + Web UI + API Gateway + Marketplace Foundry
 
 Phase 1 deliberately contains **no** document assimilation, composition engine,
 agent runtime, LLM calls, evaluation *execution*, API or UI. Those concepts are
@@ -44,12 +44,20 @@ routes in the same process, sharing the same backend — register a
 project, ingest entities/relationships, trigger evaluations/gate
 assessments/agent runs/full cycles, translating JSON into the same live
 objects `orchestrator`/`agent_runtime` already require, server-side only.
-Every layer in the layered diagram below is now built.
+Every layer in the layered diagram below is now built. Phase 10 adds
+Marketplace Foundry, developed on its own branch/PR as a new,
+independently-shippable feature rather than an addition to the sequential
+phase line: mine a project's already-ingested graph for recurring
+engineering patterns, synthesize candidate Skills/Tools/Agents from them
+via an LLM (the one step in the pipeline that calls one, reusing
+discovery's own `ExtractionClient` Protocol), and score their structural
+completeness — invoked independently, any time, via
+`scripts/run_foundry.py`, never wired into `run_cycle()`.
 
 | Delivered | |
 |---|---|
-| 68 entity types | 12 technical · 24 delivery · 32 shared |
-| 64 relationship types | 19 of them **cross-twin joins** |
+| 73 entity types | 12 technical · 24 delivery · 37 shared |
+| 67 relationship types | 19 of them **cross-twin joins** |
 | Four-state provenance | plus document provenance and the inferred-cannot-block rule |
 | Four-level role chain | DeliveryRole → Responsibility → EngineeringRole → Agent |
 | YAML registries | capabilities (both kinds), the role chain, relationships, platforms, approvals, the marketplace catalog, the evaluation catalog |
@@ -64,8 +72,9 @@ Every layer in the layered diagram below is now built.
 | Agent runtime | `run_agent()`: a real multi-turn planner-executor loop, 2 live LLM backends + 1 replay behind `AgentLLMClient`, 1 simulated `ToolExecutor` covering all 7 catalog tools, approval-gated `LOW_RISK_WRITE` — [`docs/agent-runtime.md`](docs/agent-runtime.md) |
 | Web UI | server-rendered, read-only dashboard, 6 routes, in-process against `ProjectGraphService`/`MetamodelRegistry`, zero writes — [`docs/web-ui.md`](docs/web-ui.md) |
 | API Gateway | read-write `/api/*`, same process as the Web UI — register/ingest/relate, trigger evaluations/gate-assessment/agent-runs/cycles — [`docs/api-gateway.md`](docs/api-gateway.md) |
-| 79 JSON Schema artifacts | committed, with a drift check |
-| 726 tests | 636 unit with the `web` extra installed (576 unit, 14 skipped cleanly without it) |
+| Marketplace Foundry | mine → discover patterns → LLM-synthesize candidate Skills/Tools/Agents → score structural completeness, `scripts/run_foundry.py` — [`docs/marketplace-foundry.md`](docs/marketplace-foundry.md) |
+| 85 JSON Schema artifacts | committed, with a drift check |
+| 802 tests | 712 unit with the `web` extra installed (652 unit, 14 skipped cleanly without it) |
 
 ---
 
@@ -78,7 +87,7 @@ pip install -e ".[dev]"
 
 python scripts/validate_registries.py     # registries + the worked delivery model
 python scripts/export_schemas.py --check  # JSON Schema drift check
-pytest tests/unit -q                      # 576 tests, zero infrastructure (webui tests skip cleanly)
+pytest tests/unit -q                      # 652 tests, zero infrastructure (webui tests skip cleanly)
 pytest tests/contract -q                  # in-memory adapters; real stores skip
 ```
 
@@ -93,7 +102,7 @@ To run the Web UI dashboard and the `/api/*` gateway, install the `web` extra:
 
 ```bash
 pip install -e ".[web]"
-pytest tests/unit -q                      # 636 tests, webui + API routes included
+pytest tests/unit -q                      # 712 tests, webui + API routes included
 python scripts/run_web.py --seed-demo-project   # http://127.0.0.1:8000 (UI) and /api/* (JSON)
 ```
 
@@ -232,20 +241,22 @@ than dropping them.
 ```
 domain/metamodel/          Entities (both twins), relationships, registry, versioning
 metamodel-registry/        Versioned YAML vocabularies + the worked delivery model
-schemas/                   79 generated JSON Schema artifacts, committed
+schemas/                   85 generated JSON Schema artifacts, committed
 persistence/               ports.py + memory/ + neo4j/ + postgres/
 engines/context/           Deterministic context assembly
 engines/gates/             Checklist evaluation and gate readiness
 engines/impact/            Dual impact analysis and traceability
 engines/composition/       Marketplace role/agent resolution
 engines/evaluation/        Evaluation harness: run a suite, gate the agent lifecycle
+engines/foundry/           Pure mining, pattern discovery, candidate completeness scoring, candidate lifecycle
 project_graph/             ProjectGraphService: lifecycle, snapshotting, query facade
 discovery/                 Uniform agent-based extraction: walk, resolve, orchestrate, extraction/
 orchestrator/              run_cycle(): composes discovery, impact, composition, evaluation, agent runs, gates
 agent_runtime/             run_agent(): multi-turn loop, LLM backends, simulated tool execution, approval gating
 webui/                     create_app(): read-only HTML dashboard (routes/) + read-write JSON API (api/)
-scripts/                   validate_registries.py, export_schemas.py, record_extraction_fixtures.py, record_agent_fixtures.py, run_web.py
-docs/                      Architecture, metamodel spec, delivery model, graph model, project graph, discovery, marketplace, evaluation, orchestrator, agent runtime, web UI, API gateway
+foundry/                   run_foundry_cycle(): mine -> discover -> LLM-synthesize -> evaluate, synthesis/ reuses discovery's ExtractionClient
+scripts/                   validate_registries.py, export_schemas.py, record_extraction_fixtures.py, record_agent_fixtures.py, run_web.py, run_foundry.py
+docs/                      Architecture, metamodel spec, delivery model, graph model, project graph, discovery, marketplace, evaluation, orchestrator, agent runtime, web UI, API gateway, marketplace foundry
 tests/unit/                No infrastructure needed (webui/API tests skip without the web extra)
 tests/contract/            One contract, run against every adapter
 tests/integration/         Live discovery + agent backends, independently skippable
@@ -281,6 +292,23 @@ translates JSON into the same live Python objects `orchestrator`/
 `AgentLLMClient`/filesystem path. See [`docs/api-gateway.md`](docs/api-gateway.md)
 and [ADR-0019](docs/adr/0019-api-gateway.md).
 
+Phase 10, Marketplace Foundry, is complete on its own branch/PR: given a
+project's already-ingested graph, `engines/foundry/mining.py` and
+`discovery.py` deterministically mine `EngineeringObservation`s and group
+them into `EngineeringPattern`s (no LLM, exact-match grouping plus
+set-overlap similarity — crude and honestly labelled as such), then
+`foundry/synthesis/` calls an LLM exactly once per pattern per requested
+candidate kind to author a `CandidateSkill`/`CandidateTool`/`CandidateAgent`
+proposal's descriptive content — reusing `discovery/extraction/`'s
+`ExtractionClient` Protocol unmodified, the platform (never the LLM)
+still assigning candidate identity and provenance. `engines/foundry/
+evaluation.py` scores each candidate's structural completeness through
+the real, unmodified evaluation harness. Positioned beside Composition/
+Evaluation in the layered diagram, reading from Project Graph Service the
+same way they do, but **independently invoked** — `scripts/run_foundry.py`,
+never a `run_cycle()` step. See [`docs/marketplace-foundry.md`](docs/marketplace-foundry.md)
+and [ADR-0020](docs/adr/0020-marketplace-foundry.md).
+
 **Every layer `docs/architecture.md`'s layered diagram names is now
 built**, `(later)` next to none of them. That does not mean the platform
 is production-ready — it means the *architectural skeleton* is complete.
@@ -300,3 +328,12 @@ caller-supplied by design outside the one gate-assess endpoint that lets a
 caller populate them — full artifact/evidence/approval *detection* is its
 own, larger future phase. Nothing beyond this foundation should be built
 until it is reviewed.
+
+Marketplace Foundry adds its own, separately scoped non-goals, named in
+full in [`docs/marketplace-foundry.md`](docs/marketplace-foundry.md): no
+shadow mode or certification workflow beyond a 4-state `CandidateStatus`,
+no publish-to-YAML mechanism (a human hand-writes the registry diff from a
+`CERTIFIED` candidate's payload), no cross-project/enterprise clustering,
+no knowledge-pack/delivery-blueprint synthesis, no continuous-learning
+feedback loop, and no raw repo/document re-scanning — it mines only what
+`discovery/` already ingested.

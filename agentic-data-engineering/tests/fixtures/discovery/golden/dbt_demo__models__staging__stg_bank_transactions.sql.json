@@ -22,6 +22,6 @@
     ]
   },
   "recorded_at": "2026-08-09T00:00:00+00:00",
-  "request_hash": "7ab47c6330f99b50d0254062a28da8048a39630656b8c75d48663e2a557f4993",
+  "request_hash": "96fe59f399190e1c33add9547fc23afa0646ca6e76fc27badae18e527680fd8e",
   "source_path": "dbt_demo/models/staging/stg_bank_transactions.sql"
 }

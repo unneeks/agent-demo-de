@@ -458,3 +458,28 @@ relationship_types:
     target_types: [ContextBundle, Evidence, KnowledgePack, Standard]
     requires_provenance: false
     dimension: SHARED
+
+  # ======================================================================
+  # MARKETPLACE FOUNDRY
+  # ======================================================================
+
+  - key: OBSERVES
+    description: A project's mined technical/delivery graph produced this engineering observation.
+    source_types: [Project]
+    target_types: [EngineeringObservation]
+    requires_provenance: true
+    dimension: CROSS
+
+  - key: CONTRIBUTES_TO
+    description: An engineering observation is grouped into a recurring engineering pattern.
+    source_types: [EngineeringObservation]
+    target_types: [EngineeringPattern]
+    requires_provenance: true
+    dimension: SHARED
+
+  - key: SYNTHESIZES
+    description: A recurring engineering pattern was distilled into a marketplace candidate.
+    source_types: [EngineeringPattern]
+    target_types: [CandidateSkill, CandidateTool, CandidateAgent]
+    requires_provenance: true
+    dimension: SHARED

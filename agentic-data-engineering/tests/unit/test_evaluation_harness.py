@@ -38,6 +38,24 @@ def _at(year: int, month: int, day: int) -> datetime:
     return datetime(year, month, day, tzinfo=timezone.utc)
 
 
+class TestEvaluationSuiteLevel:
+    def test_tool_is_now_a_known_level(self) -> None:
+        """Found gap (Phase 10): CandidateTool had no honest `level` to
+        evaluate under -- `skill | agent | workflow | ecosystem` had no
+        `tool`. See metamodel-registry/evaluation_suites.yaml's
+        foundry-candidate-tool-completeness."""
+        suite = EvaluationSuite(
+            id="s", name="s", entity_type=EntityType.EVALUATION_SUITE, suite_key="s", level="tool"
+        )
+        assert suite.level == "tool"
+
+    def test_an_unknown_level_still_raises(self) -> None:
+        with pytest.raises(ValidationError, match="level must be one of"):
+            EvaluationSuite(
+                id="s", name="s", entity_type=EntityType.EVALUATION_SUITE, suite_key="s", level="bogus"
+            )
+
+
 class TestRunSuite:
     def test_passing_observed_values_produce_a_passing_evaluation(self, registry) -> None:
         suite = registry.evaluation_suites[REGRESSION_SUITE]

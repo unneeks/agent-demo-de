@@ -87,3 +87,36 @@ evaluation_metrics:
     weight: 1.0
     blocking: true
     unit: fraction
+
+  # Marketplace Foundry (Phase 10): structural/contract-completeness proxy
+  # metrics for an unpublished candidate -- there is no benchmark corpus or
+  # execution sandbox in this codebase to replay a candidate against, so
+  # this stays honestly narrow rather than inventing historical-performance
+  # numbers. See docs/marketplace-foundry.md.
+
+  - key: candidate-io-contract-completeness
+    name: Candidate I/O Contract Completeness
+    dimension: technical
+    threshold: 1.0
+    higher_is_better: true
+    weight: 2.0
+    blocking: true
+    unit: boolean
+
+  - key: candidate-checklist-traceability
+    name: Candidate Checklist Traceability
+    dimension: delivery
+    threshold: 1.0
+    higher_is_better: true
+    weight: 1.0
+    blocking: false
+    unit: boolean
+
+  - key: candidate-pattern-support
+    name: Candidate Pattern Support
+    dimension: technical
+    threshold: 0.4
+    higher_is_better: true
+    weight: 1.0
+    blocking: false
+    unit: fraction

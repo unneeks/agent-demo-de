@@ -109,7 +109,12 @@
         "ContextPolicy",
         "ContextBundle",
         "ContextItem",
-        "ProjectSnapshot"
+        "ProjectSnapshot",
+        "EngineeringObservation",
+        "EngineeringPattern",
+        "CandidateSkill",
+        "CandidateTool",
+        "CandidateAgent"
       ],
       "title": "EntityType",
       "type": "string"
@@ -178,7 +183,7 @@
       "type": "array"
     },
     "level": {
-      "description": "skill | agent | workflow | ecosystem",
+      "description": "skill | tool | agent | workflow | ecosystem",
       "title": "Level",
       "type": "string"
     },

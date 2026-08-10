@@ -24,6 +24,7 @@ phase can overturn one knowingly rather than by accident.
 | [0017](0017-agent-runtime.md) | Agent runtime: a real multi-turn planner-executor loop, all tool execution simulated | `engines/context/assembler.assemble()` finally has a caller; `ToolAction.minimum_approval` finally gates a call; the last named gap short of API/UI |
 | [0018](0018-web-ui.md) | Web UI: a server-rendered, read-only dashboard, in-process, no API Gateway | Every `ProjectGraphService` method and the full marketplace/delivery-model catalog now has a human-visible viewer; API Gateway is the last layer still `(later)` |
 | [0019](0019-api-gateway.md) | API Gateway: read-write `/api/*` routes, same process as the Web UI | Every write path `orchestrator`/`agent_runtime` left as a plain function call now has an HTTP caller; every layer in `docs/architecture.md`'s diagram is now built |
+| [0020](0020-marketplace-foundry.md) | Marketplace Foundry: mine → discover patterns → LLM-synthesize candidates → score completeness, on its own branch/PR | `discovery/extraction/`'s `ExtractionClient` Protocol gets a second real caller; a new, deliberately smaller `CandidateStatus` proves `AgentLifecycle` was the wrong lifecycle to reuse |
 
 ## Deferred, and why
 
@@ -65,6 +66,24 @@ authentication or authorization — every write endpoint is reachable by
 anyone who can reach the process; OBSERVE/discovery over HTTP — no
 endpoint accepts a filesystem path from a remote caller; rate limiting;
 run-history persistence.
+
+**Marketplace Foundry** — delivered in Phase 10 (ADR-0020,
+`docs/marketplace-foundry.md`), on its own branch/PR rather than an
+addition to this sequential platform line. Deterministic mining and
+pattern discovery over a project's already-ingested graph
+(`engines/foundry/`), LLM-backed candidate content synthesis reusing
+`discovery/extraction/`'s `ExtractionClient` Protocol unmodified
+(`foundry/synthesis/`), and structural-completeness evaluation through the
+real, unmodified evaluation harness — independently invocable via
+`scripts/run_foundry.py`, never wired into `orchestrator.cycle.run_cycle()`.
+**Still not started:** shadow mode; any certification workflow beyond the
+4-state `CandidateStatus`; an actual publish-to-YAML mechanism (a human
+hand-writes the registry diff from a certified candidate's payload today);
+any new UI or API surface; cross-project/enterprise clustering;
+knowledge-pack/delivery-blueprint synthesis; a continuous-learning
+feedback loop from real usage; and any raw repo/document re-scanning —
+Foundry mines only what `discovery/` already ingested, never duplicating
+its job.
 
 **Document assimilation** (§17–18) — the extraction pipeline that would populate
 a delivery model from Markdown, PDF and DOCX. Phase 3 (ADR-0013,

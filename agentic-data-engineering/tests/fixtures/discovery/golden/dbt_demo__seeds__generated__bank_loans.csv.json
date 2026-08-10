@@ -50,6 +50,6 @@
     ]
   },
   "recorded_at": "2026-08-09T00:00:00+00:00",
-  "request_hash": "8e56f81363b9d2055698be73bd927c9b6f9a07232e6acf7cff47ea3ee5263404",
+  "request_hash": "7d99b6d01e8a475a927da94da60c45f4c3851d91b837460b1d97e5b03d0d69a1",
   "source_path": "dbt_demo/seeds/generated/bank_loans.csv"
 }

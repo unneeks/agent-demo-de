@@ -117,6 +117,13 @@ class EntityType(StrEnum):
     # --- Project graph (Phase 2) -------------------------------------------
     PROJECT_SNAPSHOT = "ProjectSnapshot"
 
+    # --- Marketplace Foundry (Phase 10) -------------------------------------
+    ENGINEERING_OBSERVATION = "EngineeringObservation"
+    ENGINEERING_PATTERN = "EngineeringPattern"
+    CANDIDATE_SKILL = "CandidateSkill"
+    CANDIDATE_TOOL = "CandidateTool"
+    CANDIDATE_AGENT = "CandidateAgent"
+
 
 class ProvenanceState(StrEnum):
     """How a fact came to be believed. See ADR-0003."""
@@ -225,6 +232,35 @@ AGENT_LIFECYCLE_TRANSITIONS: dict[AgentLifecycle, frozenset[AgentLifecycle]] = {
     ),
     AgentLifecycle.DEPRECATED: frozenset({AgentLifecycle.RETIRED}),
     AgentLifecycle.RETIRED: frozenset(),
+}
+
+
+class CandidateStatus(StrEnum):
+    """Review progress of an unpublished marketplace candidate (Foundry).
+
+    Deliberately NOT ``AgentLifecycle``: ``advance_agent()`` is structurally
+    bound to a *registered* Agent's ``agent_key``, and ``Skill``/``Tool``
+    have no lifecycle field at all. A candidate before publish has no
+    registry identity, so it needs its own, smaller lifecycle.
+    ``CERTIFIED`` is terminal here -- publish-to-YAML is a human act
+    outside the system this phase builds.
+    """
+
+    CANDIDATE = "CANDIDATE"
+    EVALUATED = "EVALUATED"
+    CERTIFIED = "CERTIFIED"
+    REJECTED = "REJECTED"
+
+
+#: Legal candidate status transitions. Mirrors AGENT_LIFECYCLE_TRANSITIONS'
+#: shape and purpose, deliberately smaller.
+CANDIDATE_STATUS_TRANSITIONS: dict[CandidateStatus, frozenset[CandidateStatus]] = {
+    CandidateStatus.CANDIDATE: frozenset({CandidateStatus.EVALUATED, CandidateStatus.REJECTED}),
+    CandidateStatus.EVALUATED: frozenset(
+        {CandidateStatus.CANDIDATE, CandidateStatus.CERTIFIED, CandidateStatus.REJECTED}
+    ),
+    CandidateStatus.CERTIFIED: frozenset(),
+    CandidateStatus.REJECTED: frozenset(),
 }
 
 

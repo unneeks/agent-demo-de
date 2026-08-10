@@ -43,6 +43,14 @@ from domain.metamodel.entities.evaluation import (
     Finding,
     MetricResult,
 )
+from domain.metamodel.entities.foundry import (
+    CandidateAgent,
+    CandidateReview,
+    CandidateSkill,
+    CandidateTool,
+    EngineeringObservation,
+    EngineeringPattern,
+)
 from domain.metamodel.entities.organization import (
     Agent,
     DeliveryCapabilityDeclaration,
@@ -171,6 +179,12 @@ _ALL_ENTITIES = (
     ContextItem,
     # Project graph
     ProjectSnapshot,
+    # Marketplace Foundry
+    EngineeringObservation,
+    EngineeringPattern,
+    CandidateSkill,
+    CandidateTool,
+    CandidateAgent,
 )
 
 #: Every concrete entity class, keyed by its ``EntityType``.
@@ -187,6 +201,7 @@ VALUE_OBJECTS = {
     "MetricResult": MetricResult,
     "ToolAction": ToolAction,
     "DeliveryCapabilityDeclaration": DeliveryCapabilityDeclaration,
+    "CandidateReview": CandidateReview,
 }
 
 __all__ = [

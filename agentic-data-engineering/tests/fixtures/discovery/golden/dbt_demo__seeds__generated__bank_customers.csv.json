@@ -50,6 +50,6 @@
     ]
   },
   "recorded_at": "2026-08-09T00:00:00+00:00",
-  "request_hash": "37effd0181feda8a171d34f9221497aff6c036eb1a564e8d76d40ea4ef48c86a",
+  "request_hash": "7206cb0e300fcacfcf68738924b152592deb6a2bd15b45d427078804d2e259e8",
   "source_path": "dbt_demo/seeds/generated/bank_customers.csv"
 }

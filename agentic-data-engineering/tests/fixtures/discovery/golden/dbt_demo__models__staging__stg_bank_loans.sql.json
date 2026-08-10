@@ -22,6 +22,6 @@
     ]
   },
   "recorded_at": "2026-08-09T00:00:00+00:00",
-  "request_hash": "af396448e36068181ad82b8fdcede4aa8aa3420f15f8d5b1f28577f41af006b9",
+  "request_hash": "1cedbc19bed837cc289ddbdd2ff83295244f20341c9726522628e71e4a5e5f79",
   "source_path": "dbt_demo/models/staging/stg_bank_loans.sql"
 }

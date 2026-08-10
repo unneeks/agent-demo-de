@@ -58,6 +58,6 @@
     ]
   },
   "recorded_at": "2026-08-09T00:00:00+00:00",
-  "request_hash": "a79e13c29b627dbb89ee0bbebff69933a3a3647d9c34830c918aaeb834d59a39",
+  "request_hash": "ae77fda37efa4865de40242ff0a447c066b4dcbeb8dd54624b072f68b04ca9bc",
   "source_path": "dbt_demo/seeds/generated/bank_transactions.csv"
 }

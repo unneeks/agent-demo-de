@@ -50,6 +50,6 @@
     ]
   },
   "recorded_at": "2026-08-09T00:00:00+00:00",
-  "request_hash": "194039cd6edabb8dc5231ca25cac9f1e1c08e20d726cbfcbffd613cdb855eef4",
+  "request_hash": "8f42a1eed76f9e799900a9364f47c74cb227811a1e5341287ac1d6e46fddee54",
   "source_path": "dbt_demo/seeds/generated/bank_accounts.csv"
 }
