@@ -13,7 +13,10 @@ Phase 4 is the marketplace: a populated catalog, a pure engine that resolves
 roles against it, and the three GitHub Copilot integration points that
 `docs/adr/README.md`'s "Deferred, and why" section had named but not started.
 See [ADR-0014](adr/0014-marketplace-catalog-and-role-level-composition.md) for
-the full reasoning and the alternatives rejected.
+the full reasoning and the alternatives rejected. A later change, extending
+composition to actually call `DeliveryContract.conformance_of()` from real
+project staffing, is covered by
+[ADR-0020](adr/0020-composition-conformance.md).
 
 ## The one idea that must not be compromised
 
@@ -26,13 +29,22 @@ engine's job is catalog-wide framing — partition into matches and
 near-misses, rank, expose per-candidate gaps — not a second definition of
 what "satisfies a role" means.
 
-This is distinct from, and complementary to, the already-existing
-`DeliveryContract.conformance_of()`
+Role satisfaction answers a catalog-wide question: "which agents in the
+whole marketplace satisfy this role, and how close do the rest come?" It
+is a different question from `DeliveryContract.conformance_of()`
 (`domain/metamodel/entities/delivery/contracts.py`), which answers a
-narrower, task-level question about one already-identified agent: "can this
-agent execute this task under this organization's process?" Composition
-answers a catalog-wide question instead: "which agents in the whole
-marketplace satisfy this role, and how close do the rest come?"
+narrower, project-and-task-specific one: "can this one agent execute this
+one task under this organization's process?" — and composition still does
+not reimplement that either. `assess_conformance()` is the same kind of
+thin wrapper `assess_candidate()` already is, this time over
+`conformance_of()`. What changed (ADR-0020): `resolve_role()` now accepts
+an *optional* `contract` parameter, and `orchestrator/staffing.py`'s
+SELECT AGENTS step supplies a real one — resolved via
+`LoadedDeliveryModel.contract_for(task_key)` — for every task obligation.
+A role-satisfying agent that cannot discharge that contract's mandatory
+controls is demoted out of `matches`, never written as `IMPLEMENTED_BY`.
+Leaving `contract=None` (the default, and every catalog-wide caller like
+`resolve_catalog()`) preserves the original role-only behaviour exactly.
 
 ## The catalog
 

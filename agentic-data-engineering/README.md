@@ -58,14 +58,14 @@ Every layer in the layered diagram below is now built.
 | Two-plane persistence | PostgreSQL (state) + Neo4j (traversal), behind ports |
 | `ProjectGraphService` | registry-validated ingestion, dual-plane consistency, snapshot/restore, project-scoped query facade (4 methods) — [`docs/project-graph.md`](docs/project-graph.md) |
 | Discovery | uniform agent-based extraction, code + Markdown, two live backends (Anthropic, Copilot CLI) behind one `ExtractionClient` Protocol — [`docs/discovery.md`](docs/discovery.md) |
-| Marketplace | 14 skills · 7 tools · 5 knowledge packs · 6 worked agents; pure role/agent composition reusing `EngineeringRole.is_satisfied_by()` — [`docs/marketplace.md`](docs/marketplace.md) |
+| Marketplace | 14 skills · 7 tools · 5 knowledge packs · 6 worked agents; pure role/agent composition reusing `EngineeringRole.is_satisfied_by()`, plus real `DeliveryContract.conformance_of()` staffing checks (ADR-0020) — [`docs/marketplace.md`](docs/marketplace.md) |
 | Evaluation harness | 2 worked suites (8 metrics, 6 scenarios), closes a real dangling gate reference, gates `Agent` CANDIDATE→EVALUATED→CERTIFIED — [`docs/evaluation.md`](docs/evaluation.md) |
 | Project orchestrator | `run_cycle()` composes OBSERVE→IMPACT→STAFF→EVALUATE→GATE, writes `IMPLEMENTED_BY`/`Evaluation`+`EVALUATES`, wires `GateState.traceability` — [`docs/orchestrator.md`](docs/orchestrator.md) |
 | Agent runtime | `run_agent()`: a real multi-turn planner-executor loop, 2 live LLM backends + 1 replay behind `AgentLLMClient`, 1 simulated `ToolExecutor` covering all 7 catalog tools, approval-gated `LOW_RISK_WRITE` — [`docs/agent-runtime.md`](docs/agent-runtime.md) |
 | Web UI | server-rendered, read-only dashboard, 6 routes, in-process against `ProjectGraphService`/`MetamodelRegistry`, zero writes — [`docs/web-ui.md`](docs/web-ui.md) |
 | API Gateway | read-write `/api/*`, same process as the Web UI — register/ingest/relate, trigger evaluations/gate-assessment/agent-runs/cycles — [`docs/api-gateway.md`](docs/api-gateway.md) |
 | 79 JSON Schema artifacts | committed, with a drift check |
-| 726 tests | 636 unit with the `web` extra installed (576 unit, 14 skipped cleanly without it) |
+| 731 tests | 641 unit with the `web` extra installed (581 unit, 14 skipped cleanly without it) |
 
 ---
 
@@ -78,7 +78,7 @@ pip install -e ".[dev]"
 
 python scripts/validate_registries.py     # registries + the worked delivery model
 python scripts/export_schemas.py --check  # JSON Schema drift check
-pytest tests/unit -q                      # 576 tests, zero infrastructure (webui tests skip cleanly)
+pytest tests/unit -q                      # 581 tests, zero infrastructure (webui tests skip cleanly)
 pytest tests/contract -q                  # in-memory adapters; real stores skip
 ```
 
@@ -93,7 +93,7 @@ To run the Web UI dashboard and the `/api/*` gateway, install the `web` extra:
 
 ```bash
 pip install -e ".[web]"
-pytest tests/unit -q                      # 636 tests, webui + API routes included
+pytest tests/unit -q                      # 641 tests, webui + API routes included
 python scripts/run_web.py --seed-demo-project   # http://127.0.0.1:8000 (UI) and /api/* (JSON)
 ```
 

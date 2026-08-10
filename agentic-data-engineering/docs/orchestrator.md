@@ -84,9 +84,15 @@ stated their boundary plainly:
 those two gaps — and only those two:
 
 - `select_agents()` resolves an obligation to a staffable `EngineeringRole`
-  via the untouched `resolve_role()`, then writes the winning match as a
-  real `IMPLEMENTED_BY(EngineeringRole, Agent)` edge via
-  `service.ingest_relationship()`.
+  via `resolve_role()`, then writes the winning match as a real
+  `IMPLEMENTED_BY(EngineeringRole, Agent)` edge via
+  `service.ingest_relationship()`. For a `"task"` obligation, it also
+  resolves `delivery_model.contract_for(obligation.key)` and passes that
+  real `DeliveryContract` through to `resolve_role()`, which now also
+  checks each candidate's delivery conformance
+  (`DeliveryContract.conformance_of()`, ADR-0020) — a role-satisfying
+  agent that cannot discharge the contract's mandatory controls is never
+  staffed.
 - `run_evaluations()` calls the untouched `run_suite()`/`advance_agent()`,
   then persists the resulting `Evaluation` (`service.ingest_entity()`), an
   `EVALUATES(Evaluation, subject)` edge, and — if requested — the advanced
@@ -132,8 +138,14 @@ literal.
 DeliveryObligation(kind in {"task","approval"})
   -> DeliveryRole.responsibility_keys
     -> EngineeringResponsibility.fulfilled_by_role_keys
-      -> EngineeringRole -> resolve_role(role, registry.agents.values())
+      -> EngineeringRole -> resolve_role(role, registry.agents.values(),
+                                          contract=delivery_model.contract_for(key))
 ```
+
+(`contract` is only ever non-`None` for `"task"` obligations, whose key
+is a real `DeliveryTask` key; `"approval"` obligations' keys are
+`DeliveryRole` keys and always resolve `contract=None`, unchanged
+role-only behaviour.)
 
 Verified end to end against the real worked delivery model, including two
 real negative cases that are first-class, reportable outcomes — never

@@ -73,6 +73,14 @@ class TestStaffing:
         assert regression.staffed_agent_key == "regression-agent"
         assert regression.implemented_by_written is True
 
+        # The staffing decision is now conformance-checked, not just
+        # role-matched: task.regression-test has a real, auto-derived
+        # DeliveryContract, and regression-agent's Agent.delivery
+        # declarations genuinely satisfy its mandatory controls.
+        assert regression.resolution.best_match.conformance is not None
+        assert regression.resolution.best_match.conformance.is_eligible is True
+        assert regression.resolution.best_match.conformance.contract_key == "contract.regression-test"
+
         edge = graph.get_relationship(
             EntityRef(type=EntityType.ENGINEERING_ROLE, id="regression-engineer"),
             "IMPLEMENTED_BY",

@@ -24,6 +24,7 @@ phase can overturn one knowingly rather than by accident.
 | [0017](0017-agent-runtime.md) | Agent runtime: a real multi-turn planner-executor loop, all tool execution simulated | `engines/context/assembler.assemble()` finally has a caller; `ToolAction.minimum_approval` finally gates a call; the last named gap short of API/UI |
 | [0018](0018-web-ui.md) | Web UI: a server-rendered, read-only dashboard, in-process, no API Gateway | Every `ProjectGraphService` method and the full marketplace/delivery-model catalog now has a human-visible viewer; API Gateway is the last layer still `(later)` |
 | [0019](0019-api-gateway.md) | API Gateway: read-write `/api/*` routes, same process as the Web UI | Every write path `orchestrator`/`agent_runtime` left as a plain function call now has an HTTP caller; every layer in `docs/architecture.md`'s diagram is now built |
+| [0020](0020-composition-conformance.md) | Composition calls `DeliveryContract.conformance_of()` for real, via an optional `contract` parameter on `resolve_role()` | Closes a real, self-acknowledged gap between `contracts.py`'s stated purpose and what Phase 4 actually wired up; a role-satisfying but non-conformant agent is now correctly rejected from real project staffing |
 
 ## Deferred, and why
 
@@ -65,6 +66,15 @@ authentication or authorization — every write endpoint is reachable by
 anyone who can reach the process; OBSERVE/discovery over HTTP — no
 endpoint accepts a filesystem path from a remote caller; rate limiting;
 run-history persistence.
+
+**Composition — capability-gap-driven role resolution** (§ per the
+original spec's Composition Engine line) — ADR-0020 wires the
+`conformance_of()` half of that line for real. **Still not started:**
+the "given a project's capability gaps, resolves which roles are needed"
+half — no code anywhere constructs a `Capability`/`DeliveryCapability`/
+`CapabilityGap` instance for a real project, and the registry has no
+"desired maturity" data to compare an observed one against. A real
+gap-analysis engine, not a wiring change, would be needed to close it.
 
 **Document assimilation** (§17–18) — the extraction pipeline that would populate
 a delivery model from Markdown, PDF and DOCX. Phase 3 (ADR-0013,
