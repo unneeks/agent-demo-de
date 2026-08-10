@@ -106,6 +106,14 @@ def select_agents(
     `resolution.best_match`; near-misses are reported in
     `StaffingOutcome.resolution` for visibility, never persisted as an edge
     that would misrepresent "this agent implements this role."
+
+    A `"task"` obligation's key is a `DeliveryTask` key, so
+    `delivery_model.contract_for()` may resolve a real, task-specific
+    `DeliveryContract` -- when it does, `resolve_role()` also checks
+    delivery conformance, and a role-satisfying agent that cannot
+    discharge the contract's mandatory controls is never staffed. An
+    `"approval"` obligation's key is a `DeliveryRole` key, not a task key,
+    so it never has a contract and keeps today's role-only behaviour.
     """
     outcomes: list[StaffingOutcome] = []
 
@@ -128,7 +136,12 @@ def select_agents(
                 )
                 continue
 
-            resolution = resolve_role(role, registry.agents.values(), strict_role_match=True)
+            contract = (
+                delivery_model.contract_for(obligation.key) if obligation.kind == "task" else None
+            )
+            resolution = resolve_role(
+                role, registry.agents.values(), strict_role_match=True, contract=contract
+            )
             staffed_agent_key = resolution.best_match.agent_key if resolution.is_staffable else None
             implemented_by_written = False
 

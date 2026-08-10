@@ -8,7 +8,7 @@ answer. It develops on its own branch/PR
 (`claude/marketplace-foundry`) as a new, independently-shippable feature,
 not an addition to the sequential phase-by-phase platform branch, though
 it is numbered Phase 10 for documentation/ADR continuity. See
-[ADR-0020](adr/0020-marketplace-foundry.md) for the full reasoning and the
+[ADR-0022](adr/0022-marketplace-foundry.md) for the full reasoning and the
 alternatives rejected.
 
 ## The one idea that must not be compromised

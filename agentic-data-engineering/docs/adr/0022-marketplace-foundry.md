@@ -1,4 +1,4 @@
-# ADR-0020: Marketplace Foundry — LLM-backed candidate synthesis, on its own branch
+# ADR-0022: Marketplace Foundry — LLM-backed candidate synthesis, on its own branch
 
 **Status:** Accepted · **Date:** 2026-08-10 · **Phase:** 10
 

@@ -1,14 +1,18 @@
-"""`run_cycle` -- the entry point composing OBSERVE (optional) -> DETECT
-CHANGE + IMPACT -> SELECT AGENTS -> EVALUATE -> APPROVAL GATE over one real
-project.
+"""`run_cycle` -- the entry point composing GAP ANALYSIS (optional) ->
+OBSERVE (optional) -> DETECT CHANGE + IMPACT -> SELECT AGENTS -> EVALUATE ->
+APPROVAL GATE over one real project.
 
-Every step calls an existing Phase 1-5 function with real data -- no new
+Every step calls an existing Phase 1-6 function with real data -- no new
 scoring, no new resolution logic, no new gate math. Every write goes through
 `ProjectGraphService`, never `persistence.ports` directly, mirroring
 `discovery/orchestrate.py`'s discipline exactly. `on_error="collect"` (the
 default) records a per-step failure and continues -- a single obligation's
 or evaluation's rejected write should not discard every other step's good
 work; `"fail_fast"` re-raises immediately instead.
+
+GAP ANALYSIS (`gap_analysis`, ADR-0021) runs independently of `change`/
+`observe` -- a standing capability-maturity assessment, not something a
+change triggers.
 """
 
 from __future__ import annotations
@@ -31,6 +35,7 @@ from agent_runtime.errors import AgentRuntimeError
 from orchestrator.agent_step import AgentRunRequest, run_agents
 from orchestrator.errors import OrchestratorError
 from orchestrator.evaluate import EvaluationRequest, run_evaluations
+from orchestrator.gap_analysis import GapAnalysisRequest, analyze_project_capability_gaps
 from orchestrator.gate import GateRequest, assess_gate_readiness
 from orchestrator.result import CycleFailure, CycleReport
 from orchestrator.staffing import select_agents
@@ -63,6 +68,7 @@ def run_cycle(
     agent_run_requests: list[AgentRunRequest] | None = None,
     evaluation_requests: list[EvaluationRequest] | None = None,
     gates: list[GateRequest] | None = None,
+    gap_analysis: GapAnalysisRequest | None = None,
     on_error: Literal["fail_fast", "collect"] = "collect",
 ) -> CycleReport:
     """Every step is independently optional except `project_ref` itself: a
@@ -91,6 +97,15 @@ def run_cycle(
         if on_error == "fail_fast":
             raise IngestionError(f"cycle step failed ({kind}): {detail}")
         failed.append(CycleFailure(kind=kind, detail=detail, source=source))
+
+    gap_analysis_outcome = None
+    if gap_analysis is not None:
+        try:
+            gap_analysis_outcome = analyze_project_capability_gaps(
+                service, registry, delivery_model, metadata, project_ref, gap_analysis
+            )
+        except (IngestionError, ValueError) as exc:
+            _record("gap_analysis_failed", str(exc), project_ref.id)
 
     impact = None
     staffing = []
@@ -141,5 +156,6 @@ def run_cycle(
         agent_runs=agent_runs,
         evaluations=evaluations,
         gate_readiness=gate_readiness,
+        gap_analysis=gap_analysis_outcome,
         failed=failed,
     )

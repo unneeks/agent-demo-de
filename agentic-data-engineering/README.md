@@ -52,29 +52,35 @@ engineering patterns, synthesize candidate Skills/Tools/Agents from them
 via an LLM (the one step in the pipeline that calls one, reusing
 discovery's own `ExtractionClient` Protocol), and score their structural
 completeness — invoked independently, any time, via
-`scripts/run_foundry.py`, never wired into `run_cycle()`.
+`scripts/run_foundry.py`, never wired into `run_cycle()`. Two further
+ADR-tracked closures, developed in parallel on the sequential platform
+line and merged in here: ADR-0020 wires `DeliveryContract.conformance_of()`
+into real composition staffing, and ADR-0021 adds capability gap analysis
+— coarse maturity inference plus itemized `CapabilityGap`s, wired into
+`run_cycle()` as a new optional step.
 
 | Delivered | |
 |---|---|
 | 73 entity types | 12 technical · 24 delivery · 37 shared |
-| 67 relationship types | 19 of them **cross-twin joins** |
+| 67 relationship types | 20 of them **cross-twin joins** |
 | Four-state provenance | plus document provenance and the inferred-cannot-block rule |
 | Four-level role chain | DeliveryRole → Responsibility → EngineeringRole → Agent |
 | YAML registries | capabilities (both kinds), the role chain, relationships, platforms, approvals, the marketplace catalog, the evaluation catalog |
 | A worked delivery model | 9 phases · 13 tasks · 6 checklists · 28 items · 10 criteria · 6 gates |
-| Five deterministic engines | context assembly · checklist + gate readiness · dual impact + traceability · marketplace composition · evaluation harness |
+| Seven deterministic engines | context assembly · checklist + gate readiness · dual impact + traceability · marketplace composition · evaluation harness · capability gap analysis · Foundry mining/pattern discovery |
 | Two-plane persistence | PostgreSQL (state) + Neo4j (traversal), behind ports |
 | `ProjectGraphService` | registry-validated ingestion, dual-plane consistency, snapshot/restore, project-scoped query facade (4 methods) — [`docs/project-graph.md`](docs/project-graph.md) |
 | Discovery | uniform agent-based extraction, code + Markdown, two live backends (Anthropic, Copilot CLI) behind one `ExtractionClient` Protocol — [`docs/discovery.md`](docs/discovery.md) |
-| Marketplace | 14 skills · 7 tools · 5 knowledge packs · 6 worked agents; pure role/agent composition reusing `EngineeringRole.is_satisfied_by()` — [`docs/marketplace.md`](docs/marketplace.md) |
+| Marketplace | 14 skills · 7 tools · 5 knowledge packs · 6 worked agents; pure role/agent composition reusing `EngineeringRole.is_satisfied_by()`, plus real `DeliveryContract.conformance_of()` staffing checks (ADR-0020) — [`docs/marketplace.md`](docs/marketplace.md) |
 | Evaluation harness | 2 worked suites (8 metrics, 6 scenarios), closes a real dangling gate reference, gates `Agent` CANDIDATE→EVALUATED→CERTIFIED — [`docs/evaluation.md`](docs/evaluation.md) |
-| Project orchestrator | `run_cycle()` composes OBSERVE→IMPACT→STAFF→EVALUATE→GATE, writes `IMPLEMENTED_BY`/`Evaluation`+`EVALUATES`, wires `GateState.traceability` — [`docs/orchestrator.md`](docs/orchestrator.md) |
+| Capability gap analysis | coarse, evidence-counting maturity inference from real `Pipeline`/`Test`/`Evaluation` facts, diffed against caller-supplied desired maturity into itemized `CapabilityGap`s + advisory role recommendations (ADR-0021) — [`docs/gap-analysis.md`](docs/gap-analysis.md) |
+| Project orchestrator | `run_cycle()` composes GAP ANALYSIS→OBSERVE→IMPACT→STAFF→EVALUATE→GATE, writes `IMPLEMENTED_BY`/`Evaluation`+`EVALUATES`/`CapabilityGap`+`HAS_GAP`, wires `GateState.traceability` — [`docs/orchestrator.md`](docs/orchestrator.md) |
 | Agent runtime | `run_agent()`: a real multi-turn planner-executor loop, 2 live LLM backends + 1 replay behind `AgentLLMClient`, 1 simulated `ToolExecutor` covering all 7 catalog tools, approval-gated `LOW_RISK_WRITE` — [`docs/agent-runtime.md`](docs/agent-runtime.md) |
 | Web UI | server-rendered, read-only dashboard, 6 routes, in-process against `ProjectGraphService`/`MetamodelRegistry`, zero writes — [`docs/web-ui.md`](docs/web-ui.md) |
 | API Gateway | read-write `/api/*`, same process as the Web UI — register/ingest/relate, trigger evaluations/gate-assessment/agent-runs/cycles — [`docs/api-gateway.md`](docs/api-gateway.md) |
 | Marketplace Foundry | mine → discover patterns → LLM-synthesize candidate Skills/Tools/Agents → score structural completeness, `scripts/run_foundry.py` — [`docs/marketplace-foundry.md`](docs/marketplace-foundry.md) |
 | 85 JSON Schema artifacts | committed, with a drift check |
-| 802 tests | 712 unit with the `web` extra installed (652 unit, 14 skipped cleanly without it) |
+| 833 tests | 743 unit with the `web` extra installed (683 unit, 14 skipped cleanly without it) |
 
 ---
 
@@ -87,7 +93,7 @@ pip install -e ".[dev]"
 
 python scripts/validate_registries.py     # registries + the worked delivery model
 python scripts/export_schemas.py --check  # JSON Schema drift check
-pytest tests/unit -q                      # 652 tests, zero infrastructure (webui tests skip cleanly)
+pytest tests/unit -q                      # 683 tests, zero infrastructure (webui tests skip cleanly)
 pytest tests/contract -q                  # in-memory adapters; real stores skip
 ```
 
@@ -102,7 +108,7 @@ To run the Web UI dashboard and the `/api/*` gateway, install the `web` extra:
 
 ```bash
 pip install -e ".[web]"
-pytest tests/unit -q                      # 712 tests, webui + API routes included
+pytest tests/unit -q                      # 743 tests, webui + API routes included
 python scripts/run_web.py --seed-demo-project   # http://127.0.0.1:8000 (UI) and /api/* (JSON)
 ```
 
@@ -248,15 +254,16 @@ engines/gates/             Checklist evaluation and gate readiness
 engines/impact/            Dual impact analysis and traceability
 engines/composition/       Marketplace role/agent resolution
 engines/evaluation/        Evaluation harness: run a suite, gate the agent lifecycle
+engines/gap_analysis/      Coarse capability maturity inference + gap diff (ADR-0021)
 engines/foundry/           Pure mining, pattern discovery, candidate completeness scoring, candidate lifecycle
 project_graph/             ProjectGraphService: lifecycle, snapshotting, query facade
 discovery/                 Uniform agent-based extraction: walk, resolve, orchestrate, extraction/
-orchestrator/              run_cycle(): composes discovery, impact, composition, evaluation, agent runs, gates
+orchestrator/              run_cycle(): composes gap analysis, discovery, impact, composition, evaluation, agent runs, gates
 agent_runtime/             run_agent(): multi-turn loop, LLM backends, simulated tool execution, approval gating
 webui/                     create_app(): read-only HTML dashboard (routes/) + read-write JSON API (api/)
 foundry/                   run_foundry_cycle(): mine -> discover -> LLM-synthesize -> evaluate, synthesis/ reuses discovery's ExtractionClient
 scripts/                   validate_registries.py, export_schemas.py, record_extraction_fixtures.py, record_agent_fixtures.py, run_web.py, run_foundry.py
-docs/                      Architecture, metamodel spec, delivery model, graph model, project graph, discovery, marketplace, evaluation, orchestrator, agent runtime, web UI, API gateway, marketplace foundry
+docs/                      Architecture, metamodel spec, delivery model, graph model, project graph, discovery, marketplace, evaluation, orchestrator, agent runtime, web UI, API gateway, gap analysis, marketplace foundry
 tests/unit/                No infrastructure needed (webui/API tests skip without the web extra)
 tests/contract/            One contract, run against every adapter
 tests/integration/         Live discovery + agent backends, independently skippable

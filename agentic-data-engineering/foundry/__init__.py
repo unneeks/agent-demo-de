@@ -10,5 +10,5 @@ opportunities against a project graph that already exists --
 ``foundry/run.py::run_foundry_cycle()`` is its own entry point, the same
 way ``discovery.orchestrate.discover_project`` is its own entry point
 rather than a forced step in every cycle. See ``docs/marketplace-foundry.md``
-and ADR-0020.
+and ADR-0022.
 """

@@ -24,7 +24,9 @@ phase can overturn one knowingly rather than by accident.
 | [0017](0017-agent-runtime.md) | Agent runtime: a real multi-turn planner-executor loop, all tool execution simulated | `engines/context/assembler.assemble()` finally has a caller; `ToolAction.minimum_approval` finally gates a call; the last named gap short of API/UI |
 | [0018](0018-web-ui.md) | Web UI: a server-rendered, read-only dashboard, in-process, no API Gateway | Every `ProjectGraphService` method and the full marketplace/delivery-model catalog now has a human-visible viewer; API Gateway is the last layer still `(later)` |
 | [0019](0019-api-gateway.md) | API Gateway: read-write `/api/*` routes, same process as the Web UI | Every write path `orchestrator`/`agent_runtime` left as a plain function call now has an HTTP caller; every layer in `docs/architecture.md`'s diagram is now built |
-| [0020](0020-marketplace-foundry.md) | Marketplace Foundry: mine → discover patterns → LLM-synthesize candidates → score completeness, on its own branch/PR | `discovery/extraction/`'s `ExtractionClient` Protocol gets a second real caller; a new, deliberately smaller `CandidateStatus` proves `AgentLifecycle` was the wrong lifecycle to reuse |
+| [0020](0020-composition-conformance.md) | Composition calls `DeliveryContract.conformance_of()` for real, via an optional `contract` parameter on `resolve_role()` | Closes a real, self-acknowledged gap between `contracts.py`'s stated purpose and what Phase 4 actually wired up; a role-satisfying but non-conformant agent is now correctly rejected from real project staffing |
+| [0021](0021-capability-gap-analysis.md) | Capability gap analysis with coarse automatic maturity inference, wired into `run_cycle()` as a new optional step | Closes the other half of the Composition Engine's original spec line; `capabilities.yaml`/`delivery_capabilities.yaml`'s `detection_hints`/`realized_by_roles` finally have a consumer |
+| [0022](0022-marketplace-foundry.md) | Marketplace Foundry: mine → discover patterns → LLM-synthesize candidates → score completeness, on its own branch/PR | `discovery/extraction/`'s `ExtractionClient` Protocol gets a second real caller; a new, deliberately smaller `CandidateStatus` proves `AgentLifecycle` was the wrong lifecycle to reuse |
 
 ## Deferred, and why
 
@@ -67,7 +69,17 @@ anyone who can reach the process; OBSERVE/discovery over HTTP — no
 endpoint accepts a filesystem path from a remote caller; rate limiting;
 run-history persistence.
 
-**Marketplace Foundry** — delivered in Phase 10 (ADR-0020,
+**Composition — capability-gap-driven role resolution** (§ per the
+original spec's Composition Engine line) — ADR-0020 wired the
+`conformance_of()` half of that line for real; ADR-0021
+(`docs/gap-analysis.md`) delivers the other half — `engines/gap_analysis/`
+infers coarse `Capability`/`DeliveryCapability` maturity from real project
+facts, diffs it against a caller-supplied desired maturity, and persists
+itemized `CapabilityGap`s plus advisory role recommendations, wired into
+`run_cycle()` as a new optional step. Both halves of the original spec
+line are now delivered.
+
+**Marketplace Foundry** — delivered in Phase 10 (ADR-0022,
 `docs/marketplace-foundry.md`), on its own branch/PR rather than an
 addition to this sequential platform line. Deterministic mining and
 pattern discovery over a project's already-ingested graph

@@ -7,10 +7,11 @@ around that logic, not a new definition of what "satisfies" means.
 
 from __future__ import annotations
 
-from domain.metamodel.enums import EntityType
-from engines.composition import assess_candidate, resolve_catalog, resolve_role
+from domain.metamodel.entities.delivery import DeliveryContract
+from domain.metamodel.enums import EntityType, ProvenanceState
+from engines.composition import assess_candidate, assess_conformance, resolve_catalog, resolve_role
 
-from tests.conftest import make_agent
+from tests.conftest import make_agent, ref
 
 
 class TestAssessCandidate:
@@ -124,6 +125,119 @@ class TestResolveRole:
         agent_a = make_agent("a-agent", role_key="regression-engineer")
         resolution = resolve_role(role, [agent_b, agent_a])
         assert [a.agent_key for a in resolution.near_misses] == ["a-agent", "b-agent"]
+
+
+class TestAssessConformance:
+    def test_agrees_with_conformance_of_directly(self, registry) -> None:
+        delivery_model = registry.delivery_model("de-delivery-model")
+        contract = delivery_model.contract_for("task.regression-test")
+        agent = registry.agents["regression-agent"]
+        conformance = assess_conformance(contract, agent)
+        expected = contract.conformance_of(
+            agent_key=agent.agent_key,
+            capabilities=set(agent.capabilities),
+            skills=set(agent.skills),
+            tools=set(agent.tools),
+            knowledge=set(agent.knowledge_packs),
+            supported_checklists=set(agent.delivery.supported_checklist_keys),
+            supported_gates=set(agent.delivery.supported_gate_keys),
+            supported_artifact_kinds=set(agent.delivery.supported_artifact_kinds),
+        )
+        assert conformance == expected
+        assert conformance.is_eligible is True
+
+
+class TestResolveRoleWithContract:
+    def test_no_contract_is_byte_identical_to_role_only_resolution(self, registry) -> None:
+        role = registry.engineering_roles["regression-engineer"]
+        candidates = [registry.agents["regression-agent"], registry.agents["copilot-coding-agent-regression"]]
+        resolution = resolve_role(role, candidates)
+        assert [m.agent_key for m in resolution.matches] == ["regression-agent"]
+        assert resolution.matches[0].conformance is None
+        assert resolution.near_misses[0].conformance is None
+
+    def test_real_worked_example_conformant_agent_stays_a_match(self, registry) -> None:
+        delivery_model = registry.delivery_model("de-delivery-model")
+        contract = delivery_model.contract_for("task.regression-test")
+        role = registry.engineering_roles["regression-engineer"]
+        resolution = resolve_role(role, registry.agents.values(), contract=contract)
+        assert resolution.best_match.agent_key == "regression-agent"
+        assert resolution.best_match.conformance.is_eligible is True
+
+    def test_role_satisfying_but_non_conformant_agent_is_demoted_to_near_misses(self, registry) -> None:
+        """The addendum's own claim, proven: an agent that is technically
+        capable but cannot discharge the mandatory controls is rejected --
+        with reasons."""
+        role = registry.engineering_roles["regression-engineer"]
+        shape_only_agent = make_agent(
+            "shape-only-agent",
+            role_key="regression-engineer",
+            capabilities=["regression-testing", "impact-analysis", "testing"],
+            delivery_capabilities=["regression-assurance"],
+            skills=[
+                "repository-discovery",
+                "dependency-analysis",
+                "impact-analysis",
+                "test-selection",
+                "test-execution",
+            ],
+            tools=["git", "github", "pytest"],
+            knowledge_packs=["project-architecture", "testing-standards"],
+            # No `delivery` declaration at all -- fully satisfies the role,
+            # declares none of the contract's mandatory controls.
+        )
+        contract = DeliveryContract(
+            id="contract.test",
+            name="Test Contract",
+            entity_type=EntityType.DELIVERY_CONTRACT,
+            contract_key="contract.test",
+            task_key="task.test",
+            checklist_refs=[ref(EntityType.CHECKLIST, "some-checklist")],
+            approval_gate_refs=[ref(EntityType.APPROVAL_GATE, "gate.some-gate")],
+            provenance=ProvenanceState.OBSERVED,
+            discovered_by="test",
+        )
+        resolution = resolve_role(role, [shape_only_agent], contract=contract)
+        assert resolution.matches == []
+        assert [a.agent_key for a in resolution.near_misses] == ["shape-only-agent"]
+
+        assessment = resolution.near_misses[0]
+        assert assessment.satisfies is True
+        assert assessment.conformance is not None
+        assert assessment.conformance.is_eligible is False
+        assert assessment.conformance.blocking_gaps
+        assert "does not conform to" in assessment.explain()
+
+    def test_is_staffable_is_false_when_the_only_role_match_fails_conformance(self, registry) -> None:
+        role = registry.engineering_roles["regression-engineer"]
+        shape_only_agent = make_agent(
+            "shape-only-agent",
+            role_key="regression-engineer",
+            capabilities=["regression-testing", "impact-analysis", "testing"],
+            delivery_capabilities=["regression-assurance"],
+            skills=[
+                "repository-discovery",
+                "dependency-analysis",
+                "impact-analysis",
+                "test-selection",
+                "test-execution",
+            ],
+            tools=["git", "github", "pytest"],
+            knowledge_packs=["project-architecture", "testing-standards"],
+        )
+        contract = DeliveryContract(
+            id="contract.test",
+            name="Test Contract",
+            entity_type=EntityType.DELIVERY_CONTRACT,
+            contract_key="contract.test",
+            task_key="task.test",
+            checklist_refs=[ref(EntityType.CHECKLIST, "some-checklist")],
+            provenance=ProvenanceState.OBSERVED,
+            discovered_by="test",
+        )
+        resolution = resolve_role(role, [shape_only_agent], contract=contract)
+        assert resolution.is_staffable is False
+        assert resolution.best_match is None
 
 
 class TestResolveCatalog:

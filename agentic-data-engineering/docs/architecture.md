@@ -37,7 +37,7 @@ Operating modes, in adoption order:
 
 The two dimensions are **not** separate models. One `EntityType` enum, one
 `Relationship` type, one provenance model, one graph plane, one metadata plane.
-19 of the 64 relationship types are cross-twin joins, and they are what make the
+20 of the 67 relationship types are cross-twin joins, and they are what make the
 whole thing worth building. See ADR-0008.
 
 ## Layered view
@@ -100,17 +100,22 @@ time a project's graph already exists, via `scripts/run_foundry.py`. See
 Nodes are keyed by `(entity_type, entity_id)` and carry no version. A node is
 the *thing*; versioned state lives in PostgreSQL. See ADR-0001.
 
-## The four engines
+## The engines
 
 Each is a pure function. None calls an LLM. That is what makes them unit
-testable in milliseconds and replayable after the fact.
+testable in milliseconds and replayable after the fact. (Phase 1 shipped the
+first four; `engines/gap_analysis/` closes ADR-0021's deferred half of the
+Composition Engine; `engines/foundry/` is Phase 10's mining/pattern-discovery
+half of Marketplace Foundry, ADR-0022 — its one LLM step lives in
+`foundry/synthesis/`, outside this package.)
 
 | Engine | Input | Output |
 |---|---|---|
 | **Context** (`engines/context/`) | policy + candidates | ordered bundle, drop reasons, stable hash |
 | **Gates** (`engines/gates/`) | gate + observed state | per-dimension scores, PASS/CONDITIONAL/BLOCKED, blockers |
 | **Impact** (`engines/impact/`) | change + graph + delivery model | technical blast radius **and** delivery obligations; traceability chains |
-| **Composition** (`engines/composition/`) | engineering role + agent catalog | matches, near-misses, itemized gaps (Phase 4) |
+| **Composition** (`engines/composition/`) | engineering role + agent catalog | matches, near-misses, itemized gaps (Phase 4); delivery conformance (ADR-0020) |
+| **Gap Analysis** (`engines/gap_analysis/`) | observed + desired capability maturity | itemized `CapabilityGap`s, recommended engineering roles (ADR-0021) |
 | **Foundry** (`engines/foundry/`) | mined observations | recurring patterns, candidate completeness scores (Phase 10; `foundry/synthesis/` layers one LLM call on top, independently invoked) |
 
 ## The organization model
