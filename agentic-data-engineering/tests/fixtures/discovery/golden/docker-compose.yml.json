@@ -1,0 +1,43 @@
+{
+  "backend": "manually-authored",
+  "raw_response": {
+    "entities": [
+      {
+        "confidence": 0.8,
+        "entity_type": "Infrastructure",
+        "infrastructure_kind": "compose_service",
+        "local_id": "i1",
+        "source_path": "docker-compose.yml",
+        "suggested_id": "compose-ollama"
+      },
+      {
+        "confidence": 0.8,
+        "entity_type": "Infrastructure",
+        "infrastructure_kind": "compose_service",
+        "local_id": "i2",
+        "source_path": "docker-compose.yml",
+        "suggested_id": "compose-agent"
+      },
+      {
+        "confidence": 0.8,
+        "entity_type": "Infrastructure",
+        "infrastructure_kind": "compose_service",
+        "local_id": "i3",
+        "source_path": "docker-compose.yml",
+        "suggested_id": "compose-pipeline"
+      },
+      {
+        "confidence": 0.8,
+        "entity_type": "Infrastructure",
+        "infrastructure_kind": "compose_service",
+        "local_id": "i4",
+        "source_path": "docker-compose.yml",
+        "suggested_id": "compose-sensor"
+      }
+    ],
+    "relationships": []
+  },
+  "recorded_at": "2026-08-09T00:00:00+00:00",
+  "request_hash": "cd271451b6afe4742e73fa9325ddf89a231aca199a10c102960c25b91fbee97f",
+  "source_path": "docker-compose.yml"
+}

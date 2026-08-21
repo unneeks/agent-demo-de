@@ -1,0 +1,101 @@
+# Risk classes, action classes, approval matrix and delivery process kinds.
+#
+# The executable form of "human control over high-risk actions". The matrix is
+# data, so an operator can tighten it without a code change and a reviewer can
+# read the current posture in one place.
+version: 0.1.0
+
+risk_classes:
+  - key: LOW
+    rank: 1
+    description: Reversible, contained, no production or customer impact.
+  - key: MEDIUM
+    rank: 2
+    description: Reversible with effort; affects a single system.
+  - key: HIGH
+    rank: 3
+    description: Customer-impacting, regulatory, or hard to reverse.
+  - key: CRITICAL
+    rank: 4
+    description: Irreversible, or affecting production data or access control.
+
+action_classes:
+  - key: READ_ONLY
+    rank: 1
+    description: Observes state without changing anything.
+    reversible: true
+  - key: LOW_RISK_WRITE
+    rank: 2
+    description: Creates isolated, easily discarded artifacts -- a branch, a comment, a draft.
+    reversible: true
+  - key: HIGH_RISK_WRITE
+    rank: 3
+    description: Changes shared state -- merging code, altering a schema.
+    reversible: false
+  - key: DESTRUCTIVE
+    rank: 4
+    description: Deletes or overwrites data, or changes access control.
+    reversible: false
+
+# Approval required for an action class at a given automation level.
+# Read down: even in fully autonomous mode, destructive actions need two humans.
+approval_matrix:
+  ASSISTED:
+    READ_ONLY: NONE
+    LOW_RISK_WRITE: NONE
+    HIGH_RISK_WRITE: SINGLE_REVIEWER
+    DESTRUCTIVE: MAKER_CHECKER
+  SUPERVISED_AUTONOMOUS:
+    READ_ONLY: NONE
+    LOW_RISK_WRITE: SAMPLED_QA
+    HIGH_RISK_WRITE: SINGLE_REVIEWER
+    DESTRUCTIVE: MAKER_CHECKER
+  AUTONOMOUS:
+    READ_ONLY: NONE
+    LOW_RISK_WRITE: NONE
+    HIGH_RISK_WRITE: SINGLE_REVIEWER
+    DESTRUCTIVE: MAKER_CHECKER
+
+# Worked examples from the specification, kept as executable documentation.
+# The registry validator asserts these resolve as written.
+examples:
+  - action: read metadata
+    action_class: READ_ONLY
+    expected_approval: NONE
+  - action: generate test
+    action_class: LOW_RISK_WRITE
+    expected_approval: NONE
+  - action: create branch
+    action_class: LOW_RISK_WRITE
+    expected_approval: NONE
+  - action: create pull request
+    action_class: LOW_RISK_WRITE
+    expected_approval: NONE
+  - action: merge code
+    action_class: HIGH_RISK_WRITE
+    expected_approval: SINGLE_REVIEWER
+  - action: production deployment
+    action_class: HIGH_RISK_WRITE
+    expected_approval: SINGLE_REVIEWER
+  - action: drop table
+    action_class: DESTRUCTIVE
+    expected_approval: MAKER_CHECKER
+
+# Kinds of DeliveryProcess. Kept here rather than as an enum so a new
+# organizational process type is a data change (ADR-0010).
+delivery_process_kinds:
+  - key: release
+    name: Release Process
+    description: How a change reaches production.
+  - key: change
+    name: Change Process
+    description: How a change is raised, assessed and approved.
+  - key: incident
+    name: Incident Process
+    description: How a production failure is handled and learned from.
+  - key: problem
+    name: Problem Process
+    description: How recurring incidents are addressed at root cause.
+  - key: onboarding
+    name: Onboarding Process
+    description: How a new data source or consumer joins the platform.

@@ -1,0 +1,159 @@
+# Engineering responsibilities -- the stable middle of the four-level role chain.
+#
+#   DeliveryRole -> EngineeringResponsibility -> EngineeringRole -> Agent
+#
+# A responsibility is a discrete thing that must be answered for. Naming them
+# separately is what lets an organization reshuffle its delivery roles without
+# invalidating the agent ecosystem: the responsibilities survive the
+# reorganisation even when the job titles do not.
+#
+# delegable_to_agent: false marks accountability that cannot be discharged by
+# software regardless of how good the software gets. Sign-off on a regulatory
+# control is the clearest case -- a person is answerable for it.
+version: 0.1.0
+engineering_responsibilities:
+
+  - key: resp.impact-assessment
+    name: Impact Assessment
+    statement: >
+      Determine, before a change lands, exactly which assets, pipelines,
+      capabilities and consumers it affects, with evidence for each claim.
+    required_capabilities: [impact-analysis, lineage]
+    required_delivery_capabilities: [change-assurance]
+    fulfilled_by_roles: [impact-analysis-engineer]
+    risk_level: MEDIUM
+    delegable_to_agent: true
+
+  - key: resp.regression-proof
+    name: Regression Proof
+    statement: >
+      Prove that a change does not break existing behaviour, by selecting and
+      running the smallest sufficient set of tests.
+    required_capabilities: [regression-testing, testing, impact-analysis]
+    required_delivery_capabilities: [regression-assurance]
+    fulfilled_by_roles: [regression-engineer]
+    risk_level: MEDIUM
+    delegable_to_agent: true
+
+  - key: resp.data-correctness
+    name: Data Correctness
+    statement: Ensure data is correct, complete and fit for its declared purpose.
+    required_capabilities: [data-quality, testing]
+    required_delivery_capabilities: [data-quality-assurance]
+    fulfilled_by_roles: [data-quality-engineer]
+    risk_level: MEDIUM
+    delegable_to_agent: true
+
+  - key: resp.logical-data-design
+    name: Logical Data Design
+    statement: >
+      Define the logical representation of required data, traceable to business
+      requirements and conformant to enterprise data standards.
+    required_capabilities: [data-modelling, metadata-management]
+    required_delivery_capabilities: [architecture-assurance]
+    fulfilled_by_roles: [data-model-engineer, data-architect]
+    risk_level: HIGH
+    delegable_to_agent: true
+
+  - key: resp.architecture-integrity
+    name: Architecture Integrity
+    statement: Ensure the solution structure remains coherent and fit for purpose.
+    required_capabilities: [transformation, lineage, metadata-management]
+    required_delivery_capabilities: [architecture-assurance]
+    fulfilled_by_roles: [data-architect]
+    risk_level: HIGH
+    delegable_to_agent: true
+
+  - key: resp.architecture-signoff
+    name: Architecture Sign-off
+    statement: >
+      Accept, on the organization's behalf, that a design is fit to build. This
+      is an accountability, not a task.
+    required_capabilities: []
+    required_delivery_capabilities: [architecture-assurance]
+    fulfilled_by_roles: []
+    risk_level: HIGH
+    delegable_to_agent: false
+
+  # Assessment and sign-off are deliberately separate responsibilities.
+  # An agent can perform the assessment; only a person can grant the clearance.
+  # Collapsing the two would either bar agents from useful work or let them
+  # sign off on obligations a human is answerable for.
+  - key: resp.security-assessment
+    name: Security Assessment
+    statement: >
+      Assess data protection and access obligations against the change and
+      produce the evidence a clearance decision needs.
+    required_capabilities: [security]
+    required_delivery_capabilities: [security-assurance]
+    fulfilled_by_roles: [security-engineer]
+    risk_level: CRITICAL
+    delegable_to_agent: true
+
+  - key: resp.security-clearance
+    name: Security Clearance
+    statement: >
+      Accept, on the organization's behalf, that security obligations are met.
+      An accountability, not a task.
+    required_capabilities: []
+    required_delivery_capabilities: [security-assurance]
+    fulfilled_by_roles: []
+    risk_level: CRITICAL
+    delegable_to_agent: false
+
+  - key: resp.release-preparation
+    name: Release Preparation
+    statement: >
+      Assemble a release with complete evidence and the runbook needed to
+      operate it.
+    required_capabilities: [monitoring, ci-cd]
+    required_delivery_capabilities: [release-assurance, operational-readiness]
+    fulfilled_by_roles: [release-engineer, sre]
+    risk_level: HIGH
+    delegable_to_agent: true
+
+  - key: resp.release-readiness
+    name: Release Readiness Sign-off
+    statement: >
+      Accept that a release is fit to deploy. An accountability, not a task.
+    required_capabilities: []
+    required_delivery_capabilities: [release-assurance]
+    fulfilled_by_roles: []
+    risk_level: HIGH
+    delegable_to_agent: false
+
+  - key: resp.documentation-currency
+    name: Documentation Currency
+    statement: Keep human-readable descriptions accurate as the system changes.
+    required_capabilities: [documentation, metadata-management]
+    required_delivery_capabilities: [documentation-assurance]
+    fulfilled_by_roles: [documentation-engineer]
+    risk_level: LOW
+    delegable_to_agent: true
+
+  - key: resp.requirements-quality
+    name: Requirements Quality
+    statement: >
+      Ensure requirements are unambiguous, testable, traceable and cited to a
+      source.
+    required_capabilities: []
+    required_delivery_capabilities: [requirements-management]
+    fulfilled_by_roles: [requirements-engineer]
+    risk_level: MEDIUM
+    delegable_to_agent: true
+
+  - key: resp.feasibility-assessment
+    name: Feasibility Assessment
+    statement: >
+      Assess the technical, operational and cost feasibility of a proposed
+      solution before requirements and architecture commit resources to it.
+      Unlike resp.architecture-signoff or resp.release-readiness this carries
+      no non-delegable sign-off twin: the discovery phase has no formal
+      approval gate in this delivery model, so the assessment's GO/NO-GO/
+      CONDITIONAL verdict is recorded directly on the produced
+      DeliveryArtifact rather than behind a gate. See ADR-0012.
+    required_capabilities: []
+    required_delivery_capabilities: [feasibility-assessment]
+    fulfilled_by_roles: [requirements-engineer]
+    risk_level: MEDIUM
+    delegable_to_agent: true

@@ -1,0 +1,53 @@
+{
+  "$id": "https://agentic-data-engineering/schemas/DeliveryCapabilityDeclaration.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "What an agent claims it can do within the organization's delivery model.\n\nThe \u00a713 addition. Without this an agent is a generic capability; with it, an\nagent is a candidate for specific organizational work, and the composition\nengine can reject it for reasons an engineering manager would recognise.",
+  "properties": {
+    "produces_evidence_keys": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Produces Evidence Keys",
+      "type": "array"
+    },
+    "supported_artifact_kinds": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Supported Artifact Kinds",
+      "type": "array"
+    },
+    "supported_checklist_keys": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Supported Checklist Keys",
+      "type": "array"
+    },
+    "supported_gate_keys": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Supported Gate Keys",
+      "type": "array"
+    },
+    "supported_phase_keys": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Supported Phase Keys",
+      "type": "array"
+    },
+    "supported_task_keys": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Supported Task Keys",
+      "type": "array"
+    }
+  },
+  "title": "DeliveryCapabilityDeclaration",
+  "type": "object",
+  "x-metamodel-version": "0.1.0"
+}

@@ -1,0 +1,277 @@
+{
+  "$defs": {
+    "EntityRef": {
+      "additionalProperties": false,
+      "description": "A typed, optionally version-pinned pointer to another entity.",
+      "properties": {
+        "id": {
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "Id",
+          "type": "string"
+        },
+        "type": {
+          "$ref": "#/$defs/EntityType"
+        },
+        "version": {
+          "anyOf": [
+            {
+              "examples": [
+                "1.0.0",
+                "2.1.0-rc.1"
+              ],
+              "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-((?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+([0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Pin to an exact version. None means 'whatever is current'.",
+          "title": "Version"
+        }
+      },
+      "required": [
+        "type",
+        "id"
+      ],
+      "title": "EntityRef",
+      "type": "object"
+    },
+    "EntityType": {
+      "description": "Every entity type in the metamodel, across both twins.\n\n``EntityRef`` and the relationship-type registry validate against this, so a\ntypo in a reference or a registry file fails loudly instead of creating a\ndangling edge.",
+      "enum": [
+        "Project",
+        "Repository",
+        "CodeArtifact",
+        "Pipeline",
+        "DataAsset",
+        "SchemaDefinition",
+        "DataProfile",
+        "Infrastructure",
+        "CloudResource",
+        "ArchitectureElement",
+        "Test",
+        "Incident",
+        "Change",
+        "Deployment",
+        "DeliveryModel",
+        "DeliveryPhase",
+        "DeliveryTask",
+        "DeliveryActivity",
+        "DeliveryArtifact",
+        "DeliveryInput",
+        "DeliveryOutput",
+        "DeliveryProcess",
+        "DeliveryContract",
+        "Checklist",
+        "ChecklistItem",
+        "AcceptanceCriterion",
+        "ApprovalGate",
+        "ApprovalRule",
+        "Approval",
+        "EvidenceRequirement",
+        "DefinitionOfDone",
+        "Standard",
+        "Template",
+        "Methodology",
+        "Control",
+        "RaciAssignment",
+        "DeliveryRole",
+        "EngineeringResponsibility",
+        "EngineeringRole",
+        "Agent",
+        "Skill",
+        "Tool",
+        "KnowledgePack",
+        "Policy",
+        "Problem",
+        "Requirement",
+        "Capability",
+        "DeliveryCapability",
+        "CapabilityGap",
+        "Workflow",
+        "Task",
+        "Artifact",
+        "Event",
+        "Decision",
+        "Observation",
+        "Evaluation",
+        "EvaluationSuite",
+        "EvaluationScenario",
+        "EvaluationMetric",
+        "Evidence",
+        "Finding",
+        "Platform",
+        "TechnologyBinding",
+        "Memory",
+        "ContextPolicy",
+        "ContextBundle",
+        "ContextItem",
+        "ProjectSnapshot",
+        "EngineeringObservation",
+        "EngineeringPattern",
+        "CandidateSkill",
+        "CandidateTool",
+        "CandidateAgent"
+      ],
+      "title": "EntityType",
+      "type": "string"
+    },
+    "Twin": {
+      "description": "Which dimension of the digital twin an entity belongs to.\n\nBoth dimensions share one graph and one provenance model; this is a label\nfor navigation and reporting, not a partition. See ADR-0008.",
+      "enum": [
+        "TECHNICAL",
+        "DELIVERY",
+        "SHARED"
+      ],
+      "title": "Twin",
+      "type": "string"
+    }
+  },
+  "$id": "https://agentic-data-engineering/schemas/EvaluationSuite.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "A named, versioned collection of scenarios and metrics.",
+  "properties": {
+    "applies_to": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Applies To",
+      "type": "array"
+    },
+    "attributes": {
+      "additionalProperties": true,
+      "description": "Adapter-specific detail that has not earned a first-class field yet.",
+      "title": "Attributes",
+      "type": "object"
+    },
+    "created_at": {
+      "format": "date-time",
+      "title": "Created At",
+      "type": "string"
+    },
+    "description": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Description"
+    },
+    "entity_type": {
+      "$ref": "#/$defs/EntityType",
+      "default": "EvaluationSuite"
+    },
+    "id": {
+      "maxLength": 256,
+      "minLength": 1,
+      "title": "Id",
+      "type": "string"
+    },
+    "labels": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Labels",
+      "type": "array"
+    },
+    "level": {
+      "description": "skill | tool | agent | workflow | ecosystem",
+      "title": "Level",
+      "type": "string"
+    },
+    "metamodel_version": {
+      "default": "0.1.0",
+      "examples": [
+        "1.0.0",
+        "2.1.0-rc.1"
+      ],
+      "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-((?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+([0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?$",
+      "title": "Metamodel Version",
+      "type": "string"
+    },
+    "metric_refs": {
+      "items": {
+        "$ref": "#/$defs/EntityRef"
+      },
+      "title": "Metric Refs",
+      "type": "array"
+    },
+    "name": {
+      "maxLength": 512,
+      "minLength": 1,
+      "title": "Name",
+      "type": "string"
+    },
+    "passing_delivery_score": {
+      "default": 0.9,
+      "maximum": 1.0,
+      "minimum": 0.0,
+      "title": "Passing Delivery Score",
+      "type": "number"
+    },
+    "passing_score": {
+      "default": 0.8,
+      "maximum": 1.0,
+      "minimum": 0.0,
+      "title": "Passing Score",
+      "type": "number"
+    },
+    "scenario_refs": {
+      "items": {
+        "$ref": "#/$defs/EntityRef"
+      },
+      "title": "Scenario Refs",
+      "type": "array"
+    },
+    "suite_key": {
+      "minLength": 1,
+      "title": "Suite Key",
+      "type": "string"
+    },
+    "twin": {
+      "$ref": "#/$defs/Twin",
+      "default": "SHARED"
+    },
+    "updated_at": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Updated At"
+    },
+    "version": {
+      "default": "0.1.0",
+      "examples": [
+        "1.0.0",
+        "2.1.0-rc.1"
+      ],
+      "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-((?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+([0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?$",
+      "title": "Version",
+      "type": "string"
+    }
+  },
+  "required": [
+    "id",
+    "name",
+    "suite_key",
+    "level"
+  ],
+  "title": "EvaluationSuite",
+  "type": "object",
+  "x-metamodel-version": "0.1.0",
+  "x-twin": "SHARED"
+}

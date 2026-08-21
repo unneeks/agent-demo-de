@@ -1,0 +1,265 @@
+{
+  "$defs": {
+    "ActionClass": {
+      "description": "Blast radius of one tool action. Required on every action.",
+      "enum": [
+        "READ_ONLY",
+        "LOW_RISK_WRITE",
+        "HIGH_RISK_WRITE",
+        "DESTRUCTIVE"
+      ],
+      "title": "ActionClass",
+      "type": "string"
+    },
+    "ApprovalLevel": {
+      "enum": [
+        "NONE",
+        "SAMPLED_QA",
+        "SINGLE_REVIEWER",
+        "MAKER_CHECKER"
+      ],
+      "title": "ApprovalLevel",
+      "type": "string"
+    },
+    "EntityType": {
+      "description": "Every entity type in the metamodel, across both twins.\n\n``EntityRef`` and the relationship-type registry validate against this, so a\ntypo in a reference or a registry file fails loudly instead of creating a\ndangling edge.",
+      "enum": [
+        "Project",
+        "Repository",
+        "CodeArtifact",
+        "Pipeline",
+        "DataAsset",
+        "SchemaDefinition",
+        "DataProfile",
+        "Infrastructure",
+        "CloudResource",
+        "ArchitectureElement",
+        "Test",
+        "Incident",
+        "Change",
+        "Deployment",
+        "DeliveryModel",
+        "DeliveryPhase",
+        "DeliveryTask",
+        "DeliveryActivity",
+        "DeliveryArtifact",
+        "DeliveryInput",
+        "DeliveryOutput",
+        "DeliveryProcess",
+        "DeliveryContract",
+        "Checklist",
+        "ChecklistItem",
+        "AcceptanceCriterion",
+        "ApprovalGate",
+        "ApprovalRule",
+        "Approval",
+        "EvidenceRequirement",
+        "DefinitionOfDone",
+        "Standard",
+        "Template",
+        "Methodology",
+        "Control",
+        "RaciAssignment",
+        "DeliveryRole",
+        "EngineeringResponsibility",
+        "EngineeringRole",
+        "Agent",
+        "Skill",
+        "Tool",
+        "KnowledgePack",
+        "Policy",
+        "Problem",
+        "Requirement",
+        "Capability",
+        "DeliveryCapability",
+        "CapabilityGap",
+        "Workflow",
+        "Task",
+        "Artifact",
+        "Event",
+        "Decision",
+        "Observation",
+        "Evaluation",
+        "EvaluationSuite",
+        "EvaluationScenario",
+        "EvaluationMetric",
+        "Evidence",
+        "Finding",
+        "Platform",
+        "TechnologyBinding",
+        "Memory",
+        "ContextPolicy",
+        "ContextBundle",
+        "ContextItem",
+        "ProjectSnapshot",
+        "EngineeringObservation",
+        "EngineeringPattern",
+        "CandidateSkill",
+        "CandidateTool",
+        "CandidateAgent"
+      ],
+      "title": "EntityType",
+      "type": "string"
+    },
+    "Twin": {
+      "description": "Which dimension of the digital twin an entity belongs to.\n\nBoth dimensions share one graph and one provenance model; this is a label\nfor navigation and reporting, not a partition. See ADR-0008.",
+      "enum": [
+        "TECHNICAL",
+        "DELIVERY",
+        "SHARED"
+      ],
+      "title": "Twin",
+      "type": "string"
+    }
+  },
+  "$id": "https://agentic-data-engineering/schemas/Policy.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "An executable governance rule.",
+  "properties": {
+    "applies_to_action_classes": {
+      "items": {
+        "$ref": "#/$defs/ActionClass"
+      },
+      "title": "Applies To Action Classes",
+      "type": "array"
+    },
+    "attributes": {
+      "additionalProperties": true,
+      "description": "Adapter-specific detail that has not earned a first-class field yet.",
+      "title": "Attributes",
+      "type": "object"
+    },
+    "created_at": {
+      "format": "date-time",
+      "title": "Created At",
+      "type": "string"
+    },
+    "description": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Description"
+    },
+    "enforcement": {
+      "default": "blocking",
+      "description": "blocking | advisory",
+      "title": "Enforcement",
+      "type": "string"
+    },
+    "entity_type": {
+      "$ref": "#/$defs/EntityType",
+      "default": "Policy"
+    },
+    "id": {
+      "maxLength": 256,
+      "minLength": 1,
+      "title": "Id",
+      "type": "string"
+    },
+    "labels": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Labels",
+      "type": "array"
+    },
+    "metamodel_version": {
+      "default": "0.1.0",
+      "examples": [
+        "1.0.0",
+        "2.1.0-rc.1"
+      ],
+      "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-((?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+([0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?$",
+      "title": "Metamodel Version",
+      "type": "string"
+    },
+    "name": {
+      "maxLength": 512,
+      "minLength": 1,
+      "title": "Name",
+      "type": "string"
+    },
+    "policy_key": {
+      "minLength": 1,
+      "title": "Policy Key",
+      "type": "string"
+    },
+    "rationale": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Rationale"
+    },
+    "required_approval": {
+      "$ref": "#/$defs/ApprovalLevel",
+      "default": "NONE"
+    },
+    "rollback_strategy": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Rollback Strategy"
+    },
+    "statement": {
+      "minLength": 1,
+      "title": "Statement",
+      "type": "string"
+    },
+    "twin": {
+      "$ref": "#/$defs/Twin",
+      "default": "SHARED"
+    },
+    "updated_at": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Updated At"
+    },
+    "version": {
+      "default": "0.1.0",
+      "examples": [
+        "1.0.0",
+        "2.1.0-rc.1"
+      ],
+      "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-((?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+([0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?$",
+      "title": "Version",
+      "type": "string"
+    }
+  },
+  "required": [
+    "id",
+    "name",
+    "policy_key",
+    "statement"
+  ],
+  "title": "Policy",
+  "type": "object",
+  "x-metamodel-version": "0.1.0",
+  "x-twin": "SHARED"
+}

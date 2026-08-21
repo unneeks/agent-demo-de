@@ -1,0 +1,24 @@
+{
+  "backend": "manually-authored",
+  "label": "tool:pattern.pipeline_shape.dbt_model.airflow",
+  "raw_response": {
+    "actions": [
+      {
+        "action_class": "LOW_RISK_WRITE",
+        "input_schema": {
+          "model": "string"
+        },
+        "name": "run",
+        "output_schema": {
+          "status": "string"
+        }
+      }
+    ],
+    "category": "orchestration",
+    "description": "Runs a dbt model as an Airflow-orchestrated task against staging orders.",
+    "name": "dbt Airflow Runner",
+    "provider": "internal"
+  },
+  "recorded_at": "2026-08-10T01:47:52.374915+00:00",
+  "request_hash": "6cc3774422c7a314172b4af98f7c0ccf16123344cbc7ed082795267ce269e826"
+}

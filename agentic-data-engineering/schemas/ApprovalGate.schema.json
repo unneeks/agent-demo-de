@@ -1,0 +1,491 @@
+{
+  "$defs": {
+    "EntityRef": {
+      "additionalProperties": false,
+      "description": "A typed, optionally version-pinned pointer to another entity.",
+      "properties": {
+        "id": {
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "Id",
+          "type": "string"
+        },
+        "type": {
+          "$ref": "#/$defs/EntityType"
+        },
+        "version": {
+          "anyOf": [
+            {
+              "examples": [
+                "1.0.0",
+                "2.1.0-rc.1"
+              ],
+              "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-((?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+([0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Pin to an exact version. None means 'whatever is current'.",
+          "title": "Version"
+        }
+      },
+      "required": [
+        "type",
+        "id"
+      ],
+      "title": "EntityRef",
+      "type": "object"
+    },
+    "EntityType": {
+      "description": "Every entity type in the metamodel, across both twins.\n\n``EntityRef`` and the relationship-type registry validate against this, so a\ntypo in a reference or a registry file fails loudly instead of creating a\ndangling edge.",
+      "enum": [
+        "Project",
+        "Repository",
+        "CodeArtifact",
+        "Pipeline",
+        "DataAsset",
+        "SchemaDefinition",
+        "DataProfile",
+        "Infrastructure",
+        "CloudResource",
+        "ArchitectureElement",
+        "Test",
+        "Incident",
+        "Change",
+        "Deployment",
+        "DeliveryModel",
+        "DeliveryPhase",
+        "DeliveryTask",
+        "DeliveryActivity",
+        "DeliveryArtifact",
+        "DeliveryInput",
+        "DeliveryOutput",
+        "DeliveryProcess",
+        "DeliveryContract",
+        "Checklist",
+        "ChecklistItem",
+        "AcceptanceCriterion",
+        "ApprovalGate",
+        "ApprovalRule",
+        "Approval",
+        "EvidenceRequirement",
+        "DefinitionOfDone",
+        "Standard",
+        "Template",
+        "Methodology",
+        "Control",
+        "RaciAssignment",
+        "DeliveryRole",
+        "EngineeringResponsibility",
+        "EngineeringRole",
+        "Agent",
+        "Skill",
+        "Tool",
+        "KnowledgePack",
+        "Policy",
+        "Problem",
+        "Requirement",
+        "Capability",
+        "DeliveryCapability",
+        "CapabilityGap",
+        "Workflow",
+        "Task",
+        "Artifact",
+        "Event",
+        "Decision",
+        "Observation",
+        "Evaluation",
+        "EvaluationSuite",
+        "EvaluationScenario",
+        "EvaluationMetric",
+        "Evidence",
+        "Finding",
+        "Platform",
+        "TechnologyBinding",
+        "Memory",
+        "ContextPolicy",
+        "ContextBundle",
+        "ContextItem",
+        "ProjectSnapshot",
+        "EngineeringObservation",
+        "EngineeringPattern",
+        "CandidateSkill",
+        "CandidateTool",
+        "CandidateAgent"
+      ],
+      "title": "EntityType",
+      "type": "string"
+    },
+    "ExtractionMethod": {
+      "description": "How a delivery fact was obtained from a document.\n\nDelivery metadata is largely extracted from prose, so the extraction method\ntravels with the fact: a heading match and an LLM reading of a paragraph\nwarrant different scepticism.",
+      "enum": [
+        "DIRECT_DECLARATION",
+        "STRUCTURED_PARSE",
+        "PATTERN_MATCH",
+        "SEMANTIC_EXTRACTION",
+        "HUMAN_ENTRY"
+      ],
+      "title": "ExtractionMethod",
+      "type": "string"
+    },
+    "GateDecision": {
+      "description": "A human decision at a gate, as opposed to computed readiness.",
+      "enum": [
+        "APPROVE",
+        "APPROVE_WITH_CONDITIONS",
+        "REJECT"
+      ],
+      "title": "GateDecision",
+      "type": "string"
+    },
+    "ProvenanceState": {
+      "description": "How a fact came to be believed. See ADR-0003.",
+      "enum": [
+        "OBSERVED",
+        "INFERRED",
+        "HUMAN_VERIFIED",
+        "CERTIFIED"
+      ],
+      "title": "ProvenanceState",
+      "type": "string"
+    },
+    "RiskClass": {
+      "enum": [
+        "LOW",
+        "MEDIUM",
+        "HIGH",
+        "CRITICAL"
+      ],
+      "title": "RiskClass",
+      "type": "string"
+    },
+    "Twin": {
+      "description": "Which dimension of the digital twin an entity belongs to.\n\nBoth dimensions share one graph and one provenance model; this is a label\nfor navigation and reporting, not a partition. See ADR-0008.",
+      "enum": [
+        "TECHNICAL",
+        "DELIVERY",
+        "SHARED"
+      ],
+      "title": "Twin",
+      "type": "string"
+    }
+  },
+  "$id": "https://agentic-data-engineering/schemas/ApprovalGate.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "A control point between phases.\n\n``blocking=True`` means work genuinely cannot proceed past it. A gate\nextracted from documentation starts non-blocking and must be verified by a\nhuman before it can stop anything -- otherwise a misread paragraph halts\ndelivery, and the platform loses the organization's trust permanently.",
+  "properties": {
+    "allowed_decisions": {
+      "items": {
+        "$ref": "#/$defs/GateDecision"
+      },
+      "title": "Allowed Decisions",
+      "type": "array"
+    },
+    "attributes": {
+      "additionalProperties": true,
+      "description": "Adapter-specific detail that has not earned a first-class field yet.",
+      "title": "Attributes",
+      "type": "object"
+    },
+    "blocking": {
+      "default": false,
+      "description": "Whether failing this rule stops delivery. Requires verified provenance.",
+      "title": "Blocking",
+      "type": "boolean"
+    },
+    "confidence": {
+      "anyOf": [
+        {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Confidence"
+    },
+    "created_at": {
+      "format": "date-time",
+      "title": "Created At",
+      "type": "string"
+    },
+    "description": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Description"
+    },
+    "discovered_at": {
+      "format": "date-time",
+      "title": "Discovered At",
+      "type": "string"
+    },
+    "discovered_by": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Adapter, skill or agent that produced this, e.g. 'git-discovery@0.1.0'.",
+      "title": "Discovered By"
+    },
+    "entity_type": {
+      "$ref": "#/$defs/EntityType",
+      "default": "ApprovalGate"
+    },
+    "evidence_refs": {
+      "items": {
+        "$ref": "#/$defs/EntityRef"
+      },
+      "title": "Evidence Refs",
+      "type": "array"
+    },
+    "extraction_method": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/ExtractionMethod"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "gate_key": {
+      "minLength": 1,
+      "title": "Gate Key",
+      "type": "string"
+    },
+    "human_verified_at": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Human Verified At"
+    },
+    "human_verified_by": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Human Verified By"
+    },
+    "id": {
+      "maxLength": 256,
+      "minLength": 1,
+      "title": "Id",
+      "type": "string"
+    },
+    "labels": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Labels",
+      "type": "array"
+    },
+    "metamodel_version": {
+      "default": "0.1.0",
+      "examples": [
+        "1.0.0",
+        "2.1.0-rc.1"
+      ],
+      "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-((?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+([0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?$",
+      "title": "Metamodel Version",
+      "type": "string"
+    },
+    "minimum_traceability": {
+      "default": 0.0,
+      "maximum": 1.0,
+      "minimum": 0.0,
+      "title": "Minimum Traceability",
+      "type": "number"
+    },
+    "name": {
+      "maxLength": 512,
+      "minLength": 1,
+      "title": "Name",
+      "type": "string"
+    },
+    "phase_keys": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Phase Keys",
+      "type": "array"
+    },
+    "policy_refs": {
+      "items": {
+        "$ref": "#/$defs/EntityRef"
+      },
+      "title": "Policy Refs",
+      "type": "array"
+    },
+    "provenance": {
+      "$ref": "#/$defs/ProvenanceState"
+    },
+    "required_artifact_kinds": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Required Artifact Kinds",
+      "type": "array"
+    },
+    "required_checklist_refs": {
+      "items": {
+        "$ref": "#/$defs/EntityRef"
+      },
+      "title": "Required Checklist Refs",
+      "type": "array"
+    },
+    "required_evaluation_refs": {
+      "items": {
+        "$ref": "#/$defs/EntityRef"
+      },
+      "title": "Required Evaluation Refs",
+      "type": "array"
+    },
+    "required_evidence_refs": {
+      "items": {
+        "$ref": "#/$defs/EntityRef"
+      },
+      "title": "Required Evidence Refs",
+      "type": "array"
+    },
+    "required_role_keys": {
+      "description": "Delivery roles that must approve.",
+      "items": {
+        "type": "string"
+      },
+      "title": "Required Role Keys",
+      "type": "array"
+    },
+    "risk_level": {
+      "$ref": "#/$defs/RiskClass",
+      "default": "MEDIUM"
+    },
+    "rule_refs": {
+      "items": {
+        "$ref": "#/$defs/EntityRef"
+      },
+      "title": "Rule Refs",
+      "type": "array"
+    },
+    "source_document": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Document this was extracted from -- path, URI or document id.",
+      "title": "Source Document"
+    },
+    "source_section": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Section, heading or page within the source document.",
+      "title": "Source Section"
+    },
+    "twin": {
+      "$ref": "#/$defs/Twin",
+      "default": "DELIVERY"
+    },
+    "updated_at": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Updated At"
+    },
+    "valid_from": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Valid From"
+    },
+    "valid_until": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Valid Until"
+    },
+    "version": {
+      "default": "0.1.0",
+      "examples": [
+        "1.0.0",
+        "2.1.0-rc.1"
+      ],
+      "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-((?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+([0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?$",
+      "title": "Version",
+      "type": "string"
+    }
+  },
+  "required": [
+    "provenance",
+    "id",
+    "name",
+    "gate_key"
+  ],
+  "title": "ApprovalGate",
+  "type": "object",
+  "x-metamodel-version": "0.1.0",
+  "x-twin": "DELIVERY"
+}

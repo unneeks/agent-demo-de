@@ -1,0 +1,383 @@
+{
+  "$defs": {
+    "ActionClass": {
+      "description": "Blast radius of one tool action. Required on every action.",
+      "enum": [
+        "READ_ONLY",
+        "LOW_RISK_WRITE",
+        "HIGH_RISK_WRITE",
+        "DESTRUCTIVE"
+      ],
+      "title": "ActionClass",
+      "type": "string"
+    },
+    "ApprovalLevel": {
+      "enum": [
+        "NONE",
+        "SAMPLED_QA",
+        "SINGLE_REVIEWER",
+        "MAKER_CHECKER"
+      ],
+      "title": "ApprovalLevel",
+      "type": "string"
+    },
+    "EntityType": {
+      "description": "Every entity type in the metamodel, across both twins.\n\n``EntityRef`` and the relationship-type registry validate against this, so a\ntypo in a reference or a registry file fails loudly instead of creating a\ndangling edge.",
+      "enum": [
+        "Project",
+        "Repository",
+        "CodeArtifact",
+        "Pipeline",
+        "DataAsset",
+        "SchemaDefinition",
+        "DataProfile",
+        "Infrastructure",
+        "CloudResource",
+        "ArchitectureElement",
+        "Test",
+        "Incident",
+        "Change",
+        "Deployment",
+        "DeliveryModel",
+        "DeliveryPhase",
+        "DeliveryTask",
+        "DeliveryActivity",
+        "DeliveryArtifact",
+        "DeliveryInput",
+        "DeliveryOutput",
+        "DeliveryProcess",
+        "DeliveryContract",
+        "Checklist",
+        "ChecklistItem",
+        "AcceptanceCriterion",
+        "ApprovalGate",
+        "ApprovalRule",
+        "Approval",
+        "EvidenceRequirement",
+        "DefinitionOfDone",
+        "Standard",
+        "Template",
+        "Methodology",
+        "Control",
+        "RaciAssignment",
+        "DeliveryRole",
+        "EngineeringResponsibility",
+        "EngineeringRole",
+        "Agent",
+        "Skill",
+        "Tool",
+        "KnowledgePack",
+        "Policy",
+        "Problem",
+        "Requirement",
+        "Capability",
+        "DeliveryCapability",
+        "CapabilityGap",
+        "Workflow",
+        "Task",
+        "Artifact",
+        "Event",
+        "Decision",
+        "Observation",
+        "Evaluation",
+        "EvaluationSuite",
+        "EvaluationScenario",
+        "EvaluationMetric",
+        "Evidence",
+        "Finding",
+        "Platform",
+        "TechnologyBinding",
+        "Memory",
+        "ContextPolicy",
+        "ContextBundle",
+        "ContextItem",
+        "ProjectSnapshot",
+        "EngineeringObservation",
+        "EngineeringPattern",
+        "CandidateSkill",
+        "CandidateTool",
+        "CandidateAgent"
+      ],
+      "title": "EntityType",
+      "type": "string"
+    },
+    "ToolAction": {
+      "additionalProperties": false,
+      "description": "One callable operation on a tool.\n\n``action_class`` has no default on purpose: an unclassified action cannot be\nconstructed, so none can slip past an approval policy by omission.",
+      "properties": {
+        "action_class": {
+          "$ref": "#/$defs/ActionClass"
+        },
+        "description": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Description"
+        },
+        "input_schema": {
+          "additionalProperties": true,
+          "title": "Input Schema",
+          "type": "object"
+        },
+        "minimum_approval": {
+          "$ref": "#/$defs/ApprovalLevel",
+          "default": "NONE"
+        },
+        "name": {
+          "minLength": 1,
+          "title": "Name",
+          "type": "string"
+        },
+        "output_schema": {
+          "additionalProperties": true,
+          "title": "Output Schema",
+          "type": "object"
+        },
+        "rate_limit_per_minute": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Rate Limit Per Minute"
+        },
+        "required_permissions": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Required Permissions",
+          "type": "array"
+        },
+        "reversible": {
+          "default": true,
+          "title": "Reversible",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "name",
+        "action_class"
+      ],
+      "title": "ToolAction",
+      "type": "object"
+    },
+    "Twin": {
+      "description": "Which dimension of the digital twin an entity belongs to.\n\nBoth dimensions share one graph and one provenance model; this is a label\nfor navigation and reporting, not a partition. See ADR-0008.",
+      "enum": [
+        "TECHNICAL",
+        "DELIVERY",
+        "SHARED"
+      ],
+      "title": "Twin",
+      "type": "string"
+    }
+  },
+  "$id": "https://agentic-data-engineering/schemas/Tool.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "An external executable capability the platform can invoke.",
+  "properties": {
+    "actions": {
+      "items": {
+        "$ref": "#/$defs/ToolAction"
+      },
+      "title": "Actions",
+      "type": "array"
+    },
+    "attributes": {
+      "additionalProperties": true,
+      "description": "Adapter-specific detail that has not earned a first-class field yet.",
+      "title": "Attributes",
+      "type": "object"
+    },
+    "auditable": {
+      "default": true,
+      "title": "Auditable",
+      "type": "boolean"
+    },
+    "authentication": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Mechanism, never a secret.",
+      "title": "Authentication"
+    },
+    "category": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Category"
+    },
+    "cost_profile": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Cost Profile"
+    },
+    "created_at": {
+      "format": "date-time",
+      "title": "Created At",
+      "type": "string"
+    },
+    "description": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Description"
+    },
+    "entity_type": {
+      "$ref": "#/$defs/EntityType",
+      "default": "Tool"
+    },
+    "id": {
+      "maxLength": 256,
+      "minLength": 1,
+      "title": "Id",
+      "type": "string"
+    },
+    "labels": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Labels",
+      "type": "array"
+    },
+    "metamodel_version": {
+      "default": "0.1.0",
+      "examples": [
+        "1.0.0",
+        "2.1.0-rc.1"
+      ],
+      "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-((?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+([0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?$",
+      "title": "Metamodel Version",
+      "type": "string"
+    },
+    "name": {
+      "maxLength": 512,
+      "minLength": 1,
+      "title": "Name",
+      "type": "string"
+    },
+    "platform_key": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Platform Key"
+    },
+    "provider": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Provider"
+    },
+    "rate_limits": {
+      "additionalProperties": {
+        "type": "integer"
+      },
+      "title": "Rate Limits",
+      "type": "object"
+    },
+    "required_permissions": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Required Permissions",
+      "type": "array"
+    },
+    "security_constraints": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Security Constraints",
+      "type": "array"
+    },
+    "tool_key": {
+      "minLength": 1,
+      "title": "Tool Key",
+      "type": "string"
+    },
+    "twin": {
+      "$ref": "#/$defs/Twin",
+      "default": "SHARED"
+    },
+    "updated_at": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Updated At"
+    },
+    "version": {
+      "default": "0.1.0",
+      "examples": [
+        "1.0.0",
+        "2.1.0-rc.1"
+      ],
+      "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-((?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+([0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?$",
+      "title": "Version",
+      "type": "string"
+    }
+  },
+  "required": [
+    "id",
+    "name",
+    "tool_key"
+  ],
+  "title": "Tool",
+  "type": "object",
+  "x-metamodel-version": "0.1.0",
+  "x-twin": "SHARED"
+}

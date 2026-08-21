@@ -1,0 +1,27 @@
+{
+  "backend": "manually-authored",
+  "raw_response": {
+    "entities": [
+      {
+        "confidence": 0.9,
+        "entity_type": "Pipeline",
+        "local_id": "p1",
+        "orchestrator": "dbt",
+        "pipeline_kind": "dbt_model",
+        "suggested_id": "stg_bank_transactions"
+      }
+    ],
+    "relationships": [
+      {
+        "confidence": 0.9,
+        "source_local_id": "p1",
+        "target_kind": "DataAsset",
+        "target_symbolic_name": "bank_transactions",
+        "type": "DEPENDS_ON"
+      }
+    ]
+  },
+  "recorded_at": "2026-08-09T00:00:00+00:00",
+  "request_hash": "96fe59f399190e1c33add9547fc23afa0646ca6e76fc27badae18e527680fd8e",
+  "source_path": "dbt_demo/models/staging/stg_bank_transactions.sql"
+}

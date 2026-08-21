@@ -1,0 +1,581 @@
+{
+  "$defs": {
+    "AgentLifecycle": {
+      "enum": [
+        "DRAFT",
+        "CANDIDATE",
+        "EVALUATED",
+        "CERTIFIED",
+        "DEPLOYED",
+        "MONITORED",
+        "REEVALUATION_REQUIRED",
+        "DEPRECATED",
+        "RETIRED"
+      ],
+      "title": "AgentLifecycle",
+      "type": "string"
+    },
+    "DeliveryCapabilityDeclaration": {
+      "additionalProperties": false,
+      "description": "What an agent claims it can do within the organization's delivery model.\n\nThe \u00a713 addition. Without this an agent is a generic capability; with it, an\nagent is a candidate for specific organizational work, and the composition\nengine can reject it for reasons an engineering manager would recognise.",
+      "properties": {
+        "produces_evidence_keys": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Produces Evidence Keys",
+          "type": "array"
+        },
+        "supported_artifact_kinds": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Supported Artifact Kinds",
+          "type": "array"
+        },
+        "supported_checklist_keys": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Supported Checklist Keys",
+          "type": "array"
+        },
+        "supported_gate_keys": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Supported Gate Keys",
+          "type": "array"
+        },
+        "supported_phase_keys": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Supported Phase Keys",
+          "type": "array"
+        },
+        "supported_task_keys": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Supported Task Keys",
+          "type": "array"
+        }
+      },
+      "title": "DeliveryCapabilityDeclaration",
+      "type": "object"
+    },
+    "EntityRef": {
+      "additionalProperties": false,
+      "description": "A typed, optionally version-pinned pointer to another entity.",
+      "properties": {
+        "id": {
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "Id",
+          "type": "string"
+        },
+        "type": {
+          "$ref": "#/$defs/EntityType"
+        },
+        "version": {
+          "anyOf": [
+            {
+              "examples": [
+                "1.0.0",
+                "2.1.0-rc.1"
+              ],
+              "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-((?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+([0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Pin to an exact version. None means 'whatever is current'.",
+          "title": "Version"
+        }
+      },
+      "required": [
+        "type",
+        "id"
+      ],
+      "title": "EntityRef",
+      "type": "object"
+    },
+    "EntityType": {
+      "description": "Every entity type in the metamodel, across both twins.\n\n``EntityRef`` and the relationship-type registry validate against this, so a\ntypo in a reference or a registry file fails loudly instead of creating a\ndangling edge.",
+      "enum": [
+        "Project",
+        "Repository",
+        "CodeArtifact",
+        "Pipeline",
+        "DataAsset",
+        "SchemaDefinition",
+        "DataProfile",
+        "Infrastructure",
+        "CloudResource",
+        "ArchitectureElement",
+        "Test",
+        "Incident",
+        "Change",
+        "Deployment",
+        "DeliveryModel",
+        "DeliveryPhase",
+        "DeliveryTask",
+        "DeliveryActivity",
+        "DeliveryArtifact",
+        "DeliveryInput",
+        "DeliveryOutput",
+        "DeliveryProcess",
+        "DeliveryContract",
+        "Checklist",
+        "ChecklistItem",
+        "AcceptanceCriterion",
+        "ApprovalGate",
+        "ApprovalRule",
+        "Approval",
+        "EvidenceRequirement",
+        "DefinitionOfDone",
+        "Standard",
+        "Template",
+        "Methodology",
+        "Control",
+        "RaciAssignment",
+        "DeliveryRole",
+        "EngineeringResponsibility",
+        "EngineeringRole",
+        "Agent",
+        "Skill",
+        "Tool",
+        "KnowledgePack",
+        "Policy",
+        "Problem",
+        "Requirement",
+        "Capability",
+        "DeliveryCapability",
+        "CapabilityGap",
+        "Workflow",
+        "Task",
+        "Artifact",
+        "Event",
+        "Decision",
+        "Observation",
+        "Evaluation",
+        "EvaluationSuite",
+        "EvaluationScenario",
+        "EvaluationMetric",
+        "Evidence",
+        "Finding",
+        "Platform",
+        "TechnologyBinding",
+        "Memory",
+        "ContextPolicy",
+        "ContextBundle",
+        "ContextItem",
+        "ProjectSnapshot",
+        "EngineeringObservation",
+        "EngineeringPattern",
+        "CandidateSkill",
+        "CandidateTool",
+        "CandidateAgent"
+      ],
+      "title": "EntityType",
+      "type": "string"
+    },
+    "ExecutionModel": {
+      "description": "How an agent runs.\n\nEXTERNAL_AGENT is distinct from the other three: this platform does not\nrun the loop and does not select a model for it -- execution happens\nentirely inside a third-party agent platform (e.g. GitHub Copilot coding\nagent). See ADR-0014 and Agent.external_provider.",
+      "enum": [
+        "SINGLE_SHOT",
+        "ITERATIVE",
+        "PLANNER_EXECUTOR",
+        "WORKFLOW_DRIVEN",
+        "EXTERNAL_AGENT"
+      ],
+      "title": "ExecutionModel",
+      "type": "string"
+    },
+    "RiskClass": {
+      "enum": [
+        "LOW",
+        "MEDIUM",
+        "HIGH",
+        "CRITICAL"
+      ],
+      "title": "RiskClass",
+      "type": "string"
+    },
+    "Twin": {
+      "description": "Which dimension of the digital twin an entity belongs to.\n\nBoth dimensions share one graph and one provenance model; this is a label\nfor navigation and reporting, not a partition. See ADR-0008.",
+      "enum": [
+        "TECHNICAL",
+        "DELIVERY",
+        "SHARED"
+      ],
+      "title": "Twin",
+      "type": "string"
+    }
+  },
+  "$id": "https://agentic-data-engineering/schemas/Agent.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "One implementation of an EngineeringRole.\n\nEverything here is configuration, not code, so an agent version is fully\ndescribed by its record and can be reproduced.",
+  "properties": {
+    "agent_key": {
+      "minLength": 1,
+      "title": "Agent Key",
+      "type": "string"
+    },
+    "attributes": {
+      "additionalProperties": true,
+      "description": "Adapter-specific detail that has not earned a first-class field yet.",
+      "title": "Attributes",
+      "type": "object"
+    },
+    "capabilities": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Capabilities",
+      "type": "array"
+    },
+    "certification_status": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Certification Status"
+    },
+    "context_policy_ref": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/EntityRef"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "cost_profile": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Cost Profile"
+    },
+    "created_at": {
+      "format": "date-time",
+      "title": "Created At",
+      "type": "string"
+    },
+    "delegation_strategy": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Delegation Strategy"
+    },
+    "delivery": {
+      "$ref": "#/$defs/DeliveryCapabilityDeclaration"
+    },
+    "delivery_capabilities": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Delivery Capabilities",
+      "type": "array"
+    },
+    "description": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Description"
+    },
+    "entity_type": {
+      "$ref": "#/$defs/EntityType",
+      "default": "Agent"
+    },
+    "evaluation_suite_ref": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/EntityRef"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "execution_model": {
+      "$ref": "#/$defs/ExecutionModel",
+      "default": "PLANNER_EXECUTOR"
+    },
+    "external_provider": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "External Provider"
+    },
+    "human_approval_required": {
+      "default": true,
+      "title": "Human Approval Required",
+      "type": "boolean"
+    },
+    "id": {
+      "maxLength": 256,
+      "minLength": 1,
+      "title": "Id",
+      "type": "string"
+    },
+    "inputs": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "title": "Inputs",
+      "type": "object"
+    },
+    "knowledge_packs": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Knowledge Packs",
+      "type": "array"
+    },
+    "labels": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Labels",
+      "type": "array"
+    },
+    "max_iterations": {
+      "default": 10,
+      "exclusiveMinimum": 0,
+      "title": "Max Iterations",
+      "type": "integer"
+    },
+    "memory_scopes": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Memory Scopes",
+      "type": "array"
+    },
+    "metamodel_version": {
+      "default": "0.1.0",
+      "examples": [
+        "1.0.0",
+        "2.1.0-rc.1"
+      ],
+      "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-((?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+([0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?$",
+      "title": "Metamodel Version",
+      "type": "string"
+    },
+    "mission": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Mission"
+    },
+    "model_configuration": {
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "type": "number"
+          },
+          {
+            "type": "integer"
+          },
+          {
+            "type": "string"
+          },
+          {
+            "type": "boolean"
+          }
+        ]
+      },
+      "title": "Model Configuration",
+      "type": "object"
+    },
+    "model_name": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Model Name"
+    },
+    "model_provider": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Model Provider"
+    },
+    "name": {
+      "maxLength": 512,
+      "minLength": 1,
+      "title": "Name",
+      "type": "string"
+    },
+    "outputs": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "title": "Outputs",
+      "type": "object"
+    },
+    "planning_strategy": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Planning Strategy"
+    },
+    "policies": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Policies",
+      "type": "array"
+    },
+    "retry_policy": {
+      "additionalProperties": {
+        "type": "integer"
+      },
+      "title": "Retry Policy",
+      "type": "object"
+    },
+    "risk_class": {
+      "$ref": "#/$defs/RiskClass",
+      "default": "MEDIUM"
+    },
+    "role_key": {
+      "minLength": 1,
+      "title": "Role Key",
+      "type": "string"
+    },
+    "security_profile": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Security Profile"
+    },
+    "skills": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Skills",
+      "type": "array"
+    },
+    "status": {
+      "$ref": "#/$defs/AgentLifecycle",
+      "default": "DRAFT"
+    },
+    "timeout_seconds": {
+      "default": 900,
+      "exclusiveMinimum": 0,
+      "title": "Timeout Seconds",
+      "type": "integer"
+    },
+    "tools": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Tools",
+      "type": "array"
+    },
+    "twin": {
+      "$ref": "#/$defs/Twin",
+      "default": "SHARED"
+    },
+    "updated_at": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Updated At"
+    },
+    "version": {
+      "default": "0.1.0",
+      "examples": [
+        "1.0.0",
+        "2.1.0-rc.1"
+      ],
+      "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-((?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+([0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?$",
+      "title": "Version",
+      "type": "string"
+    }
+  },
+  "required": [
+    "id",
+    "name",
+    "agent_key",
+    "role_key"
+  ],
+  "title": "Agent",
+  "type": "object",
+  "x-metamodel-version": "0.1.0",
+  "x-twin": "SHARED"
+}

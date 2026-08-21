@@ -1,0 +1,41 @@
+{
+  "backend": "manually-authored",
+  "raw_response": {
+    "entities": [
+      {
+        "confidence": 0.9,
+        "entity_type": "Pipeline",
+        "local_id": "p1",
+        "orchestrator": "dbt",
+        "pipeline_kind": "dbt_model",
+        "suggested_id": "mart_customer_360"
+      }
+    ],
+    "relationships": [
+      {
+        "confidence": 0.9,
+        "source_local_id": "p1",
+        "target_kind": "Pipeline",
+        "target_symbolic_name": "fct_account_activity",
+        "type": "DEPENDS_ON"
+      },
+      {
+        "confidence": 0.9,
+        "source_local_id": "p1",
+        "target_kind": "Pipeline",
+        "target_symbolic_name": "stg_bank_loans",
+        "type": "DEPENDS_ON"
+      },
+      {
+        "confidence": 0.9,
+        "source_local_id": "p1",
+        "target_kind": "Pipeline",
+        "target_symbolic_name": "stg_bank_customers",
+        "type": "DEPENDS_ON"
+      }
+    ]
+  },
+  "recorded_at": "2026-08-09T00:00:00+00:00",
+  "request_hash": "a708bc6d9c82e0d6772be277bdad526befb3b54083aa300c1af1a91b1f2b6fab",
+  "source_path": "dbt_demo/models/marts/mart_customer_360.sql"
+}

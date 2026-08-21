@@ -1,0 +1,22 @@
+{
+  "backend": "manually-authored",
+  "label": "skill:pattern.pipeline_shape.dbt_model.airflow",
+  "raw_response": {
+    "description": "Transforms raw order data into a staged, cleaned table via a dbt model orchestrated by Airflow.",
+    "deterministic": true,
+    "inputs": {
+      "raw_orders": "raw order records"
+    },
+    "name": "Staging Orders Transform",
+    "outputs": {
+      "stg_orders": "staged, cleaned order records"
+    },
+    "required_tools": [
+      "dbt",
+      "airflow"
+    ],
+    "risk_level": "LOW"
+  },
+  "recorded_at": "2026-08-10T01:47:52.369910+00:00",
+  "request_hash": "c17fd4de56dc1fecea1cd20101b09471075470c6a23b8345c2442e32fba59648"
+}

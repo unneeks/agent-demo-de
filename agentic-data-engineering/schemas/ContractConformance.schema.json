@@ -1,0 +1,80 @@
+{
+  "$defs": {
+    "ConformanceGap": {
+      "additionalProperties": false,
+      "description": "One reason an agent cannot satisfy a delivery contract.",
+      "properties": {
+        "detail": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Detail"
+        },
+        "dimension": {
+          "description": "capability | skill | tool | knowledge | checklist | criterion | gate | artifact",
+          "title": "Dimension",
+          "type": "string"
+        },
+        "mandatory": {
+          "default": true,
+          "title": "Mandatory",
+          "type": "boolean"
+        },
+        "missing": {
+          "title": "Missing",
+          "type": "string"
+        }
+      },
+      "required": [
+        "dimension",
+        "missing"
+      ],
+      "title": "ConformanceGap",
+      "type": "object"
+    }
+  },
+  "$id": "https://agentic-data-engineering/schemas/ContractConformance.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Whether an agent may execute a contract, and what is missing if not.\n\nDeliberately not a bare boolean. A rejection nobody can act on is a rejection\nthat gets overridden, so the gaps are itemized and split by whether they\nblock.",
+  "properties": {
+    "agent_key": {
+      "title": "Agent Key",
+      "type": "string"
+    },
+    "contract_key": {
+      "title": "Contract Key",
+      "type": "string"
+    },
+    "delivery_conformant": {
+      "title": "Delivery Conformant",
+      "type": "boolean"
+    },
+    "gaps": {
+      "items": {
+        "$ref": "#/$defs/ConformanceGap"
+      },
+      "title": "Gaps",
+      "type": "array"
+    },
+    "technically_capable": {
+      "title": "Technically Capable",
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "contract_key",
+    "agent_key",
+    "technically_capable",
+    "delivery_conformant"
+  ],
+  "title": "ContractConformance",
+  "type": "object",
+  "x-metamodel-version": "0.1.0"
+}

@@ -1,0 +1,55 @@
+{
+  "backend": "manually-authored",
+  "raw_response": {
+    "entities": [
+      {
+        "asset_kind": "dataset",
+        "confidence": 0.85,
+        "entity_type": "DataAsset",
+        "local_id": "a1",
+        "suggested_id": "bank_accounts"
+      },
+      {
+        "asset_ref_local_id": "a1",
+        "confidence": 0.8,
+        "entity_type": "SchemaDefinition",
+        "fields": [
+          {
+            "data_type": "string",
+            "name": "account_id"
+          },
+          {
+            "data_type": "string",
+            "name": "customer_id"
+          },
+          {
+            "data_type": "string",
+            "name": "product_type"
+          },
+          {
+            "data_type": "string",
+            "name": "balance"
+          },
+          {
+            "data_type": "string",
+            "name": "status"
+          }
+        ],
+        "local_id": "s1",
+        "suggested_id": "bank_accounts.schema"
+      }
+    ],
+    "relationships": [
+      {
+        "confidence": 0.9,
+        "source_local_id": "a1",
+        "target_kind": "SchemaDefinition",
+        "target_symbolic_name": "bank_accounts.schema",
+        "type": "HAS_SCHEMA"
+      }
+    ]
+  },
+  "recorded_at": "2026-08-09T00:00:00+00:00",
+  "request_hash": "8f42a1eed76f9e799900a9364f47c74cb227811a1e5341287ac1d6e46fddee54",
+  "source_path": "dbt_demo/seeds/generated/bank_accounts.csv"
+}

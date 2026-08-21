@@ -1,0 +1,17 @@
+{
+  "backend": "manually-authored",
+  "label": "agent:pattern.pipeline_shape.dbt_model.airflow",
+  "raw_response": {
+    "description": "Runs staging dbt models against raw orders on a schedule via Airflow.",
+    "inputs": {
+      "raw_orders": "raw order records"
+    },
+    "name": "Staging Pipeline Agent",
+    "outputs": {
+      "stg_orders": "staged, cleaned order records"
+    },
+    "role_key": "data-model-engineer"
+  },
+  "recorded_at": "2026-08-10T01:47:52.380101+00:00",
+  "request_hash": "20dd7dc0ca0ce765a9eeafa0324ad52b4c9733c39b2f75a96bbe3d729f09be2e"
+}

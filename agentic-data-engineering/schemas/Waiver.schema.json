@@ -1,0 +1,170 @@
+{
+  "$defs": {
+    "EntityRef": {
+      "additionalProperties": false,
+      "description": "A typed, optionally version-pinned pointer to another entity.",
+      "properties": {
+        "id": {
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "Id",
+          "type": "string"
+        },
+        "type": {
+          "$ref": "#/$defs/EntityType"
+        },
+        "version": {
+          "anyOf": [
+            {
+              "examples": [
+                "1.0.0",
+                "2.1.0-rc.1"
+              ],
+              "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-((?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+([0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Pin to an exact version. None means 'whatever is current'.",
+          "title": "Version"
+        }
+      },
+      "required": [
+        "type",
+        "id"
+      ],
+      "title": "EntityRef",
+      "type": "object"
+    },
+    "EntityType": {
+      "description": "Every entity type in the metamodel, across both twins.\n\n``EntityRef`` and the relationship-type registry validate against this, so a\ntypo in a reference or a registry file fails loudly instead of creating a\ndangling edge.",
+      "enum": [
+        "Project",
+        "Repository",
+        "CodeArtifact",
+        "Pipeline",
+        "DataAsset",
+        "SchemaDefinition",
+        "DataProfile",
+        "Infrastructure",
+        "CloudResource",
+        "ArchitectureElement",
+        "Test",
+        "Incident",
+        "Change",
+        "Deployment",
+        "DeliveryModel",
+        "DeliveryPhase",
+        "DeliveryTask",
+        "DeliveryActivity",
+        "DeliveryArtifact",
+        "DeliveryInput",
+        "DeliveryOutput",
+        "DeliveryProcess",
+        "DeliveryContract",
+        "Checklist",
+        "ChecklistItem",
+        "AcceptanceCriterion",
+        "ApprovalGate",
+        "ApprovalRule",
+        "Approval",
+        "EvidenceRequirement",
+        "DefinitionOfDone",
+        "Standard",
+        "Template",
+        "Methodology",
+        "Control",
+        "RaciAssignment",
+        "DeliveryRole",
+        "EngineeringResponsibility",
+        "EngineeringRole",
+        "Agent",
+        "Skill",
+        "Tool",
+        "KnowledgePack",
+        "Policy",
+        "Problem",
+        "Requirement",
+        "Capability",
+        "DeliveryCapability",
+        "CapabilityGap",
+        "Workflow",
+        "Task",
+        "Artifact",
+        "Event",
+        "Decision",
+        "Observation",
+        "Evaluation",
+        "EvaluationSuite",
+        "EvaluationScenario",
+        "EvaluationMetric",
+        "Evidence",
+        "Finding",
+        "Platform",
+        "TechnologyBinding",
+        "Memory",
+        "ContextPolicy",
+        "ContextBundle",
+        "ContextItem",
+        "ProjectSnapshot",
+        "EngineeringObservation",
+        "EngineeringPattern",
+        "CandidateSkill",
+        "CandidateTool",
+        "CandidateAgent"
+      ],
+      "title": "EntityType",
+      "type": "string"
+    }
+  },
+  "$id": "https://agentic-data-engineering/schemas/Waiver.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "A deliberate, attributed decision to proceed despite an unmet control.\n\nEvery field is required. An unattributed waiver is indistinguishable from a\nskipped control, and a waiver with no evidence is indistinguishable from an\nopinion -- which is precisely how governance quietly stops meaning anything.",
+  "properties": {
+    "approver": {
+      "minLength": 1,
+      "title": "Approver",
+      "type": "string"
+    },
+    "evidence_ref": {
+      "$ref": "#/$defs/EntityRef"
+    },
+    "expires_at": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Waivers should be temporary; None means indefinite.",
+      "title": "Expires At"
+    },
+    "reason": {
+      "maxLength": 4000,
+      "minLength": 1,
+      "title": "Reason",
+      "type": "string"
+    },
+    "waived_at": {
+      "format": "date-time",
+      "title": "Waived At",
+      "type": "string"
+    }
+  },
+  "required": [
+    "reason",
+    "approver",
+    "evidence_ref"
+  ],
+  "title": "Waiver",
+  "type": "object",
+  "x-metamodel-version": "0.1.0"
+}

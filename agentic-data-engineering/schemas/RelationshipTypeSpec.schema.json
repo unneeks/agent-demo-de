@@ -1,0 +1,153 @@
+{
+  "$defs": {
+    "EntityType": {
+      "description": "Every entity type in the metamodel, across both twins.\n\n``EntityRef`` and the relationship-type registry validate against this, so a\ntypo in a reference or a registry file fails loudly instead of creating a\ndangling edge.",
+      "enum": [
+        "Project",
+        "Repository",
+        "CodeArtifact",
+        "Pipeline",
+        "DataAsset",
+        "SchemaDefinition",
+        "DataProfile",
+        "Infrastructure",
+        "CloudResource",
+        "ArchitectureElement",
+        "Test",
+        "Incident",
+        "Change",
+        "Deployment",
+        "DeliveryModel",
+        "DeliveryPhase",
+        "DeliveryTask",
+        "DeliveryActivity",
+        "DeliveryArtifact",
+        "DeliveryInput",
+        "DeliveryOutput",
+        "DeliveryProcess",
+        "DeliveryContract",
+        "Checklist",
+        "ChecklistItem",
+        "AcceptanceCriterion",
+        "ApprovalGate",
+        "ApprovalRule",
+        "Approval",
+        "EvidenceRequirement",
+        "DefinitionOfDone",
+        "Standard",
+        "Template",
+        "Methodology",
+        "Control",
+        "RaciAssignment",
+        "DeliveryRole",
+        "EngineeringResponsibility",
+        "EngineeringRole",
+        "Agent",
+        "Skill",
+        "Tool",
+        "KnowledgePack",
+        "Policy",
+        "Problem",
+        "Requirement",
+        "Capability",
+        "DeliveryCapability",
+        "CapabilityGap",
+        "Workflow",
+        "Task",
+        "Artifact",
+        "Event",
+        "Decision",
+        "Observation",
+        "Evaluation",
+        "EvaluationSuite",
+        "EvaluationScenario",
+        "EvaluationMetric",
+        "Evidence",
+        "Finding",
+        "Platform",
+        "TechnologyBinding",
+        "Memory",
+        "ContextPolicy",
+        "ContextBundle",
+        "ContextItem",
+        "ProjectSnapshot",
+        "EngineeringObservation",
+        "EngineeringPattern",
+        "CandidateSkill",
+        "CandidateTool",
+        "CandidateAgent"
+      ],
+      "title": "EntityType",
+      "type": "string"
+    }
+  },
+  "$id": "https://agentic-data-engineering/schemas/RelationshipTypeSpec.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "The declaration of one legal relationship type, loaded from YAML.",
+  "properties": {
+    "cardinality": {
+      "default": "many",
+      "description": "one | many",
+      "title": "Cardinality",
+      "type": "string"
+    },
+    "description": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Description"
+    },
+    "dimension": {
+      "default": "TECHNICAL",
+      "description": "TECHNICAL | DELIVERY | CROSS | SHARED",
+      "title": "Dimension",
+      "type": "string"
+    },
+    "key": {
+      "minLength": 1,
+      "title": "Key",
+      "type": "string"
+    },
+    "requires_provenance": {
+      "default": true,
+      "title": "Requires Provenance",
+      "type": "boolean"
+    },
+    "source_types": {
+      "items": {
+        "$ref": "#/$defs/EntityType"
+      },
+      "minItems": 1,
+      "title": "Source Types",
+      "type": "array"
+    },
+    "symmetric": {
+      "default": false,
+      "title": "Symmetric",
+      "type": "boolean"
+    },
+    "target_types": {
+      "items": {
+        "$ref": "#/$defs/EntityType"
+      },
+      "minItems": 1,
+      "title": "Target Types",
+      "type": "array"
+    }
+  },
+  "required": [
+    "key",
+    "source_types",
+    "target_types"
+  ],
+  "title": "RelationshipTypeSpec",
+  "type": "object",
+  "x-metamodel-version": "0.1.0"
+}

@@ -1,0 +1,20 @@
+# The metamodel contract version, and the changelog that justifies each bump.
+#
+# Must equal METAMODEL_VERSION in domain/metamodel/version.py; a unit test
+# enforces that, so the declared contract and the code cannot drift apart.
+version: 0.1.0
+
+changelog:
+  - version: 0.1.0
+    date: 2026-08-09
+    summary: Dual-twin metamodel foundation.
+    changes:
+      - 66 entity types across the Technical Twin, the Delivery Twin, the
+        organization, capability, work, evaluation, platform and context.
+      - Relationships as first-class provenanced objects; 63 types, of which 19
+        are cross-twin joins.
+      - Four-state provenance with executable invariants, plus document
+        provenance (source_document, source_section, extraction_method).
+      - Blockable mixin - an INFERRED rule cannot block delivery until verified.
+      - Four-level role chain via first-class EngineeringResponsibility.
+      - Technical and delivery capabilities as distinct catalogs.

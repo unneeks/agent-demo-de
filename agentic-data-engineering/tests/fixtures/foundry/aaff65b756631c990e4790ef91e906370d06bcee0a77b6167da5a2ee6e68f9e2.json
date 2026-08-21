@@ -1,0 +1,21 @@
+{
+  "backend": "manually-authored",
+  "label": "skill:pattern.pipeline_shape.airflow_dag.dagster",
+  "raw_response": {
+    "description": "Cleans raw event data into a validated event table via an Airflow DAG orchestrated by Dagster.",
+    "deterministic": true,
+    "inputs": {
+      "events": "raw event records"
+    },
+    "name": "Event Cleansing Transform",
+    "outputs": {
+      "clean_events": "validated event records"
+    },
+    "required_tools": [
+      "dagster"
+    ],
+    "risk_level": "LOW"
+  },
+  "recorded_at": "2026-08-10T01:47:52.382852+00:00",
+  "request_hash": "aaff65b756631c990e4790ef91e906370d06bcee0a77b6167da5a2ee6e68f9e2"
+}

@@ -1,0 +1,122 @@
+# Evaluation metric catalog -- reusable, independently addressable measures,
+# referenced by key from multiple suites the same way a Tool or KnowledgePack
+# is referenced by key from multiple agents. See ADR-0015.
+#
+# The first 4 back architecture-quality-evaluation, one per
+# architecture-checklist's real items (ARC-01..ARC-04). nfr-coverage and
+# integration-points-identified are blocking, matching ARC-01/ARC-02's
+# mandatory+blocking status exactly. vendor-neutral-justification and
+# cost-estimate-completeness are non-blocking -- deliberately not a 1:1 mirror
+# of ARC-03 (also mandatory+blocking on the checklist): a checklist item and
+# an evaluation metric measure different things (a reviewer's confirmation
+# vs. a machine-scoreable proxy), so this suite's blocking set is a separate
+# judgment call, not required to match the checklist's. The last 4 back
+# regression-agent-certification, one per regression-engineer's own
+# evaluation_criteria (engineering_roles.yaml).
+version: 0.1.0
+evaluation_metrics:
+
+  - key: nfr-coverage
+    name: NFR Coverage
+    dimension: technical
+    threshold: 0.9
+    higher_is_better: true
+    weight: 2.0
+    blocking: true
+    unit: fraction
+
+  - key: integration-points-identified
+    name: Integration Points Identified
+    dimension: technical
+    threshold: 1.0
+    higher_is_better: true
+    weight: 1.0
+    blocking: true
+    unit: boolean
+
+  - key: vendor-neutral-justification
+    name: Vendor-Neutral Justification
+    dimension: technical
+    threshold: 0.8
+    higher_is_better: true
+    weight: 1.0
+    blocking: false
+    unit: fraction
+
+  - key: cost-estimate-completeness
+    name: Cost Estimate Completeness
+    dimension: delivery
+    threshold: 0.7
+    higher_is_better: true
+    weight: 1.0
+    blocking: false
+    unit: fraction
+
+  - key: impacted-asset-coverage
+    name: Impacted Asset Coverage
+    dimension: technical
+    threshold: 0.9
+    higher_is_better: true
+    weight: 2.0
+    blocking: true
+    unit: fraction
+
+  - key: test-selection-false-positive-rate
+    name: Test Selection False Positive Rate
+    dimension: technical
+    threshold: 0.05
+    higher_is_better: false
+    weight: 1.0
+    blocking: false
+    unit: fraction
+
+  - key: selection-explainability
+    name: Selection Explainability
+    dimension: technical
+    threshold: 0.8
+    higher_is_better: true
+    weight: 1.0
+    blocking: false
+    unit: fraction
+
+  - key: test-readiness-evidence-conformance
+    name: Test Readiness Evidence Conformance
+    dimension: delivery
+    threshold: 0.95
+    higher_is_better: true
+    weight: 1.0
+    blocking: true
+    unit: fraction
+
+  # Marketplace Foundry (Phase 10): structural/contract-completeness proxy
+  # metrics for an unpublished candidate -- there is no benchmark corpus or
+  # execution sandbox in this codebase to replay a candidate against, so
+  # this stays honestly narrow rather than inventing historical-performance
+  # numbers. See docs/marketplace-foundry.md.
+
+  - key: candidate-io-contract-completeness
+    name: Candidate I/O Contract Completeness
+    dimension: technical
+    threshold: 1.0
+    higher_is_better: true
+    weight: 2.0
+    blocking: true
+    unit: boolean
+
+  - key: candidate-checklist-traceability
+    name: Candidate Checklist Traceability
+    dimension: delivery
+    threshold: 1.0
+    higher_is_better: true
+    weight: 1.0
+    blocking: false
+    unit: boolean
+
+  - key: candidate-pattern-support
+    name: Candidate Pattern Support
+    dimension: technical
+    threshold: 0.4
+    higher_is_better: true
+    weight: 1.0
+    blocking: false
+    unit: fraction

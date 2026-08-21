@@ -1,0 +1,249 @@
+{
+  "$defs": {
+    "ChecklistItemStatus": {
+      "description": "Outcome of one checklist item.\n\n``WAIVED`` is not a synonym for ``NOT_APPLICABLE``: a waiver is a deliberate,\nattributed decision to proceed despite an unmet control, and carries an\napprover and evidence. Not-applicable means the control never applied.",
+      "enum": [
+        "PENDING",
+        "PASS",
+        "FAIL",
+        "NOT_APPLICABLE",
+        "WAIVED"
+      ],
+      "title": "ChecklistItemStatus",
+      "type": "string"
+    },
+    "EntityRef": {
+      "additionalProperties": false,
+      "description": "A typed, optionally version-pinned pointer to another entity.",
+      "properties": {
+        "id": {
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "Id",
+          "type": "string"
+        },
+        "type": {
+          "$ref": "#/$defs/EntityType"
+        },
+        "version": {
+          "anyOf": [
+            {
+              "examples": [
+                "1.0.0",
+                "2.1.0-rc.1"
+              ],
+              "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-((?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+([0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Pin to an exact version. None means 'whatever is current'.",
+          "title": "Version"
+        }
+      },
+      "required": [
+        "type",
+        "id"
+      ],
+      "title": "EntityRef",
+      "type": "object"
+    },
+    "EntityType": {
+      "description": "Every entity type in the metamodel, across both twins.\n\n``EntityRef`` and the relationship-type registry validate against this, so a\ntypo in a reference or a registry file fails loudly instead of creating a\ndangling edge.",
+      "enum": [
+        "Project",
+        "Repository",
+        "CodeArtifact",
+        "Pipeline",
+        "DataAsset",
+        "SchemaDefinition",
+        "DataProfile",
+        "Infrastructure",
+        "CloudResource",
+        "ArchitectureElement",
+        "Test",
+        "Incident",
+        "Change",
+        "Deployment",
+        "DeliveryModel",
+        "DeliveryPhase",
+        "DeliveryTask",
+        "DeliveryActivity",
+        "DeliveryArtifact",
+        "DeliveryInput",
+        "DeliveryOutput",
+        "DeliveryProcess",
+        "DeliveryContract",
+        "Checklist",
+        "ChecklistItem",
+        "AcceptanceCriterion",
+        "ApprovalGate",
+        "ApprovalRule",
+        "Approval",
+        "EvidenceRequirement",
+        "DefinitionOfDone",
+        "Standard",
+        "Template",
+        "Methodology",
+        "Control",
+        "RaciAssignment",
+        "DeliveryRole",
+        "EngineeringResponsibility",
+        "EngineeringRole",
+        "Agent",
+        "Skill",
+        "Tool",
+        "KnowledgePack",
+        "Policy",
+        "Problem",
+        "Requirement",
+        "Capability",
+        "DeliveryCapability",
+        "CapabilityGap",
+        "Workflow",
+        "Task",
+        "Artifact",
+        "Event",
+        "Decision",
+        "Observation",
+        "Evaluation",
+        "EvaluationSuite",
+        "EvaluationScenario",
+        "EvaluationMetric",
+        "Evidence",
+        "Finding",
+        "Platform",
+        "TechnologyBinding",
+        "Memory",
+        "ContextPolicy",
+        "ContextBundle",
+        "ContextItem",
+        "ProjectSnapshot",
+        "EngineeringObservation",
+        "EngineeringPattern",
+        "CandidateSkill",
+        "CandidateTool",
+        "CandidateAgent"
+      ],
+      "title": "EntityType",
+      "type": "string"
+    },
+    "Waiver": {
+      "additionalProperties": false,
+      "description": "A deliberate, attributed decision to proceed despite an unmet control.\n\nEvery field is required. An unattributed waiver is indistinguishable from a\nskipped control, and a waiver with no evidence is indistinguishable from an\nopinion -- which is precisely how governance quietly stops meaning anything.",
+      "properties": {
+        "approver": {
+          "minLength": 1,
+          "title": "Approver",
+          "type": "string"
+        },
+        "evidence_ref": {
+          "$ref": "#/$defs/EntityRef"
+        },
+        "expires_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Waivers should be temporary; None means indefinite.",
+          "title": "Expires At"
+        },
+        "reason": {
+          "maxLength": 4000,
+          "minLength": 1,
+          "title": "Reason",
+          "type": "string"
+        },
+        "waived_at": {
+          "format": "date-time",
+          "title": "Waived At",
+          "type": "string"
+        }
+      },
+      "required": [
+        "reason",
+        "approver",
+        "evidence_ref"
+      ],
+      "title": "Waiver",
+      "type": "object"
+    }
+  },
+  "$id": "https://agentic-data-engineering/schemas/ChecklistItemResult.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "The outcome of evaluating one item on one occasion.\n\nRuntime state rather than definition, so it is a value object persisted with\nits outcome rather than a separately versioned entity.",
+  "properties": {
+    "evaluated_at": {
+      "format": "date-time",
+      "title": "Evaluated At",
+      "type": "string"
+    },
+    "evaluated_by": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Evaluated By"
+    },
+    "evidence_refs": {
+      "items": {
+        "$ref": "#/$defs/EntityRef"
+      },
+      "title": "Evidence Refs",
+      "type": "array"
+    },
+    "item_key": {
+      "minLength": 1,
+      "title": "Item Key",
+      "type": "string"
+    },
+    "note": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Note"
+    },
+    "status": {
+      "$ref": "#/$defs/ChecklistItemStatus",
+      "default": "PENDING"
+    },
+    "waiver": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Waiver"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    }
+  },
+  "required": [
+    "item_key"
+  ],
+  "title": "ChecklistItemResult",
+  "type": "object",
+  "x-metamodel-version": "0.1.0"
+}

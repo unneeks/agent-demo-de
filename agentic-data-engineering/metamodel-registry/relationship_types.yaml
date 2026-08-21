@@ -1,0 +1,485 @@
+# The graph vocabulary, spanning both twins.
+#
+# Adding an edge type is a data change; nothing in domain/ hard-codes these keys.
+#
+# requires_provenance: true  -> a discovered claim; an INFERRED edge needs a confidence
+# requires_provenance: false -> structural configuration (an agent HAS_SKILL a skill)
+#
+# dimension: TECHNICAL | DELIVERY | CROSS | SHARED
+#   CROSS edges are the ones that make the dual twin worth having. Without them
+#   there are two disconnected models and no way to ask what a code change means
+#   for the delivery process. SHARED edges (evaluation, evidence, context)
+#   belong to neither dimension exclusively.
+version: 0.1.0
+relationship_types:
+
+  # ======================================================================
+  # TECHNICAL TWIN
+  # ======================================================================
+
+  - key: CONTAINS
+    description: Structural containment -- project to asset, table to column.
+    source_types: [Project, Repository, DataAsset, Workflow]
+    target_types: [Repository, CodeArtifact, DataAsset, Pipeline, Test, Task, Infrastructure]
+    requires_provenance: true
+    dimension: TECHNICAL
+
+  - key: DEPENDS_ON
+    description: >
+      A pipeline reads an asset, or an asset derives from another. The most
+      important inferred edge in the graph -- impact analysis walks it.
+    source_types: [Pipeline, DataAsset, Test, CodeArtifact, CloudResource]
+    target_types: [DataAsset, Pipeline, CodeArtifact, CloudResource]
+    requires_provenance: true
+    dimension: TECHNICAL
+
+  - key: PRODUCES
+    source_types: [Pipeline, Task]
+    target_types: [DataAsset, Artifact]
+    requires_provenance: true
+    dimension: TECHNICAL
+
+  - key: COVERS
+    description: A test protects an asset or pipeline. Drives impact-aware test selection.
+    source_types: [Test]
+    target_types: [DataAsset, Pipeline, CodeArtifact, Requirement]
+    requires_provenance: true
+    dimension: TECHNICAL
+
+  - key: HAS_SCHEMA
+    source_types: [DataAsset]
+    target_types: [SchemaDefinition]
+    cardinality: one
+    requires_provenance: true
+    dimension: TECHNICAL
+
+  - key: PROFILES
+    description: A profiling result measured against a data asset at a point in time.
+    source_types: [DataProfile]
+    target_types: [DataAsset]
+    requires_provenance: true
+    dimension: TECHNICAL
+
+  - key: IMPLEMENTS
+    description: Concrete technology realizing an architecture element.
+    source_types: [Pipeline, CloudResource, CodeArtifact, Infrastructure]
+    target_types: [ArchitectureElement]
+    requires_provenance: true
+    dimension: TECHNICAL
+
+  - key: MANAGES
+    source_types: [Infrastructure]
+    target_types: [CloudResource]
+    requires_provenance: true
+    dimension: TECHNICAL
+
+  - key: IMPACTS
+    description: A change affects part of the technical twin. Usually INFERRED.
+    source_types: [Change]
+    target_types: [Pipeline, DataAsset, Test, CodeArtifact, Capability, ArchitectureElement]
+    requires_provenance: true
+    dimension: TECHNICAL
+
+  - key: AFFECTED_BY
+    source_types: [Pipeline, DataAsset, Project]
+    target_types: [Incident]
+    requires_provenance: true
+    dimension: TECHNICAL
+
+  # ======================================================================
+  # DELIVERY TWIN
+  # ======================================================================
+
+  - key: HAS_PHASE
+    source_types: [DeliveryModel, DeliveryProcess]
+    target_types: [DeliveryPhase]
+    requires_provenance: false
+    dimension: DELIVERY
+
+  - key: PRECEDES
+    description: Phase ordering. The registry validator checks this graph is acyclic.
+    source_types: [DeliveryPhase]
+    target_types: [DeliveryPhase]
+    requires_provenance: false
+    dimension: DELIVERY
+
+  - key: HAS_TASK
+    source_types: [DeliveryPhase]
+    target_types: [DeliveryTask]
+    requires_provenance: false
+    dimension: DELIVERY
+
+  - key: HAS_ACTIVITY
+    source_types: [DeliveryTask]
+    target_types: [DeliveryActivity]
+    requires_provenance: false
+    dimension: DELIVERY
+
+  - key: REQUIRES_INPUT
+    source_types: [DeliveryTask, DeliveryPhase, DeliveryContract]
+    target_types: [DeliveryInput]
+    requires_provenance: false
+    dimension: DELIVERY
+
+  - key: PRODUCES_OUTPUT
+    source_types: [DeliveryTask, DeliveryPhase, DeliveryContract]
+    target_types: [DeliveryOutput]
+    requires_provenance: false
+    dimension: DELIVERY
+
+  - key: SATISFIED_BY
+    description: An input or output specification satisfied by a concrete artifact.
+    source_types: [DeliveryInput, DeliveryOutput]
+    target_types: [DeliveryArtifact]
+    requires_provenance: true
+    dimension: DELIVERY
+
+  - key: VALIDATED_BY
+    description: A task or phase validated by a checklist.
+    source_types: [DeliveryTask, DeliveryPhase, DeliveryOutput, DeliveryContract]
+    target_types: [Checklist]
+    requires_provenance: false
+    dimension: DELIVERY
+
+  - key: HAS_ITEM
+    source_types: [Checklist]
+    target_types: [ChecklistItem]
+    requires_provenance: false
+    dimension: DELIVERY
+
+  - key: JUDGED_BY
+    description: An output judged against an acceptance criterion.
+    source_types: [DeliveryTask, DeliveryOutput, DeliveryArtifact, DeliveryContract]
+    target_types: [AcceptanceCriterion]
+    requires_provenance: false
+    dimension: DELIVERY
+
+  - key: ENDS_AT_GATE
+    source_types: [DeliveryPhase, DeliveryTask, DeliveryProcess, DeliveryContract]
+    target_types: [ApprovalGate]
+    requires_provenance: false
+    dimension: DELIVERY
+
+  - key: HAS_RULE
+    source_types: [ApprovalGate]
+    target_types: [ApprovalRule]
+    requires_provenance: false
+    dimension: DELIVERY
+
+  - key: REQUIRES_EVIDENCE
+    source_types: [ApprovalGate, DeliveryTask, DeliveryOutput, Control, DeliveryContract]
+    target_types: [EvidenceRequirement]
+    requires_provenance: false
+    dimension: DELIVERY
+
+  - key: APPROVED_AT
+    source_types: [Approval]
+    target_types: [ApprovalGate]
+    cardinality: one
+    requires_provenance: false
+    dimension: DELIVERY
+
+  - key: CONFORMS_TO
+    description: Work must conform to a standard or definition of done.
+    source_types: [DeliveryTask, DeliveryArtifact, DeliveryOutput, Pipeline, CodeArtifact]
+    target_types: [Standard, DefinitionOfDone]
+    requires_provenance: true
+    dimension: DELIVERY
+
+  - key: IMPLEMENTS_CONTROL
+    description: A task or gate implements a governance control.
+    source_types: [DeliveryTask, ApprovalGate, Checklist, Test]
+    target_types: [Control]
+    requires_provenance: true
+    dimension: DELIVERY
+
+  - key: SHAPED_BY
+    source_types: [DeliveryArtifact, DeliveryOutput]
+    target_types: [Template]
+    requires_provenance: false
+    dimension: DELIVERY
+
+  - key: FOLLOWS_METHODOLOGY
+    source_types: [DeliveryModel]
+    target_types: [Methodology]
+    cardinality: one
+    requires_provenance: true
+    dimension: DELIVERY
+
+  - key: ASSIGNED
+    description: RACI assignment of a delivery role to a task, phase or gate.
+    source_types: [RaciAssignment]
+    target_types: [DeliveryTask, DeliveryPhase, ApprovalGate]
+    requires_provenance: true
+    dimension: DELIVERY
+
+  - key: BINDS
+    description: A delivery contract binds everything one task needs.
+    source_types: [DeliveryContract]
+    target_types: [DeliveryTask]
+    cardinality: one
+    requires_provenance: false
+    dimension: DELIVERY
+
+  - key: WAIVED_BY
+    source_types: [ChecklistItem, AcceptanceCriterion]
+    target_types: [Approval]
+    requires_provenance: false
+    dimension: DELIVERY
+
+  # ======================================================================
+  # CROSS-TWIN JOINS -- the reason this is one graph
+  # ======================================================================
+
+  - key: GOVERNED_BY_MODEL
+    description: A project is governed by a delivery model. The top-level join.
+    source_types: [Project]
+    target_types: [DeliveryModel]
+    cardinality: one
+    requires_provenance: true
+    dimension: CROSS
+
+  - key: DESCRIBES
+    description: >
+      A delivery artifact documents technical reality. Almost always INFERRED,
+      and the confidence matters: acting on a low-confidence DESCRIBES edge means
+      telling someone to update a document that was never about their code.
+    source_types: [DeliveryArtifact]
+    target_types: [Pipeline, DataAsset, ArchitectureElement, Infrastructure, CodeArtifact]
+    requires_provenance: true
+    dimension: CROSS
+
+  - key: GOVERNS
+    description: Which delivery task owns changes to a technical thing.
+    source_types: [DeliveryTask]
+    target_types: [Pipeline, DataAsset, CodeArtifact, ArchitectureElement, Infrastructure]
+    requires_provenance: true
+    dimension: CROSS
+
+  - key: TRIGGERS_TASK
+    description: A change creates a delivery obligation. The heart of dual impact analysis.
+    source_types: [Change, Event, Incident]
+    target_types: [DeliveryTask, DeliveryProcess]
+    requires_provenance: true
+    dimension: CROSS
+
+  - key: SATISFIES
+    description: A technical test discharges an organizational evidence requirement.
+    source_types: [Test, Evidence, Artifact]
+    target_types: [EvidenceRequirement]
+    requires_provenance: true
+    dimension: CROSS
+
+  - key: TRACED_TO
+    description: A requirement is implemented by a delivery task. Head of the trace chain.
+    source_types: [Requirement, Problem]
+    target_types: [DeliveryTask]
+    requires_provenance: true
+    dimension: CROSS
+
+  - key: PERFORMED_BY
+    source_types: [DeliveryTask, Task]
+    target_types: [Agent, DeliveryRole]
+    requires_provenance: false
+    dimension: CROSS
+
+  - key: PRODUCES_ARTIFACT
+    source_types: [Agent, Task, DeliveryTask]
+    target_types: [DeliveryArtifact]
+    requires_provenance: true
+    dimension: CROSS
+
+  - key: VERIFIED_BY
+    source_types: [DeliveryArtifact, DeliveryOutput]
+    target_types: [Test]
+    requires_provenance: true
+    dimension: CROSS
+
+  - key: SUPPORTS_APPROVAL
+    source_types: [Evidence]
+    target_types: [Approval]
+    requires_provenance: false
+    dimension: CROSS
+
+  - key: AUTHORIZES
+    source_types: [Approval]
+    target_types: [Deployment]
+    requires_provenance: false
+    dimension: CROSS
+
+  # ======================================================================
+  # ORGANIZATION -- the four-level role chain
+  # ======================================================================
+
+  - key: ACCOUNTABLE_FOR
+    description: A delivery role is accountable for an engineering responsibility.
+    source_types: [DeliveryRole]
+    target_types: [EngineeringResponsibility]
+    requires_provenance: true
+    dimension: CROSS
+
+  - key: FULFILLED_BY
+    description: A responsibility is fulfilled by an engineering role.
+    source_types: [EngineeringResponsibility]
+    target_types: [EngineeringRole]
+    requires_provenance: false
+    dimension: CROSS
+
+  - key: IMPLEMENTED_BY
+    description: An engineering role is implemented by an agent. The role outlives the agent.
+    source_types: [EngineeringRole]
+    target_types: [Agent]
+    requires_provenance: false
+    dimension: SHARED
+
+  - key: HAS_SKILL
+    source_types: [Agent]
+    target_types: [Skill]
+    requires_provenance: false
+    dimension: TECHNICAL
+
+  - key: USES_TOOL
+    source_types: [Agent, Skill]
+    target_types: [Tool]
+    requires_provenance: false
+    dimension: TECHNICAL
+
+  - key: CONSUMES_KNOWLEDGE
+    source_types: [Agent, Skill]
+    target_types: [KnowledgePack]
+    requires_provenance: false
+    dimension: TECHNICAL
+
+  - key: GOVERNED_BY
+    source_types: [Agent, Tool, Workflow, Deployment, DeliveryTask]
+    target_types: [Policy]
+    requires_provenance: false
+    dimension: TECHNICAL
+
+  - key: PARTICIPATES_IN
+    source_types: [Agent, EngineeringRole, DeliveryRole]
+    target_types: [Workflow]
+    requires_provenance: false
+    dimension: TECHNICAL
+
+  # ======================================================================
+  # CAPABILITY, EVALUATION, EVIDENCE
+  # ======================================================================
+
+  - key: REQUIRES
+    source_types: [Problem, Requirement]
+    target_types: [Capability, DeliveryCapability]
+    requires_provenance: true
+    dimension: CROSS
+
+  - key: EXHIBITS
+    description: A project demonstrates a capability, evidenced by discovery.
+    source_types: [Project]
+    target_types: [Capability, DeliveryCapability]
+    requires_provenance: true
+    dimension: CROSS
+
+  - key: REALIZED_BY
+    source_types: [Capability, DeliveryCapability, CapabilityGap]
+    target_types: [EngineeringRole, EngineeringResponsibility]
+    requires_provenance: false
+    dimension: CROSS
+
+  - key: HAS_GAP
+    source_types: [Project]
+    target_types: [CapabilityGap]
+    requires_provenance: true
+    dimension: CROSS
+
+  - key: BOUND_TO
+    source_types: [Capability, TechnologyBinding]
+    target_types: [TechnologyBinding, Platform]
+    requires_provenance: false
+    dimension: TECHNICAL
+
+  - key: TARGETS_PLATFORM
+    source_types: [Project]
+    target_types: [Platform]
+    cardinality: one
+    requires_provenance: true
+    dimension: TECHNICAL
+
+  - key: EVALUATES
+    source_types: [Evaluation, EvaluationSuite]
+    target_types: [Agent, Skill, Workflow, Project, DeliveryContract, DeliveryArtifact]
+    requires_provenance: false
+    dimension: SHARED
+
+  - key: GENERATES
+    source_types: [Task, DeliveryTask, Evaluation, Observation, Test]
+    target_types: [Evidence]
+    requires_provenance: false
+    dimension: CROSS
+
+  - key: SUPPORTS
+    description: Evidence underpins a finding, decision or evaluation.
+    source_types: [Evidence]
+    target_types: [Finding, Decision, Evaluation, Capability, DeliveryCapability, CapabilityGap]
+    requires_provenance: false
+    dimension: SHARED
+
+  - key: DECIDED
+    source_types: [Agent, Decision]
+    target_types: [Finding, Change, Artifact, DeliveryArtifact]
+    requires_provenance: false
+    dimension: SHARED
+
+  - key: DEPLOYS
+    source_types: [Deployment]
+    target_types: [Agent, Pipeline]
+    cardinality: one
+    requires_provenance: false
+    dimension: TECHNICAL
+
+  - key: UPDATES
+    description: An observation proposes a correction to a twin or to knowledge.
+    source_types: [Observation]
+    target_types: [Project, DataAsset, Pipeline, KnowledgePack, Capability, DeliveryModel, DeliveryTask]
+    requires_provenance: true
+    dimension: CROSS
+
+  # ======================================================================
+  # CONTEXT ENGINEERING
+  # ======================================================================
+
+  - key: ASSEMBLED_FROM
+    source_types: [ContextBundle]
+    target_types: [ContextItem]
+    requires_provenance: false
+    dimension: SHARED
+
+  - key: CITES
+    source_types: [Decision, Finding, ContextItem, Approval]
+    target_types: [ContextBundle, Evidence, KnowledgePack, Standard]
+    requires_provenance: false
+    dimension: SHARED
+
+  # ======================================================================
+  # MARKETPLACE FOUNDRY
+  # ======================================================================
+
+  - key: OBSERVES
+    description: A project's mined technical/delivery graph produced this engineering observation.
+    source_types: [Project]
+    target_types: [EngineeringObservation]
+    requires_provenance: true
+    dimension: CROSS
+
+  - key: CONTRIBUTES_TO
+    description: An engineering observation is grouped into a recurring engineering pattern.
+    source_types: [EngineeringObservation]
+    target_types: [EngineeringPattern]
+    requires_provenance: true
+    dimension: SHARED
+
+  - key: SYNTHESIZES
+    description: A recurring engineering pattern was distilled into a marketplace candidate.
+    source_types: [EngineeringPattern]
+    target_types: [CandidateSkill, CandidateTool, CandidateAgent]
+    requires_provenance: true
+    dimension: SHARED

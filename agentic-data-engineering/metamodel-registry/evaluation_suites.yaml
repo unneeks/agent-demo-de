@@ -1,0 +1,86 @@
+# Evaluation suite catalog. See ADR-0015.
+#
+# architecture-quality-evaluation closes a real dangling reference:
+# delivery-models/data-engineering.yaml's gate.architecture-review has
+# declared `required_evaluations: [architecture-quality-evaluation]` since
+# Phase 1, with nothing behind the key and nothing validating it resolved.
+#
+# level=workflow, not agent: gate.architecture-review's required_roles names
+# the DeliveryRole solution-architect, which has no corresponding
+# EngineeringRole/Agent in the marketplace catalog -- there is no candidate
+# agent this suite could certify. What it genuinely evaluates is
+# task.solution-architecture's produced artifact.
+#
+# regression-agent-certification is level=agent, built directly from
+# regression-engineer's own evaluation_criteria, passing_score and
+# passing_delivery_score set exactly equal to that role's
+# minimum_evaluation_score/minimum_delivery_conformance.
+version: 0.1.0
+evaluation_suites:
+
+  - key: architecture-quality-evaluation
+    name: Architecture Quality Evaluation
+    level: workflow
+    scenarios:
+      - arch-nfr-and-integration-coverage
+      - arch-vendor-neutral-choice
+      - arch-cost-estimate-present
+    metrics:
+      - nfr-coverage
+      - integration-points-identified
+      - vendor-neutral-justification
+      - cost-estimate-completeness
+    passing_score: 0.85
+    passing_delivery_score: 0.8
+    applies_to: [task.solution-architecture]
+
+  - key: regression-agent-certification
+    name: Regression Agent Certification
+    level: agent
+    scenarios:
+      - regression-full-impact-coverage
+      - regression-low-false-positive
+      - regression-respects-test-readiness-gate
+    metrics:
+      - impacted-asset-coverage
+      - test-selection-false-positive-rate
+      - selection-explainability
+      - test-readiness-evidence-conformance
+    passing_score: 0.85
+    passing_delivery_score: 0.95
+    applies_to: [regression-engineer]
+
+  # Marketplace Foundry (Phase 10): structural completeness only, no
+  # scenarios -- engines/foundry/evaluation.py::score_candidate_completeness()
+  # scores a candidate's own declared shape, not a simulated run against
+  # scenarios. passing_delivery_score defaults to 0.9 (EvaluationSuite's
+  # own default) but candidate-checklist-traceability is non-blocking, so a
+  # candidate with no checklist story can still pass the technical bar.
+
+  - key: foundry-candidate-skill-completeness
+    name: Foundry Candidate Skill Completeness
+    level: skill
+    metrics:
+      - candidate-io-contract-completeness
+      - candidate-checklist-traceability
+      - candidate-pattern-support
+    passing_score: 0.7
+    passing_delivery_score: 0.0
+
+  - key: foundry-candidate-tool-completeness
+    name: Foundry Candidate Tool Completeness
+    level: tool
+    metrics:
+      - candidate-io-contract-completeness
+      - candidate-pattern-support
+    passing_score: 0.7
+    passing_delivery_score: 0.0
+
+  - key: foundry-candidate-agent-completeness
+    name: Foundry Candidate Agent Completeness
+    level: agent
+    metrics:
+      - candidate-io-contract-completeness
+      - candidate-pattern-support
+    passing_score: 0.7
+    passing_delivery_score: 0.0

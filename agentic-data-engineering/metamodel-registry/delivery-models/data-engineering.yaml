@@ -1,0 +1,809 @@
+# A worked data engineering delivery model.
+#
+# This is *example organizational data*, not part of the metamodel. It exists so
+# the gate, impact and traceability engines are tested against a realistic
+# process rather than against toy fixtures, and so a reader can see what a real
+# assimilated delivery model looks like.
+#
+# In production this file is produced by the assimilation engine reading an
+# organization's own documentation (Phase 3), and every entity would carry
+# source_document / source_section / extraction_method with an INFERRED
+# provenance until a human verified it. Here it is HUMAN_VERIFIED because it was
+# written by hand -- which is also why its gates are allowed to block.
+version: 0.1.0
+
+model:
+  key: de-delivery-model
+  name: Data Engineering Delivery Model
+  applies_to: [data-engineering]
+  methodology: hybrid-incremental
+  owner: Head of Data Engineering
+  delivery_capabilities:
+    - requirements-management
+    - feasibility-assessment
+    - architecture-assurance
+    - change-assurance
+    - regression-assurance
+    - data-quality-assurance
+    - security-assurance
+    - release-assurance
+    - operational-readiness
+
+methodology:
+  key: hybrid-incremental
+  name: Hybrid Incremental
+  style: hybrid
+  principles:
+    - Architecture is agreed before build, but revisited each increment.
+    - Testing is continuous; the test gate is a checkpoint, not a stage.
+    - Evidence is produced as work happens, never reconstructed at the end.
+
+# ---------------------------------------------------------------------------
+# Phases
+# ---------------------------------------------------------------------------
+phases:
+  - key: discovery
+    name: Discovery
+    sequence: 1
+    purpose: Understand the problem, the data landscape and the constraints.
+    entry_criteria: ["A sponsored business problem exists"]
+    exit_criteria: ["Problem statement agreed", "Data sources identified"]
+    depends_on: []
+    tasks: [task.feasibility-assessment]
+
+  - key: requirements
+    name: Requirements
+    sequence: 2
+    purpose: Capture unambiguous, testable, traceable requirements.
+    entry_criteria: ["Discovery complete"]
+    exit_criteria: ["Requirements cited and testable", "Requirements review passed"]
+    depends_on: [discovery]
+    tasks: [task.business-requirements]
+    gates: [gate.requirements-review]
+
+  - key: architecture
+    name: Architecture
+    sequence: 3
+    purpose: Agree the solution shape before build begins.
+    entry_criteria: ["Requirements review passed"]
+    exit_criteria: ["Architecture review passed"]
+    depends_on: [requirements]
+    tasks: [task.solution-architecture, task.conceptual-model]
+    gates: [gate.architecture-review]
+
+  - key: design
+    name: Design
+    sequence: 4
+    purpose: Define the logical and physical data design.
+    entry_criteria: ["Architecture review passed"]
+    exit_criteria: ["Data architecture review passed", "Logical model traceable to requirements"]
+    depends_on: [architecture]
+    tasks: [task.logical-data-model]
+    gates: [gate.data-architecture-review]
+
+  - key: development
+    name: Development
+    sequence: 5
+    purpose: Build the pipelines and transformations.
+    entry_criteria: ["Data architecture review passed"]
+    exit_criteria: ["Code complete", "Unit tests passing"]
+    depends_on: [design]
+    tasks: [task.build-pipeline, task.unit-test]
+
+  - key: testing
+    name: Testing
+    sequence: 6
+    purpose: Prove the change works and breaks nothing.
+    entry_criteria: ["Code complete"]
+    exit_criteria: ["Test readiness gate passed"]
+    depends_on: [development]
+    tasks: [task.regression-test, task.data-quality-rules, task.data-profiling]
+    gates: [gate.test-readiness]
+
+  - key: release
+    name: Release
+    sequence: 7
+    purpose: Package the change with the evidence needed to deploy it.
+    entry_criteria: ["Test readiness gate passed"]
+    exit_criteria: ["Release readiness gate passed"]
+    depends_on: [testing]
+    tasks: [task.security-assessment, task.operational-runbook, task.release-package]
+    gates: [gate.release-readiness]
+
+  - key: deployment
+    name: Deployment
+    sequence: 8
+    purpose: Deploy to production under change control.
+    entry_criteria: ["Release readiness gate passed"]
+    exit_criteria: ["Deployed and verified in production"]
+    depends_on: [release]
+
+  - key: operations
+    name: Operations
+    sequence: 9
+    purpose: Run, monitor and learn from what was built.
+    entry_criteria: ["Deployed to production"]
+    exit_criteria: []
+    depends_on: [deployment]
+
+# ---------------------------------------------------------------------------
+# Tasks. task.logical-data-model is the worked example from the addendum (§6).
+# task.feasibility-assessment, task.conceptual-model and task.data-profiling
+# close coverage gaps found during Phase 2 review: feasibility assessment had no
+# representation at all, and the conceptual model that task.logical-data-model
+# has always required as an input was never produced by anything in this model.
+# ---------------------------------------------------------------------------
+tasks:
+  - key: task.feasibility-assessment
+    name: Assess Feasibility
+    phases: [discovery]
+    purpose: >
+      Assess the technical, cost and operational feasibility of a proposed
+      solution before requirements and architecture commit resources to it.
+    outputs:
+      - key: out.feasibility-assessment
+        kind: artifact
+        artifact_kind: feasibility-assessment
+        mandatory: true
+        evidence: [ev.feasibility-assessment]
+    skills: [feasibility-analysis]
+    delivery_roles: [business-analyst]
+    checklists: [feasibility-checklist]
+    acceptance_criteria: [AC-FEAS-01, AC-FEAS-02]
+    evidence: [ev.feasibility-assessment]
+    risk_level: MEDIUM
+    automatable: true
+
+  - key: task.conceptual-model
+    name: Create Conceptual Data Model
+    phases: [architecture]
+    purpose: >
+      Define the high-level entities and relationships the logical data model
+      will later elaborate, independent of any target platform.
+    outputs:
+      - key: out.conceptual-model
+        kind: data_model
+        artifact_kind: conceptual-model
+        mandatory: true
+        evidence: [ev.conceptual-model]
+    skills: [conceptual-model-analysis]
+    tools: [modeling-tool]
+    delivery_roles: [data-architect]
+    evidence: [ev.conceptual-model]
+    risk_level: MEDIUM
+    automatable: true
+
+  - key: task.logical-data-model
+    name: Create Logical Data Model
+    phases: [design]
+    purpose: Define the logical representation of required data.
+    inputs:
+      - key: in.business-requirements
+        kind: requirement
+        mandatory: true
+        source_phase: requirements
+      - key: in.conceptual-model
+        kind: data_model
+        mandatory: true
+        source_phase: architecture
+        artifact_kind: conceptual-model
+      - key: in.enterprise-data-standards
+        kind: policy
+        mandatory: true
+    outputs:
+      - key: out.logical-data-model
+        kind: data_model
+        artifact_kind: logical-data-model
+        mandatory: true
+        template: tmpl.logical-data-model
+        evidence: [ev.logical-model, ev.traceability]
+      - key: out.traceability-matrix
+        kind: artifact
+        artifact_kind: traceability-matrix
+        mandatory: true
+        evidence: [ev.traceability]
+    skills: [conceptual-model-analysis, logical-model-generation, traceability-mapping]
+    tools: [modeling-tool, metadata-platform]
+    delivery_roles: [data-architect]
+    checklists: [logical-model-checklist]
+    acceptance_criteria: [AC-LDM-01, AC-LDM-02, AC-LDM-03, AC-LDM-04, AC-LDM-05, AC-LDM-06, AC-LDM-07, AC-LDM-08]
+    gates: [gate.data-architecture-review]
+    evidence: [ev.logical-model, ev.traceability, ev.checklist-result]
+    standards: [std.enterprise-data-standards, std.naming-standards]
+    risk_level: HIGH
+    automatable: true
+
+  - key: task.business-requirements
+    name: Capture Business Requirements
+    phases: [requirements]
+    purpose: Produce testable, cited requirements.
+    outputs:
+      - key: out.requirements
+        kind: requirement
+        artifact_kind: requirements-specification
+        mandatory: true
+        evidence: [ev.requirements]
+    delivery_roles: [business-analyst]
+    checklists: [requirements-checklist]
+    gates: [gate.requirements-review]
+    evidence: [ev.requirements]
+    risk_level: MEDIUM
+
+  - key: task.solution-architecture
+    name: Produce Solution Architecture
+    phases: [architecture]
+    outputs:
+      - key: out.solution-architecture
+        kind: artifact
+        artifact_kind: solution-architecture
+        mandatory: true
+        evidence: [ev.architecture]
+    delivery_roles: [solution-architect]
+    checklists: [architecture-checklist]
+    gates: [gate.architecture-review]
+    evidence: [ev.architecture]
+    risk_level: HIGH
+
+  - key: task.build-pipeline
+    name: Build Pipeline
+    phases: [development]
+    delivery_roles: [data-engineer]
+    checklists: [code-checklist]
+    evidence: [ev.code-review]
+    risk_level: MEDIUM
+
+  - key: task.unit-test
+    name: Write Unit Tests
+    phases: [development]
+    delivery_roles: [data-engineer]
+    evidence: [ev.test-result]
+    risk_level: LOW
+
+  - key: task.regression-test
+    name: Run Regression Tests
+    phases: [testing]
+    purpose: Prove the change does not break existing behaviour.
+    delivery_roles: [test-lead]
+    checklists: [test-checklist]
+    gates: [gate.test-readiness]
+    evidence: [ev.test-result, ev.checklist-result]
+    risk_level: MEDIUM
+    automatable: true
+
+  - key: task.data-quality-rules
+    name: Define Data Quality Rules
+    phases: [testing]
+    delivery_roles: [data-steward]
+    evidence: [ev.quality-result]
+    risk_level: MEDIUM
+
+  - key: task.data-profiling
+    name: Profile Changed Data Assets
+    phases: [testing]
+    purpose: >
+      Measure the statistical shape of changed data assets -- volume, null
+      rates, cardinality -- as a baseline for quality drift detection. Produces
+      a DataProfile technical entity rather than a delivery artifact; no
+      checklist is defined here for the same reason task.data-quality-rules has
+      none -- this task is control-light by design in this worked model.
+    skills: [data-profiling]
+    delivery_roles: [data-steward]
+    evidence: [ev.profiling-result]
+    risk_level: LOW
+    automatable: true
+
+  - key: task.security-assessment
+    name: Security Assessment
+    phases: [release]
+    delivery_roles: [security-architect]
+    gates: [gate.release-readiness, gate.security-review]
+    evidence: [ev.security-assessment]
+    risk_level: CRITICAL
+    automatable: false
+
+  - key: task.operational-runbook
+    name: Produce Operational Runbook
+    phases: [release]
+    outputs:
+      - key: out.runbook
+        kind: artifact
+        artifact_kind: operational-runbook
+        mandatory: true
+        evidence: [ev.runbook]
+    delivery_roles: [release-manager]
+    gates: [gate.release-readiness]
+    evidence: [ev.runbook]
+    risk_level: HIGH
+
+  - key: task.release-package
+    name: Assemble Release Package
+    phases: [release]
+    delivery_roles: [release-manager]
+    gates: [gate.release-readiness]
+    evidence: [ev.release-record]
+    risk_level: HIGH
+
+# ---------------------------------------------------------------------------
+# The 12-item logical model checklist (§6, §14)
+# ---------------------------------------------------------------------------
+checklists:
+  - key: logical-model-checklist
+    name: Logical Data Model Checklist
+    applies_to: [task.logical-data-model]
+    completion_rule: ALL_MANDATORY
+    items:
+      - key: LMC-01
+        description: Every entity has a definition in the business glossary.
+        mandatory: true
+        validation_method: METADATA_LOOKUP
+        validation_reference: glossary.lookup
+        evidence_required: true
+        blocking: true
+      - key: LMC-02
+        description: Every entity has an identified business owner.
+        mandatory: true
+        validation_method: METADATA_LOOKUP
+        validation_reference: ownership.lookup
+        evidence_required: true
+        blocking: true
+      - key: LMC-03
+        description: Every attribute has a data type and nullability.
+        mandatory: true
+        validation_method: AUTOMATED
+        validation_reference: model.validate_attributes
+        blocking: true
+      - key: LMC-04
+        description: Primary keys are declared for every entity.
+        mandatory: true
+        validation_method: AUTOMATED
+        validation_reference: model.validate_keys
+        blocking: true
+      - key: LMC-05
+        description: Relationships have declared cardinality.
+        mandatory: true
+        validation_method: AUTOMATED
+        validation_reference: model.validate_cardinality
+        blocking: true
+      - key: LMC-06
+        description: Naming conforms to enterprise naming standards.
+        mandatory: true
+        validation_method: AUTOMATED
+        validation_reference: standards.check_naming
+        blocking: true
+      - key: LMC-07
+        description: Every entity traces to at least one business requirement.
+        mandatory: true
+        validation_method: METADATA_LOOKUP
+        validation_reference: traceability.check
+        evidence_required: true
+        blocking: true
+      - key: LMC-08
+        description: Sensitive attributes are classified.
+        mandatory: true
+        validation_method: METADATA_LOOKUP
+        validation_reference: classification.check
+        evidence_required: true
+        blocking: true
+      - key: LMC-09
+        description: The model has been peer reviewed.
+        mandatory: true
+        validation_method: PEER_REVIEW
+        evidence_required: true
+        blocking: true
+      - key: LMC-10
+        description: Deviations from the conceptual model are documented.
+        mandatory: false
+        validation_method: DOCUMENT_REVIEW
+        blocking: false
+      - key: LMC-11
+        description: Volumetrics and growth expectations are recorded.
+        mandatory: false
+        validation_method: DOCUMENT_REVIEW
+        blocking: false
+      - key: LMC-12
+        description: Retention requirements are recorded per entity.
+        mandatory: false
+        validation_method: METADATA_LOOKUP
+        validation_reference: retention.check
+        blocking: false
+
+  - key: architecture-checklist
+    name: Architecture Checklist
+    applies_to: [task.solution-architecture]
+    completion_rule: ALL_MANDATORY
+    items:
+      - key: ARC-01
+        description: Non-functional requirements are addressed.
+        mandatory: true
+        validation_method: DOCUMENT_REVIEW
+        blocking: true
+      - key: ARC-02
+        description: Integration points are identified.
+        mandatory: true
+        validation_method: DOCUMENT_REVIEW
+        blocking: true
+      - key: ARC-03
+        description: Capability choices are justified independently of vendor.
+        mandatory: true
+        validation_method: DOCUMENT_REVIEW
+        blocking: true
+      - key: ARC-04
+        description: Cost implications are estimated.
+        mandatory: false
+        validation_method: DOCUMENT_REVIEW
+        blocking: false
+
+  - key: test-checklist
+    name: Test Readiness Checklist
+    applies_to: [task.regression-test]
+    completion_rule: PERCENTAGE
+    completion_threshold: 0.9
+    items:
+      - key: TST-01
+        description: Regression suite selected from impact analysis, not by hand.
+        mandatory: true
+        validation_method: AUTOMATED
+        validation_reference: tests.selection_provenance
+        blocking: true
+      - key: TST-02
+        description: All selected regression tests pass.
+        mandatory: true
+        validation_method: TEST_EXECUTION
+        validation_reference: pytest
+        evidence_required: true
+        blocking: true
+      - key: TST-03
+        description: Data quality assertions pass.
+        mandatory: true
+        validation_method: TEST_EXECUTION
+        validation_reference: dbt test
+        evidence_required: true
+        blocking: true
+      - key: TST-04
+        description: Open defects are triaged.
+        mandatory: false
+        validation_method: HUMAN_REVIEW
+        blocking: false
+
+  - key: requirements-checklist
+    name: Requirements Checklist
+    applies_to: [task.business-requirements]
+    completion_rule: ALL_MANDATORY
+    items:
+      - key: REQ-01
+        description: Every requirement is testable.
+        mandatory: true
+        validation_method: HUMAN_REVIEW
+        blocking: true
+      - key: REQ-02
+        description: Every requirement cites a source.
+        mandatory: true
+        validation_method: METADATA_LOOKUP
+        validation_reference: citation.check
+        blocking: true
+
+  - key: code-checklist
+    name: Code Checklist
+    applies_to: [task.build-pipeline]
+    completion_rule: ALL_MANDATORY
+    items:
+      - key: COD-01
+        description: Code reviewed by someone other than the author.
+        mandatory: true
+        validation_method: PEER_REVIEW
+        evidence_required: true
+        blocking: true
+      - key: COD-02
+        description: No secrets committed.
+        mandatory: true
+        validation_method: AUTOMATED
+        validation_reference: secret.scan
+        blocking: true
+
+  - key: feasibility-checklist
+    name: Feasibility Assessment Checklist
+    applies_to: [task.feasibility-assessment]
+    completion_rule: ALL_MANDATORY
+    items:
+      - key: FEAS-01
+        description: Technical feasibility is assessed against current platform capabilities.
+        mandatory: true
+        validation_method: DOCUMENT_REVIEW
+        blocking: true
+      - key: FEAS-02
+        description: Cost feasibility is estimated.
+        mandatory: true
+        validation_method: DOCUMENT_REVIEW
+        blocking: true
+      - key: FEAS-03
+        description: Operational feasibility (support, monitoring, on-call impact) is assessed.
+        mandatory: true
+        validation_method: DOCUMENT_REVIEW
+        blocking: true
+      - key: FEAS-04
+        description: A clear recommendation (GO, NO-GO or CONDITIONAL) is documented and evidenced.
+        mandatory: true
+        validation_method: METADATA_LOOKUP
+        validation_reference: feasibility.recommendation_recorded
+        evidence_required: true
+        blocking: true
+
+# ---------------------------------------------------------------------------
+# Acceptance criteria (§9, §14). AC-LDM-07 is the addendum's worked example.
+# ---------------------------------------------------------------------------
+acceptance_criteria:
+  - key: AC-LDM-01
+    condition: The logical model covers every in-scope business requirement.
+    validation_method: METADATA_LOOKUP
+    validation_reference: traceability.coverage
+    severity: HIGH
+    blocking: true
+    applies_to: [task.logical-data-model]
+  - key: AC-LDM-02
+    condition: No logical entity duplicates an existing enterprise entity.
+    validation_method: METADATA_LOOKUP
+    validation_reference: glossary.duplicates
+    severity: MEDIUM
+    blocking: false
+    applies_to: [task.logical-data-model]
+  - key: AC-LDM-03
+    condition: The model normalises to at least third normal form unless justified.
+    validation_method: HUMAN_REVIEW
+    severity: MEDIUM
+    blocking: false
+    applies_to: [task.logical-data-model]
+  - key: AC-LDM-04
+    condition: All identifiers are business-meaningful or explicitly surrogate.
+    validation_method: AUTOMATED
+    validation_reference: model.validate_identifiers
+    severity: MEDIUM
+    blocking: false
+    applies_to: [task.logical-data-model]
+  - key: AC-LDM-05
+    condition: Every PII attribute is classified and has a retention rule.
+    validation_method: METADATA_LOOKUP
+    validation_reference: classification.pii
+    severity: CRITICAL
+    blocking: true
+    applies_to: [task.logical-data-model]
+  - key: AC-LDM-06
+    condition: The model is expressed independently of any target platform.
+    validation_method: HUMAN_REVIEW
+    severity: HIGH
+    blocking: true
+    applies_to: [task.logical-data-model]
+  - key: AC-LDM-07
+    condition: Every logical entity must have an identified business owner.
+    validation_method: METADATA_LOOKUP
+    validation_reference: ownership.lookup
+    severity: HIGH
+    blocking: true
+    applies_to: [task.logical-data-model]
+  - key: AC-LDM-08
+    condition: Model changes since the last version are documented.
+    validation_method: DOCUMENT_REVIEW
+    severity: LOW
+    blocking: false
+    applies_to: [task.logical-data-model]
+  - key: AC-FEAS-01
+    condition: The feasibility assessment states a clear recommendation with supporting evidence.
+    validation_method: METADATA_LOOKUP
+    validation_reference: feasibility.recommendation_recorded
+    severity: HIGH
+    blocking: true
+    applies_to: [task.feasibility-assessment]
+  - key: AC-FEAS-02
+    condition: Known technical or cost risks are stated even when the recommendation is GO.
+    validation_method: HUMAN_REVIEW
+    severity: MEDIUM
+    blocking: false
+    applies_to: [task.feasibility-assessment]
+
+# ---------------------------------------------------------------------------
+# Gates. gate.architecture-review is the addendum's §10 example.
+# ---------------------------------------------------------------------------
+gates:
+  - key: gate.architecture-review
+    name: Architecture Review Gate
+    phases: [architecture]
+    required_artifact_kinds: [solution-architecture, logical-data-model]
+    required_checklists: [architecture-checklist]
+    required_evaluations: [architecture-quality-evaluation]
+    required_roles: [solution-architect]
+    required_evidence: [ev.architecture]
+    minimum_traceability: 0.9
+    blocking: true
+    risk_level: HIGH
+
+  - key: gate.data-architecture-review
+    name: Data Architecture Review Gate
+    phases: [design]
+    required_artifact_kinds: [logical-data-model, traceability-matrix]
+    required_checklists: [logical-model-checklist]
+    required_roles: [data-architect]
+    required_evidence: [ev.logical-model, ev.traceability]
+    minimum_traceability: 0.9
+    blocking: true
+    risk_level: HIGH
+
+  - key: gate.test-readiness
+    name: Test Readiness Gate
+    phases: [testing]
+    required_checklists: [test-checklist]
+    required_roles: [test-lead]
+    required_evidence: [ev.test-result, ev.quality-result]
+    minimum_traceability: 0.8
+    blocking: true
+    risk_level: MEDIUM
+
+  - key: gate.release-readiness
+    name: Release Readiness Gate
+    phases: [release]
+    required_artifact_kinds: [operational-runbook]
+    required_roles: [release-manager, security-architect]
+    required_evidence: [ev.security-assessment, ev.runbook, ev.release-record]
+    minimum_traceability: 0.9
+    blocking: true
+    risk_level: CRITICAL
+
+  - key: gate.security-review
+    name: Security Review Gate
+    phases: [release]
+    purpose: >
+      A dedicated security sign-off distinct from general release readiness --
+      the security-architect delivery role approves both, but this gate exists
+      so security may block independently of runbook or release-record
+      completeness. Closes a registry validation gap: security-architect's
+      approves_gates always listed this gate, but nothing defined it (Phase 2).
+    required_roles: [security-architect]
+    required_evidence: [ev.security-assessment]
+    blocking: true
+    risk_level: CRITICAL
+
+  - key: gate.requirements-review
+    name: Requirements Review Gate
+    phases: [requirements]
+    required_checklists: [requirements-checklist]
+    required_roles: [business-analyst]
+    required_evidence: [ev.requirements]
+    blocking: true
+    risk_level: MEDIUM
+
+# ---------------------------------------------------------------------------
+# Evidence requirements
+# ---------------------------------------------------------------------------
+evidence_requirements:
+  - key: ev.logical-model
+    evidence_kind: model
+    mandatory: true
+    validation_method: DOCUMENT_REVIEW
+    retention_days: 2555
+  - key: ev.traceability
+    evidence_kind: review_record
+    mandatory: true
+    validation_method: METADATA_LOOKUP
+    acceptance_pattern: traceability-matrix
+    retention_days: 2555
+  - key: ev.checklist-result
+    evidence_kind: review_record
+    mandatory: true
+    validation_method: METADATA_LOOKUP
+  - key: ev.architecture
+    evidence_kind: review_record
+    mandatory: true
+    validation_method: DOCUMENT_REVIEW
+  - key: ev.requirements
+    evidence_kind: document_section
+    mandatory: true
+    validation_method: DOCUMENT_REVIEW
+  - key: ev.test-result
+    evidence_kind: test_result
+    mandatory: true
+    validation_method: TEST_EXECUTION
+    acceptance_pattern: junit-xml
+    retention_days: 365
+  - key: ev.quality-result
+    evidence_kind: test_result
+    mandatory: true
+    validation_method: TEST_EXECUTION
+  - key: ev.code-review
+    evidence_kind: review_record
+    mandatory: true
+    validation_method: PEER_REVIEW
+  - key: ev.security-assessment
+    evidence_kind: scan_report
+    mandatory: true
+    validation_method: DOCUMENT_REVIEW
+    retention_days: 2555
+  - key: ev.runbook
+    evidence_kind: document_section
+    mandatory: true
+    validation_method: DOCUMENT_REVIEW
+  - key: ev.release-record
+    evidence_kind: approval
+    mandatory: true
+    validation_method: METADATA_LOOKUP
+    retention_days: 2555
+  - key: ev.feasibility-assessment
+    evidence_kind: document_section
+    mandatory: true
+    validation_method: DOCUMENT_REVIEW
+    retention_days: 2555
+  - key: ev.conceptual-model
+    evidence_kind: model
+    mandatory: true
+    validation_method: DOCUMENT_REVIEW
+    retention_days: 2555
+  - key: ev.profiling-result
+    evidence_kind: metric
+    mandatory: true
+    validation_method: METADATA_LOOKUP
+    acceptance_pattern: data-profile
+    retention_days: 365
+
+# ---------------------------------------------------------------------------
+# Standards, templates and controls
+# ---------------------------------------------------------------------------
+standards:
+  - key: std.enterprise-data-standards
+    statement: Data models conform to the enterprise data standard.
+    category: data
+    authority: Data Governance Board
+    validation_method: HUMAN_REVIEW
+    blocking: true
+  - key: std.naming-standards
+    statement: Objects follow the enterprise naming convention.
+    category: naming
+    authority: Data Governance Board
+    validation_method: AUTOMATED
+    validation_reference: standards.check_naming
+    blocking: true
+
+templates:
+  - key: tmpl.logical-data-model
+    artifact_kind: logical-data-model
+    content_reference: templates/logical-data-model.md
+    required_sections: [Entities, Attributes, Relationships, Traceability, Classification]
+
+controls:
+  - key: ctl.change-management
+    statement: All production changes are assessed, tested and approved before release.
+    control_family: change-management
+    regulatory_reference: internal-CM-01
+    risk_level: HIGH
+    implemented_by: [task.regression-test, gate.release-readiness]
+    evidence_requirements: [ev.test-result, ev.release-record]
+    blocking: true
+  - key: ctl.data-protection
+    statement: Personal data is classified, minimised and retained per policy.
+    control_family: data-protection
+    regulatory_reference: GDPR-Art5
+    risk_level: CRITICAL
+    implemented_by: [task.logical-data-model, task.security-assessment]
+    evidence_requirements: [ev.logical-model, ev.security-assessment]
+    blocking: true
+
+# ---------------------------------------------------------------------------
+# RACI. Exactly one ACCOUNTABLE role per task -- the validator enforces it.
+# ---------------------------------------------------------------------------
+raci:
+  - task: task.logical-data-model
+    accountable: data-architect
+    responsible: [data-architect]
+    consulted: [business-analyst, data-steward]
+    informed: [solution-architect]
+  - task: task.regression-test
+    accountable: test-lead
+    responsible: [test-lead, data-engineer]
+    consulted: []
+    informed: [release-manager]
+  - task: task.security-assessment
+    accountable: security-architect
+    responsible: [security-architect]
+    consulted: []
+    informed: [release-manager]
+  - task: task.release-package
+    accountable: release-manager
+    responsible: [release-manager]
+    consulted: [security-architect]
+    informed: [solution-architect]

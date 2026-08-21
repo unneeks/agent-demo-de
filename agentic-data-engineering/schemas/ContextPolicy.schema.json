@@ -1,0 +1,321 @@
+{
+  "$defs": {
+    "ContextItemKind": {
+      "description": "What kind of thing a candidate context item is.\n\nThe delivery kinds matter: an agent executing a DeliveryContract must be\nshown the checklist and acceptance criteria it will be judged against, and a\npolicy can require exactly that.",
+      "enum": [
+        "KNOWLEDGE",
+        "EVIDENCE",
+        "MEMORY",
+        "PROJECT_FACT",
+        "POLICY",
+        "SCHEMA",
+        "CODE",
+        "FINDING",
+        "DELIVERY_STANDARD",
+        "CHECKLIST",
+        "ACCEPTANCE_CRITERION",
+        "GATE_RULE",
+        "DELIVERY_TEMPLATE"
+      ],
+      "title": "ContextItemKind",
+      "type": "string"
+    },
+    "EntityType": {
+      "description": "Every entity type in the metamodel, across both twins.\n\n``EntityRef`` and the relationship-type registry validate against this, so a\ntypo in a reference or a registry file fails loudly instead of creating a\ndangling edge.",
+      "enum": [
+        "Project",
+        "Repository",
+        "CodeArtifact",
+        "Pipeline",
+        "DataAsset",
+        "SchemaDefinition",
+        "DataProfile",
+        "Infrastructure",
+        "CloudResource",
+        "ArchitectureElement",
+        "Test",
+        "Incident",
+        "Change",
+        "Deployment",
+        "DeliveryModel",
+        "DeliveryPhase",
+        "DeliveryTask",
+        "DeliveryActivity",
+        "DeliveryArtifact",
+        "DeliveryInput",
+        "DeliveryOutput",
+        "DeliveryProcess",
+        "DeliveryContract",
+        "Checklist",
+        "ChecklistItem",
+        "AcceptanceCriterion",
+        "ApprovalGate",
+        "ApprovalRule",
+        "Approval",
+        "EvidenceRequirement",
+        "DefinitionOfDone",
+        "Standard",
+        "Template",
+        "Methodology",
+        "Control",
+        "RaciAssignment",
+        "DeliveryRole",
+        "EngineeringResponsibility",
+        "EngineeringRole",
+        "Agent",
+        "Skill",
+        "Tool",
+        "KnowledgePack",
+        "Policy",
+        "Problem",
+        "Requirement",
+        "Capability",
+        "DeliveryCapability",
+        "CapabilityGap",
+        "Workflow",
+        "Task",
+        "Artifact",
+        "Event",
+        "Decision",
+        "Observation",
+        "Evaluation",
+        "EvaluationSuite",
+        "EvaluationScenario",
+        "EvaluationMetric",
+        "Evidence",
+        "Finding",
+        "Platform",
+        "TechnologyBinding",
+        "Memory",
+        "ContextPolicy",
+        "ContextBundle",
+        "ContextItem",
+        "ProjectSnapshot",
+        "EngineeringObservation",
+        "EngineeringPattern",
+        "CandidateSkill",
+        "CandidateTool",
+        "CandidateAgent"
+      ],
+      "title": "EntityType",
+      "type": "string"
+    },
+    "OverflowStrategy": {
+      "enum": [
+        "DROP_LOWEST_PRIORITY",
+        "TRUNCATE_LOWEST_PRIORITY",
+        "FAIL"
+      ],
+      "title": "OverflowStrategy",
+      "type": "string"
+    },
+    "TrustLevel": {
+      "enum": [
+        "UNTRUSTED",
+        "LOW",
+        "MEDIUM",
+        "HIGH",
+        "AUTHORITATIVE"
+      ],
+      "title": "TrustLevel",
+      "type": "string"
+    },
+    "Twin": {
+      "description": "Which dimension of the digital twin an entity belongs to.\n\nBoth dimensions share one graph and one provenance model; this is a label\nfor navigation and reporting, not a partition. See ADR-0008.",
+      "enum": [
+        "TECHNICAL",
+        "DELIVERY",
+        "SHARED"
+      ],
+      "title": "Twin",
+      "type": "string"
+    }
+  },
+  "$id": "https://agentic-data-engineering/schemas/ContextPolicy.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "The rules governing what may enter an agent's context.",
+  "properties": {
+    "allowed_kinds": {
+      "description": "Empty means all kinds are admissible.",
+      "items": {
+        "$ref": "#/$defs/ContextItemKind"
+      },
+      "title": "Allowed Kinds",
+      "type": "array"
+    },
+    "attributes": {
+      "additionalProperties": true,
+      "description": "Adapter-specific detail that has not earned a first-class field yet.",
+      "title": "Attributes",
+      "type": "object"
+    },
+    "created_at": {
+      "format": "date-time",
+      "title": "Created At",
+      "type": "string"
+    },
+    "deduplicate": {
+      "default": true,
+      "title": "Deduplicate",
+      "type": "boolean"
+    },
+    "description": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Description"
+    },
+    "entity_type": {
+      "$ref": "#/$defs/EntityType",
+      "default": "ContextPolicy"
+    },
+    "id": {
+      "maxLength": 256,
+      "minLength": 1,
+      "title": "Id",
+      "type": "string"
+    },
+    "kind_priorities": {
+      "additionalProperties": {
+        "type": "integer"
+      },
+      "propertyNames": {
+        "$ref": "#/$defs/ContextItemKind"
+      },
+      "title": "Kind Priorities",
+      "type": "object"
+    },
+    "labels": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Labels",
+      "type": "array"
+    },
+    "max_age_days": {
+      "anyOf": [
+        {
+          "minimum": 0,
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Max Age Days"
+    },
+    "max_items_per_kind": {
+      "additionalProperties": {
+        "type": "integer"
+      },
+      "propertyNames": {
+        "$ref": "#/$defs/ContextItemKind"
+      },
+      "title": "Max Items Per Kind",
+      "type": "object"
+    },
+    "max_tokens": {
+      "exclusiveMinimum": 0,
+      "title": "Max Tokens",
+      "type": "integer"
+    },
+    "metamodel_version": {
+      "default": "0.1.0",
+      "examples": [
+        "1.0.0",
+        "2.1.0-rc.1"
+      ],
+      "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-((?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+([0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?$",
+      "title": "Metamodel Version",
+      "type": "string"
+    },
+    "minimum_trust": {
+      "$ref": "#/$defs/TrustLevel",
+      "default": "LOW"
+    },
+    "name": {
+      "maxLength": 512,
+      "minLength": 1,
+      "title": "Name",
+      "type": "string"
+    },
+    "overflow_strategy": {
+      "$ref": "#/$defs/OverflowStrategy",
+      "default": "DROP_LOWEST_PRIORITY"
+    },
+    "policy_key": {
+      "minLength": 1,
+      "title": "Policy Key",
+      "type": "string"
+    },
+    "redact_patterns": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Redact Patterns",
+      "type": "array"
+    },
+    "require_citation": {
+      "default": true,
+      "title": "Require Citation",
+      "type": "boolean"
+    },
+    "require_delivery_context": {
+      "default": false,
+      "description": "Pin delivery-control items so the budget cannot evict them.",
+      "title": "Require Delivery Context",
+      "type": "boolean"
+    },
+    "reserved_tokens": {
+      "default": 0,
+      "minimum": 0,
+      "title": "Reserved Tokens",
+      "type": "integer"
+    },
+    "twin": {
+      "$ref": "#/$defs/Twin",
+      "default": "SHARED"
+    },
+    "updated_at": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Updated At"
+    },
+    "version": {
+      "default": "0.1.0",
+      "examples": [
+        "1.0.0",
+        "2.1.0-rc.1"
+      ],
+      "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-((?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+([0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?$",
+      "title": "Version",
+      "type": "string"
+    }
+  },
+  "required": [
+    "id",
+    "name",
+    "policy_key",
+    "max_tokens"
+  ],
+  "title": "ContextPolicy",
+  "type": "object",
+  "x-metamodel-version": "0.1.0",
+  "x-twin": "SHARED"
+}

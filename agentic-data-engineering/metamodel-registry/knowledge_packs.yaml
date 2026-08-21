@@ -1,0 +1,37 @@
+# Knowledge pack catalog -- explicit, versioned, citable knowledge an agent
+# can reference and cite rather than carrying inside a prompt.
+#
+# Built exactly from the required_knowledge keys already declared across the
+# 5 "staffed in the MVP" engineering roles. See ADR-0014.
+version: 0.1.0
+knowledge_packs:
+
+  - key: project-architecture
+    name: Project Architecture
+    scope: project
+    content_reference: "project-graph://architecture-summary"
+    knowledge_kind: reference
+
+  - key: testing-standards
+    name: Testing Standards
+    scope: enterprise
+    content_reference: "docs/testing-standards.md"
+    knowledge_kind: standard
+
+  - key: enterprise-data-standards
+    name: Enterprise Data Standards
+    scope: enterprise
+    content_reference: "docs/enterprise-data-standards.md"
+    knowledge_kind: standard
+
+  - key: business-glossary
+    name: Business Glossary
+    scope: enterprise
+    content_reference: "metadata-platform://glossary"
+    knowledge_kind: reference
+
+  - key: delivery-model
+    name: Delivery Model
+    scope: enterprise
+    content_reference: "metamodel-registry/delivery-models/data-engineering.yaml"
+    knowledge_kind: standard

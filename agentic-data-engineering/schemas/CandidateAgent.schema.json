@@ -1,0 +1,931 @@
+{
+  "$defs": {
+    "Agent": {
+      "additionalProperties": false,
+      "description": "One implementation of an EngineeringRole.\n\nEverything here is configuration, not code, so an agent version is fully\ndescribed by its record and can be reproduced.",
+      "properties": {
+        "agent_key": {
+          "minLength": 1,
+          "title": "Agent Key",
+          "type": "string"
+        },
+        "attributes": {
+          "additionalProperties": true,
+          "description": "Adapter-specific detail that has not earned a first-class field yet.",
+          "title": "Attributes",
+          "type": "object"
+        },
+        "capabilities": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Capabilities",
+          "type": "array"
+        },
+        "certification_status": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Certification Status"
+        },
+        "context_policy_ref": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/EntityRef"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "cost_profile": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Cost Profile"
+        },
+        "created_at": {
+          "format": "date-time",
+          "title": "Created At",
+          "type": "string"
+        },
+        "delegation_strategy": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Delegation Strategy"
+        },
+        "delivery": {
+          "$ref": "#/$defs/DeliveryCapabilityDeclaration"
+        },
+        "delivery_capabilities": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Delivery Capabilities",
+          "type": "array"
+        },
+        "description": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Description"
+        },
+        "entity_type": {
+          "$ref": "#/$defs/EntityType",
+          "default": "Agent"
+        },
+        "evaluation_suite_ref": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/EntityRef"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "execution_model": {
+          "$ref": "#/$defs/ExecutionModel",
+          "default": "PLANNER_EXECUTOR"
+        },
+        "external_provider": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "External Provider"
+        },
+        "human_approval_required": {
+          "default": true,
+          "title": "Human Approval Required",
+          "type": "boolean"
+        },
+        "id": {
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "Id",
+          "type": "string"
+        },
+        "inputs": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "title": "Inputs",
+          "type": "object"
+        },
+        "knowledge_packs": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Knowledge Packs",
+          "type": "array"
+        },
+        "labels": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Labels",
+          "type": "array"
+        },
+        "max_iterations": {
+          "default": 10,
+          "exclusiveMinimum": 0,
+          "title": "Max Iterations",
+          "type": "integer"
+        },
+        "memory_scopes": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Memory Scopes",
+          "type": "array"
+        },
+        "metamodel_version": {
+          "default": "0.1.0",
+          "examples": [
+            "1.0.0",
+            "2.1.0-rc.1"
+          ],
+          "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-((?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+([0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?$",
+          "title": "Metamodel Version",
+          "type": "string"
+        },
+        "mission": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Mission"
+        },
+        "model_configuration": {
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "boolean"
+              }
+            ]
+          },
+          "title": "Model Configuration",
+          "type": "object"
+        },
+        "model_name": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Model Name"
+        },
+        "model_provider": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Model Provider"
+        },
+        "name": {
+          "maxLength": 512,
+          "minLength": 1,
+          "title": "Name",
+          "type": "string"
+        },
+        "outputs": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "title": "Outputs",
+          "type": "object"
+        },
+        "planning_strategy": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Planning Strategy"
+        },
+        "policies": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Policies",
+          "type": "array"
+        },
+        "retry_policy": {
+          "additionalProperties": {
+            "type": "integer"
+          },
+          "title": "Retry Policy",
+          "type": "object"
+        },
+        "risk_class": {
+          "$ref": "#/$defs/RiskClass",
+          "default": "MEDIUM"
+        },
+        "role_key": {
+          "minLength": 1,
+          "title": "Role Key",
+          "type": "string"
+        },
+        "security_profile": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Security Profile"
+        },
+        "skills": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Skills",
+          "type": "array"
+        },
+        "status": {
+          "$ref": "#/$defs/AgentLifecycle",
+          "default": "DRAFT"
+        },
+        "timeout_seconds": {
+          "default": 900,
+          "exclusiveMinimum": 0,
+          "title": "Timeout Seconds",
+          "type": "integer"
+        },
+        "tools": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Tools",
+          "type": "array"
+        },
+        "twin": {
+          "$ref": "#/$defs/Twin",
+          "default": "SHARED"
+        },
+        "updated_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Updated At"
+        },
+        "version": {
+          "default": "0.1.0",
+          "examples": [
+            "1.0.0",
+            "2.1.0-rc.1"
+          ],
+          "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-((?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+([0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?$",
+          "title": "Version",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "agent_key",
+        "role_key"
+      ],
+      "title": "Agent",
+      "type": "object"
+    },
+    "AgentLifecycle": {
+      "enum": [
+        "DRAFT",
+        "CANDIDATE",
+        "EVALUATED",
+        "CERTIFIED",
+        "DEPLOYED",
+        "MONITORED",
+        "REEVALUATION_REQUIRED",
+        "DEPRECATED",
+        "RETIRED"
+      ],
+      "title": "AgentLifecycle",
+      "type": "string"
+    },
+    "CandidateReview": {
+      "additionalProperties": false,
+      "description": "Review-workflow state shared by all three candidate kinds.\n\nKept as a shared value object rather than duplicated three times, and\nkept strictly separate from ``ProvenanceState``: provenance says how\nmuch to trust the *fact* that this candidate was synthesized this way\n(INFERRED, from a pattern); ``candidate_status`` says how far the\n*proposal itself* has progressed through human review.",
+      "properties": {
+        "candidate_status": {
+          "$ref": "#/$defs/CandidateStatus",
+          "default": "CANDIDATE"
+        },
+        "derived_from_pattern_refs": {
+          "items": {
+            "$ref": "#/$defs/EntityRef"
+          },
+          "minItems": 1,
+          "title": "Derived From Pattern Refs",
+          "type": "array"
+        },
+        "evaluation_ref": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/EntityRef"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "proposed_key": {
+          "minLength": 1,
+          "title": "Proposed Key",
+          "type": "string"
+        },
+        "rationale": {
+          "minLength": 1,
+          "title": "Rationale",
+          "type": "string"
+        },
+        "rejection_reason": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Rejection Reason"
+        },
+        "reviewed_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Reviewed At"
+        },
+        "reviewed_by": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Reviewed By"
+        }
+      },
+      "required": [
+        "proposed_key",
+        "derived_from_pattern_refs",
+        "rationale"
+      ],
+      "title": "CandidateReview",
+      "type": "object"
+    },
+    "CandidateStatus": {
+      "description": "Review progress of an unpublished marketplace candidate (Foundry).\n\nDeliberately NOT ``AgentLifecycle``: ``advance_agent()`` is structurally\nbound to a *registered* Agent's ``agent_key``, and ``Skill``/``Tool``\nhave no lifecycle field at all. A candidate before publish has no\nregistry identity, so it needs its own, smaller lifecycle.\n``CERTIFIED`` is terminal here -- publish-to-YAML is a human act\noutside the system this phase builds.",
+      "enum": [
+        "CANDIDATE",
+        "EVALUATED",
+        "CERTIFIED",
+        "REJECTED"
+      ],
+      "title": "CandidateStatus",
+      "type": "string"
+    },
+    "DeliveryCapabilityDeclaration": {
+      "additionalProperties": false,
+      "description": "What an agent claims it can do within the organization's delivery model.\n\nThe \u00a713 addition. Without this an agent is a generic capability; with it, an\nagent is a candidate for specific organizational work, and the composition\nengine can reject it for reasons an engineering manager would recognise.",
+      "properties": {
+        "produces_evidence_keys": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Produces Evidence Keys",
+          "type": "array"
+        },
+        "supported_artifact_kinds": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Supported Artifact Kinds",
+          "type": "array"
+        },
+        "supported_checklist_keys": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Supported Checklist Keys",
+          "type": "array"
+        },
+        "supported_gate_keys": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Supported Gate Keys",
+          "type": "array"
+        },
+        "supported_phase_keys": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Supported Phase Keys",
+          "type": "array"
+        },
+        "supported_task_keys": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Supported Task Keys",
+          "type": "array"
+        }
+      },
+      "title": "DeliveryCapabilityDeclaration",
+      "type": "object"
+    },
+    "EntityRef": {
+      "additionalProperties": false,
+      "description": "A typed, optionally version-pinned pointer to another entity.",
+      "properties": {
+        "id": {
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "Id",
+          "type": "string"
+        },
+        "type": {
+          "$ref": "#/$defs/EntityType"
+        },
+        "version": {
+          "anyOf": [
+            {
+              "examples": [
+                "1.0.0",
+                "2.1.0-rc.1"
+              ],
+              "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-((?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+([0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Pin to an exact version. None means 'whatever is current'.",
+          "title": "Version"
+        }
+      },
+      "required": [
+        "type",
+        "id"
+      ],
+      "title": "EntityRef",
+      "type": "object"
+    },
+    "EntityType": {
+      "description": "Every entity type in the metamodel, across both twins.\n\n``EntityRef`` and the relationship-type registry validate against this, so a\ntypo in a reference or a registry file fails loudly instead of creating a\ndangling edge.",
+      "enum": [
+        "Project",
+        "Repository",
+        "CodeArtifact",
+        "Pipeline",
+        "DataAsset",
+        "SchemaDefinition",
+        "DataProfile",
+        "Infrastructure",
+        "CloudResource",
+        "ArchitectureElement",
+        "Test",
+        "Incident",
+        "Change",
+        "Deployment",
+        "DeliveryModel",
+        "DeliveryPhase",
+        "DeliveryTask",
+        "DeliveryActivity",
+        "DeliveryArtifact",
+        "DeliveryInput",
+        "DeliveryOutput",
+        "DeliveryProcess",
+        "DeliveryContract",
+        "Checklist",
+        "ChecklistItem",
+        "AcceptanceCriterion",
+        "ApprovalGate",
+        "ApprovalRule",
+        "Approval",
+        "EvidenceRequirement",
+        "DefinitionOfDone",
+        "Standard",
+        "Template",
+        "Methodology",
+        "Control",
+        "RaciAssignment",
+        "DeliveryRole",
+        "EngineeringResponsibility",
+        "EngineeringRole",
+        "Agent",
+        "Skill",
+        "Tool",
+        "KnowledgePack",
+        "Policy",
+        "Problem",
+        "Requirement",
+        "Capability",
+        "DeliveryCapability",
+        "CapabilityGap",
+        "Workflow",
+        "Task",
+        "Artifact",
+        "Event",
+        "Decision",
+        "Observation",
+        "Evaluation",
+        "EvaluationSuite",
+        "EvaluationScenario",
+        "EvaluationMetric",
+        "Evidence",
+        "Finding",
+        "Platform",
+        "TechnologyBinding",
+        "Memory",
+        "ContextPolicy",
+        "ContextBundle",
+        "ContextItem",
+        "ProjectSnapshot",
+        "EngineeringObservation",
+        "EngineeringPattern",
+        "CandidateSkill",
+        "CandidateTool",
+        "CandidateAgent"
+      ],
+      "title": "EntityType",
+      "type": "string"
+    },
+    "ExecutionModel": {
+      "description": "How an agent runs.\n\nEXTERNAL_AGENT is distinct from the other three: this platform does not\nrun the loop and does not select a model for it -- execution happens\nentirely inside a third-party agent platform (e.g. GitHub Copilot coding\nagent). See ADR-0014 and Agent.external_provider.",
+      "enum": [
+        "SINGLE_SHOT",
+        "ITERATIVE",
+        "PLANNER_EXECUTOR",
+        "WORKFLOW_DRIVEN",
+        "EXTERNAL_AGENT"
+      ],
+      "title": "ExecutionModel",
+      "type": "string"
+    },
+    "ExtractionMethod": {
+      "description": "How a delivery fact was obtained from a document.\n\nDelivery metadata is largely extracted from prose, so the extraction method\ntravels with the fact: a heading match and an LLM reading of a paragraph\nwarrant different scepticism.",
+      "enum": [
+        "DIRECT_DECLARATION",
+        "STRUCTURED_PARSE",
+        "PATTERN_MATCH",
+        "SEMANTIC_EXTRACTION",
+        "HUMAN_ENTRY"
+      ],
+      "title": "ExtractionMethod",
+      "type": "string"
+    },
+    "ProvenanceState": {
+      "description": "How a fact came to be believed. See ADR-0003.",
+      "enum": [
+        "OBSERVED",
+        "INFERRED",
+        "HUMAN_VERIFIED",
+        "CERTIFIED"
+      ],
+      "title": "ProvenanceState",
+      "type": "string"
+    },
+    "RiskClass": {
+      "enum": [
+        "LOW",
+        "MEDIUM",
+        "HIGH",
+        "CRITICAL"
+      ],
+      "title": "RiskClass",
+      "type": "string"
+    },
+    "Twin": {
+      "description": "Which dimension of the digital twin an entity belongs to.\n\nBoth dimensions share one graph and one provenance model; this is a label\nfor navigation and reporting, not a partition. See ADR-0008.",
+      "enum": [
+        "TECHNICAL",
+        "DELIVERY",
+        "SHARED"
+      ],
+      "title": "Twin",
+      "type": "string"
+    }
+  },
+  "$id": "https://agentic-data-engineering/schemas/CandidateAgent.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "An unpublished, synthesized Agent proposal.",
+  "properties": {
+    "attributes": {
+      "additionalProperties": true,
+      "description": "Adapter-specific detail that has not earned a first-class field yet.",
+      "title": "Attributes",
+      "type": "object"
+    },
+    "confidence": {
+      "anyOf": [
+        {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Confidence"
+    },
+    "created_at": {
+      "format": "date-time",
+      "title": "Created At",
+      "type": "string"
+    },
+    "description": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Description"
+    },
+    "discovered_at": {
+      "format": "date-time",
+      "title": "Discovered At",
+      "type": "string"
+    },
+    "discovered_by": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Adapter, skill or agent that produced this, e.g. 'git-discovery@0.1.0'.",
+      "title": "Discovered By"
+    },
+    "entity_type": {
+      "$ref": "#/$defs/EntityType",
+      "default": "CandidateAgent"
+    },
+    "evidence_refs": {
+      "items": {
+        "$ref": "#/$defs/EntityRef"
+      },
+      "title": "Evidence Refs",
+      "type": "array"
+    },
+    "extraction_method": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/ExtractionMethod"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "human_verified_at": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Human Verified At"
+    },
+    "human_verified_by": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Human Verified By"
+    },
+    "id": {
+      "maxLength": 256,
+      "minLength": 1,
+      "title": "Id",
+      "type": "string"
+    },
+    "labels": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Labels",
+      "type": "array"
+    },
+    "metamodel_version": {
+      "default": "0.1.0",
+      "examples": [
+        "1.0.0",
+        "2.1.0-rc.1"
+      ],
+      "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-((?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+([0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?$",
+      "title": "Metamodel Version",
+      "type": "string"
+    },
+    "name": {
+      "maxLength": 512,
+      "minLength": 1,
+      "title": "Name",
+      "type": "string"
+    },
+    "proposed_agent": {
+      "$ref": "#/$defs/Agent"
+    },
+    "provenance": {
+      "$ref": "#/$defs/ProvenanceState"
+    },
+    "review": {
+      "$ref": "#/$defs/CandidateReview"
+    },
+    "source_document": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Document this was extracted from -- path, URI or document id.",
+      "title": "Source Document"
+    },
+    "source_section": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Section, heading or page within the source document.",
+      "title": "Source Section"
+    },
+    "twin": {
+      "$ref": "#/$defs/Twin",
+      "default": "SHARED"
+    },
+    "updated_at": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Updated At"
+    },
+    "valid_from": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Valid From"
+    },
+    "valid_until": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Valid Until"
+    },
+    "version": {
+      "default": "0.1.0",
+      "examples": [
+        "1.0.0",
+        "2.1.0-rc.1"
+      ],
+      "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-((?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+([0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?$",
+      "title": "Version",
+      "type": "string"
+    }
+  },
+  "required": [
+    "provenance",
+    "name",
+    "review",
+    "proposed_agent"
+  ],
+  "title": "CandidateAgent",
+  "type": "object",
+  "x-metamodel-version": "0.1.0",
+  "x-twin": "SHARED"
+}
