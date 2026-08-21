@@ -28,6 +28,7 @@ from pathlib import Path
 
 from fastapi import FastAPI, Request, Response
 from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 from agent_runtime.errors import AgentRuntimeError
@@ -70,7 +71,12 @@ def create_app(
     app.state.graph = graph
     app.state.service = service
     app.state.templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
+    import os
+    _prefix = os.environ.get("APP_BASE_PATH", "/app/9000")
+    app.state.templates.env.globals["BASE"] = _prefix
     app.state.agent_fixtures_dir = agent_fixtures_dir
+
+    app.mount("/static", StaticFiles(directory=str(Path(__file__).parent / "static")), name="static")
 
     for router in (
         projects.router,
