@@ -27,6 +27,7 @@ phase can overturn one knowingly rather than by accident.
 | [0020](0020-composition-conformance.md) | Composition calls `DeliveryContract.conformance_of()` for real, via an optional `contract` parameter on `resolve_role()` | Closes a real, self-acknowledged gap between `contracts.py`'s stated purpose and what Phase 4 actually wired up; a role-satisfying but non-conformant agent is now correctly rejected from real project staffing |
 | [0021](0021-capability-gap-analysis.md) | Capability gap analysis with coarse automatic maturity inference, wired into `run_cycle()` as a new optional step | Closes the other half of the Composition Engine's original spec line; `capabilities.yaml`/`delivery_capabilities.yaml`'s `detection_hints`/`realized_by_roles` finally have a consumer |
 | [0022](0022-onboarding-script.md) | Interactive `scripts/onboard_project.py`, composing existing calls, no new engine code | Onboarding a real project is now one guided command instead of four docs and hand-written glue; surfaced (and cleanly handled, not fixed) a real uncaught-`ExtractionError` boundary gap in `discover_project`/`run_cycle` |
+| [0023](0023-agentcore-harness-and-live-workflow-dashboard.md) | AWS Bedrock AgentCore Harness as a 4th `AgentLLMClient`; the first real `ToolExecutor`; a live, pollable multi-agent workflow dashboard | `AgentCoreHarnessClient`'s tool bridge and metrics ride an existing AWS primitive (`InvokeHarness`'s `inlineFunction` tool type) instead of a custom envelope; `run_agent()`/`loop.py` needed zero new code |
 
 ## Deferred, and why
 
@@ -49,12 +50,19 @@ runtime does not exist yet, and none of this phase's work executes anything.
 marked `(later)` through Phase 6. Phase 7 (ADR-0017, `docs/agent-runtime.md`)
 delivers a real multi-turn planner-executor loop (`agent_runtime.run_agent()`)
 behind two live LLM backends (Anthropic, Copilot CLI) plus a hermetic replay
-backend, composed into `run_cycle()` as a new opt-in RUN AGENT step. **Still
-not started:** any real tool side effect — every one of the 7 catalog tools'
-actions is answered by `SimulatedToolExecutor`'s canned data, always — and
-any live human-in-the-loop approval mechanism; `AutomationLevelApprovalPolicy`
-is a synchronous, caller-declared, simulated authorization check, not a real
-gate a human sits in front of.
+backend, composed into `run_cycle()` as a new opt-in RUN AGENT step.
+ADR-0023 (`docs/workflow-dashboard.md`) partially closes "any real tool side
+effect": a fourth LLM backend (`AgentCoreHarnessClient`, AWS Bedrock
+AgentCore) and the first real (non-simulated) `ToolExecutor`
+(`LocalToolExecutor`) now exist, covering `git`/`pytest`/`github` read and
+comment for real — the other 7 catalog actions still have no real backend
+and fall back to `SimulatedToolExecutor`. **Still not started:** any live
+human-in-the-loop approval mechanism; `AutomationLevelApprovalPolicy` is
+still a synchronous, caller-declared, simulated authorization check, not a
+real gate a human sits in front of (the workflow dashboard's "approve and
+retry" is a fresh `run_agent()` call at an elevated grant, not a live pause
+of one); GitHub Copilot coding agent dispatch, deliberately deferred past
+ADR-0023 per explicit sequencing (see the entry above).
 
 **API Gateway** — delivered in Phase 9 (ADR-0019, `docs/api-gateway.md`),
 the last layer `docs/architecture.md`'s layered diagram marked `(later)`.

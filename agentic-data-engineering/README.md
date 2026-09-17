@@ -44,7 +44,11 @@ routes in the same process, sharing the same backend — register a
 project, ingest entities/relationships, trigger evaluations/gate
 assessments/agent runs/full cycles, translating JSON into the same live
 objects `orchestrator`/`agent_runtime` already require, server-side only.
-Every layer in the layered diagram below is now built.
+Every layer in the layered diagram below is now built. A later change adds
+the live workflow dashboard: a fourth `AgentLLMClient` backed by a real
+AWS Bedrock AgentCore Harness, the first real (non-simulated)
+`ToolExecutor`, and a pollable multi-agent SDLC dashboard at `/workflows`
+(ADR-0023).
 
 | Delivered | |
 |---|---|
@@ -62,11 +66,12 @@ Every layer in the layered diagram below is now built.
 | Evaluation harness | 2 worked suites (8 metrics, 6 scenarios), closes a real dangling gate reference, gates `Agent` CANDIDATE→EVALUATED→CERTIFIED — [`docs/evaluation.md`](docs/evaluation.md) |
 | Capability gap analysis | coarse, evidence-counting maturity inference from real `Pipeline`/`Test`/`Evaluation` facts, diffed against caller-supplied desired maturity into itemized `CapabilityGap`s + advisory role recommendations (ADR-0021) — [`docs/gap-analysis.md`](docs/gap-analysis.md) |
 | Project orchestrator | `run_cycle()` composes GAP ANALYSIS→OBSERVE→IMPACT→STAFF→EVALUATE→GATE, writes `IMPLEMENTED_BY`/`Evaluation`+`EVALUATES`/`CapabilityGap`+`HAS_GAP`, wires `GateState.traceability` — [`docs/orchestrator.md`](docs/orchestrator.md) |
-| Agent runtime | `run_agent()`: a real multi-turn planner-executor loop, 2 live LLM backends + 1 replay behind `AgentLLMClient`, 1 simulated `ToolExecutor` covering all 7 catalog tools, approval-gated `LOW_RISK_WRITE` — [`docs/agent-runtime.md`](docs/agent-runtime.md) |
-| Web UI | server-rendered, read-only dashboard, 6 routes, in-process against `ProjectGraphService`/`MetamodelRegistry`, zero writes — [`docs/web-ui.md`](docs/web-ui.md) |
-| API Gateway | read-write `/api/*`, same process as the Web UI — register/ingest/relate, trigger evaluations/gate-assessment/agent-runs/cycles — [`docs/api-gateway.md`](docs/api-gateway.md) |
+| Agent runtime | `run_agent()`: a real multi-turn planner-executor loop, 3 live LLM backends (Anthropic, Copilot CLI, AWS Bedrock AgentCore Harness) + 1 replay behind `AgentLLMClient`, 1 real (`LocalToolExecutor`) + 1 simulated `ToolExecutor`, approval-gated `LOW_RISK_WRITE` — [`docs/agent-runtime.md`](docs/agent-runtime.md) |
+| Web UI | server-rendered dashboard, 8 routes (6 read-only + the live `/workflows` pair), in-process against `ProjectGraphService`/`MetamodelRegistry` — [`docs/web-ui.md`](docs/web-ui.md) |
+| API Gateway | read-write `/api/*`, same process as the Web UI — register/ingest/relate, trigger evaluations/gate-assessment/agent-runs/cycles/workflow-runs — [`docs/api-gateway.md`](docs/api-gateway.md) |
+| Live workflow dashboard | demo + live multi-agent SDLC dashboard, real AWS Bedrock AgentCore Harness backend, real token-cost/elapsed-time metrics, human-attention/approve-and-retry — [`docs/workflow-dashboard.md`](docs/workflow-dashboard.md) |
 | 79 JSON Schema artifacts | committed, with a drift check |
-| 766 tests | 676 unit with the `web` extra installed (616 unit, 14 skipped cleanly without it) |
+| 818 tests | 728 unit with the `web` extra installed (672 unit, 15 skipped cleanly without it) |
 
 ---
 
@@ -79,7 +84,7 @@ pip install -e ".[dev]"
 
 python scripts/validate_registries.py     # registries + the worked delivery model
 python scripts/export_schemas.py --check  # JSON Schema drift check
-pytest tests/unit -q                      # 616 tests, zero infrastructure (webui tests skip cleanly)
+pytest tests/unit -q                      # 672 tests, zero infrastructure (webui tests skip cleanly)
 pytest tests/contract -q                  # in-memory adapters; real stores skip
 ```
 
@@ -94,7 +99,7 @@ To run the Web UI dashboard and the `/api/*` gateway, install the `web` extra:
 
 ```bash
 pip install -e ".[web]"
-pytest tests/unit -q                      # 676 tests, webui + API routes included
+pytest tests/unit -q                      # 728 tests, webui + API routes included
 python scripts/run_web.py --seed-demo-project   # http://127.0.0.1:8000 (UI) and /api/* (JSON)
 ```
 
@@ -113,6 +118,16 @@ analysis and a gate assessment, in one guided walkthrough), see
 
 ```bash
 python scripts/onboard_project.py
+```
+
+To run the live workflow dashboard's `agentcore` backend against a real
+AWS Bedrock AgentCore Harness (already logged in via `aws sso login`/
+`aws configure` -- no keys are ever entered into this app), see
+[`docs/workflow-dashboard.md`](docs/workflow-dashboard.md):
+
+```bash
+pip install -e ".[web,agentcore]"
+python scripts/run_web.py --seed-demo-project   # then open /workflows
 ```
 
 ---
@@ -252,10 +267,11 @@ engines/gap_analysis/      Coarse capability maturity inference + gap diff (ADR-
 project_graph/             ProjectGraphService: lifecycle, snapshotting, query facade
 discovery/                 Uniform agent-based extraction: walk, resolve, orchestrate, extraction/
 orchestrator/              run_cycle(): composes gap analysis, discovery, impact, composition, evaluation, agent runs, gates
-agent_runtime/             run_agent(): multi-turn loop, LLM backends, simulated tool execution, approval gating
-webui/                     create_app(): read-only HTML dashboard (routes/) + read-write JSON API (api/)
+orchestrator/workflow.py   WorkflowRunner: the live, pollable multi-agent workflow orchestrator (ADR-0023)
+agent_runtime/             run_agent(): multi-turn loop, LLM backends (incl. AgentCore Harness), real + simulated tool execution, approval gating
+webui/                     create_app(): HTML dashboard (routes/, incl. live /workflows) + read-write JSON API (api/)
 scripts/                   validate_registries.py, export_schemas.py, record_extraction_fixtures.py, record_agent_fixtures.py, run_web.py, onboard_project.py
-docs/                      Architecture, metamodel spec, delivery model, graph model, project graph, discovery, marketplace, evaluation, orchestrator, agent runtime, web UI, API gateway, gap analysis, onboarding
+docs/                      Architecture, metamodel spec, delivery model, graph model, project graph, discovery, marketplace, evaluation, orchestrator, agent runtime, web UI, API gateway, gap analysis, onboarding, workflow dashboard
 tests/unit/                No infrastructure needed (webui/API tests skip without the web extra)
 tests/contract/            One contract, run against every adapter
 tests/integration/         Live discovery + agent backends, independently skippable
