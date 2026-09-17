@@ -1,0 +1,97 @@
+{
+  "$defs": {
+    "ActionClass": {
+      "description": "Blast radius of one tool action. Required on every action.",
+      "enum": [
+        "READ_ONLY",
+        "LOW_RISK_WRITE",
+        "HIGH_RISK_WRITE",
+        "DESTRUCTIVE"
+      ],
+      "title": "ActionClass",
+      "type": "string"
+    },
+    "ApprovalLevel": {
+      "enum": [
+        "NONE",
+        "SAMPLED_QA",
+        "SINGLE_REVIEWER",
+        "MAKER_CHECKER"
+      ],
+      "title": "ApprovalLevel",
+      "type": "string"
+    }
+  },
+  "$id": "https://agentic-data-engineering/schemas/ToolAction.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "One callable operation on a tool.\n\n``action_class`` has no default on purpose: an unclassified action cannot be\nconstructed, so none can slip past an approval policy by omission.",
+  "properties": {
+    "action_class": {
+      "$ref": "#/$defs/ActionClass"
+    },
+    "description": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Description"
+    },
+    "input_schema": {
+      "additionalProperties": true,
+      "title": "Input Schema",
+      "type": "object"
+    },
+    "minimum_approval": {
+      "$ref": "#/$defs/ApprovalLevel",
+      "default": "NONE"
+    },
+    "name": {
+      "minLength": 1,
+      "title": "Name",
+      "type": "string"
+    },
+    "output_schema": {
+      "additionalProperties": true,
+      "title": "Output Schema",
+      "type": "object"
+    },
+    "rate_limit_per_minute": {
+      "anyOf": [
+        {
+          "exclusiveMinimum": 0,
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Rate Limit Per Minute"
+    },
+    "required_permissions": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Required Permissions",
+      "type": "array"
+    },
+    "reversible": {
+      "default": true,
+      "title": "Reversible",
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "name",
+    "action_class"
+  ],
+  "title": "ToolAction",
+  "type": "object",
+  "x-metamodel-version": "0.1.0"
+}

@@ -1,0 +1,51 @@
+# Optional infrastructure for the two storage planes.
+#
+# Nothing in the unit suite needs this: the in-memory adapters implement the
+# same contract. Bring these up only to run the contract suite against the real
+# stores:
+#
+#   docker compose up -d
+#   pytest tests/contract -q
+#
+# The contract suite detects both services and skips cleanly when absent.
+
+services:
+  neo4j:
+    image: neo4j:5.26-community
+    container_name: ade-neo4j
+    environment:
+      NEO4J_AUTH: neo4j/devpassword
+      NEO4J_server_memory_heap_max__size: 512M
+    ports:
+      - "7474:7474"
+      - "7687:7687"
+    healthcheck:
+      test: ["CMD", "cypher-shell", "-u", "neo4j", "-p", "devpassword", "RETURN 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+    volumes:
+      - neo4j-data:/data
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: ade-postgres
+    environment:
+      POSTGRES_USER: ade
+      POSTGRES_PASSWORD: devpassword
+      POSTGRES_DB: ade
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ade -d ade"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./persistence/postgres/migrations:/docker-entrypoint-initdb.d:ro
+
+volumes:
+  neo4j-data:
+  postgres-data:

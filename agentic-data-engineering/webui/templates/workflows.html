@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}Workflows{% endblock %}
+{% block content %}
+<h1>Workflow dashboard</h1>
+<p class="muted">
+  Live multi-agent SDLC runs. This form starts a <strong>demo</strong> run
+  (scripted, no credentials needed) -- a <strong>live</strong> run (a real
+  AgentCore Harness / Anthropic / Copilot CLI backend) is started via
+  <code>POST /api/workflows</code>. See
+  <code>docs/workflow-dashboard.md</code> in the repository for the full
+  design.
+</p>
+
+<h2>Start a demo run</h2>
+<form method="post" action="/workflows/start">
+  <select name="template_key">
+    {% for template in templates %}
+    <option value="{{ template.key }}">{{ template.name }}</option>
+    {% endfor %}
+  </select>
+  <button type="submit">Start demo run</button>
+</form>
+
+<h2>Runs (this server process only)</h2>
+{% if not runs %}
+<p class="empty">No workflow runs yet.</p>
+{% else %}
+<table>
+  <tr><th>Run</th><th>Mode</th><th>Status</th><th>Work products</th><th>Started</th></tr>
+  {% for snapshot in runs %}
+  <tr>
+    <td><a href="/workflows/{{ snapshot.run_id }}"><code>{{ snapshot.run_id }}</code></a></td>
+    <td>{{ snapshot.mode }}</td>
+    <td><span class="pill {% if snapshot.status == 'completed' %}pass{% endif %}">{{ snapshot.status }}</span></td>
+    <td>{{ snapshot.work_products_done }} / {{ snapshot.work_products_total }}</td>
+    <td>{{ snapshot.started_at }}</td>
+  </tr>
+  {% endfor %}
+</table>
+{% endif %}
+{% endblock %}

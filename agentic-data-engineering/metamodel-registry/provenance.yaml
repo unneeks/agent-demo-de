@@ -1,0 +1,59 @@
+# Provenance states and what each one permits.
+#
+# The states are an enum in code because logic branches on them; this file
+# declares the rules attached to each -- what a state requires, and what the
+# platform may do with data in that state.
+#
+# may_block is the addendum's guardrail: extracted delivery text may advise, but
+# only verified text may stop a release. Enforced by the Blockable mixin.
+version: 0.1.0
+provenance_states:
+
+  - key: OBSERVED
+    name: Observed
+    description: Read directly from a source artifact. Seen, not concluded.
+    requires_confidence: false
+    implied_confidence: 1.0
+    requires_discoverer: true
+    requires_human: false
+    may_drive_automated_action: true
+    may_be_cited_as_fact: true
+    may_block: true
+    rank: 2
+
+  - key: INFERRED
+    name: Inferred
+    description: >
+      Concluded from evidence rather than seen. Always carries a confidence, is
+      never presented as established fact, and may never block delivery.
+    requires_confidence: true
+    requires_discoverer: false
+    requires_human: false
+    may_drive_automated_action: false
+    may_be_cited_as_fact: false
+    may_block: false
+    rank: 1
+
+  - key: HUMAN_VERIFIED
+    name: Human Verified
+    description: A named human checked this and signed off, with a timestamp.
+    requires_confidence: false
+    requires_discoverer: false
+    requires_human: true
+    may_drive_automated_action: true
+    may_be_cited_as_fact: true
+    may_block: true
+    rank: 3
+
+  - key: CERTIFIED
+    name: Certified
+    description: >
+      Human-verified and additionally passed a formal evaluation or governance
+      gate. The only state trusted for high-risk automated action.
+    requires_confidence: false
+    requires_discoverer: false
+    requires_human: true
+    may_drive_automated_action: true
+    may_be_cited_as_fact: true
+    may_block: true
+    rank: 4

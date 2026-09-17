@@ -1,0 +1,85 @@
+# Tool catalog -- external executable capabilities the platform can invoke.
+#
+# Built exactly from the required_tools keys already declared across the 5
+# "staffed in the MVP" engineering roles. See ADR-0014.
+#
+# `github`'s `copilot_code_review` action is integration point (a) of the
+# three deferred GitHub Copilot points named in docs/adr/README.md: registry
+# data only, LOW_RISK_WRITE, findings framed as Evidence -- never executed by
+# this platform. See docs/marketplace.md.
+version: 0.1.0
+tools:
+
+  - key: git
+    name: Git
+    category: vcs
+    actions:
+      - name: read_repository
+        action_class: READ_ONLY
+
+  - key: github
+    name: GitHub
+    provider: github
+    category: vcs-platform
+    actions:
+      - name: read_pull_request
+        action_class: READ_ONLY
+      - name: comment_on_pull_request
+        action_class: LOW_RISK_WRITE
+        # A deliberate floor beneath the approval_matrix's own LOW_RISK_WRITE
+        # result (risk.yaml): a posted comment is visible to humans outside
+        # this platform immediately, so it should never go out unreviewed --
+        # not even under ASSISTED mode, where the matrix alone says NONE.
+        # See docs/agent-runtime.md and ADR-0017.
+        minimum_approval: SINGLE_REVIEWER
+        reversible: true
+      - name: copilot_code_review
+        description: >
+          Requests a GitHub Copilot code review on a pull request. Findings
+          are recorded as Evidence(evidence_kind="review_record"), never
+          executed by this platform -- see docs/marketplace.md.
+        action_class: LOW_RISK_WRITE
+        required_permissions: ["pull_requests:write"]
+        reversible: true
+
+  - key: pytest
+    name: pytest
+    category: test-runner
+    actions:
+      - name: run_tests
+        action_class: LOW_RISK_WRITE
+        reversible: true
+
+  - key: neo4j
+    name: Neo4j
+    category: graph-query
+    actions:
+      - name: traverse
+        action_class: READ_ONLY
+
+  - key: bigquery
+    name: BigQuery
+    category: data-warehouse
+    actions:
+      - name: profile_query
+        action_class: READ_ONLY
+
+  - key: modeling-tool
+    name: Data Modeling Tool
+    category: modeling
+    actions:
+      - name: validate_model
+        action_class: READ_ONLY
+      - name: generate_model
+        action_class: LOW_RISK_WRITE
+        reversible: true
+
+  - key: metadata-platform
+    name: Metadata Platform
+    category: metadata
+    actions:
+      - name: lookup
+        action_class: READ_ONLY
+      - name: publish_model
+        action_class: LOW_RISK_WRITE
+        reversible: true

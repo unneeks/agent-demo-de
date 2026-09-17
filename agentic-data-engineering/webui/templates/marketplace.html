@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block title %}Marketplace{% endblock %}
+{% block content %}
+<h1>Marketplace</h1>
+
+<h2>Agents</h2>
+<table>
+  <tr><th>Key</th><th>Name</th><th>Role</th><th>Status</th><th>Execution model</th></tr>
+  {% for a in agents %}
+  <tr>
+    <td><code>{{ a.agent_key }}</code></td>
+    <td>{{ a.name }}</td>
+    <td>{{ a.role_key }}</td>
+    <td>{{ a.status.value }}</td>
+    <td>{{ a.execution_model.value }}</td>
+  </tr>
+  {% endfor %}
+</table>
+
+<h2>Staffing (IMPLEMENTED_BY)</h2>
+<p class="muted">
+  A global catalog fact, not scoped to any one project: which agents implement a
+  role, across every project that has ever staffed it.
+</p>
+<table>
+  <tr><th>Engineering role</th><th>Implemented by</th></tr>
+  {% for entry in staffing %}
+  <tr>
+    <td><code>{{ entry.role.role_key }}</code> -- {{ entry.role.name }}</td>
+    <td>
+      {% if entry.agent_ids %}
+        {% for aid in entry.agent_ids %}<code>{{ aid }}</code>{% if not loop.last %}, {% endif %}{% endfor %}
+      {% else %}<span class="empty">no agent has ever staffed this role</span>{% endif %}
+    </td>
+  </tr>
+  {% endfor %}
+</table>
+
+<h2>Skills</h2>
+<table>
+  <tr><th>Key</th><th>Name</th><th>Risk level</th></tr>
+  {% for s in skills %}
+  <tr><td><code>{{ s.skill_key }}</code></td><td>{{ s.name }}</td><td>{{ s.risk_level.value }}</td></tr>
+  {% endfor %}
+</table>
+
+<h2>Tools</h2>
+<table>
+  <tr><th>Key</th><th>Name</th><th>Actions</th></tr>
+  {% for t in tools %}
+  <tr>
+    <td><code>{{ t.tool_key }}</code></td>
+    <td>{{ t.name }}</td>
+    <td>{% for act in t.actions %}<code>{{ act.name }}</code> ({{ act.action_class.value }}){% if not loop.last %}, {% endif %}{% endfor %}</td>
+  </tr>
+  {% endfor %}
+</table>
+
+<h2>Knowledge Packs</h2>
+<table>
+  <tr><th>Key</th><th>Name</th><th>Trust level</th></tr>
+  {% for k in knowledge_packs %}
+  <tr><td><code>{{ k.knowledge_key }}</code></td><td>{{ k.name }}</td><td>{{ k.trust_level.value }}</td></tr>
+  {% endfor %}
+</table>
+{% endblock %}

@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+{% block title %}Workflow {{ run_id }}{% endblock %}
+{% block content %}
+<style>
+  .wf-header { display: flex; flex-wrap: wrap; gap: 1.5rem; align-items: baseline; margin-bottom: 1rem; }
+  .wf-stat { font-size: 0.85rem; color: #6b6b78; }
+  .wf-stat strong { display: block; font-size: 1.1rem; color: #1a1a2e; font-weight: 600; }
+  .wf-phasebar { display: flex; gap: 0.4rem; margin: 1rem 0 1.5rem; }
+  .wf-phase { flex: 1; text-align: center; }
+  .wf-phase-bar { height: 6px; border-radius: 3px; background: #e5e5ea; overflow: hidden; margin-bottom: 0.3rem; }
+  .wf-phase-fill { height: 100%; background: #2f6fed; }
+  .wf-phase-fill.done { background: #1f9d55; }
+  .wf-agents { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
+  .wf-agent-card { border: 1px solid #e5e5ea; border-radius: 6px; overflow: hidden; }
+  .wf-agent-head { padding: 0.6rem 0.8rem; color: #fff; font-weight: 600; }
+  .wf-agent-body { padding: 0.6rem 0.8rem; }
+  .wf-agent-activity { font-size: 0.85rem; color: #444; min-height: 2.4em; margin-bottom: 0.5rem; }
+  .wf-wp-list { list-style: none; padding: 0; margin: 0; font-size: 0.85rem; }
+  .wf-wp-list li { padding: 0.2rem 0; display: flex; align-items: center; gap: 0.4rem; }
+  .wf-dot { width: 0.6rem; height: 0.6rem; border-radius: 50%; background: #ccc; flex-shrink: 0; }
+  .wf-dot.completed { background: #1f9d55; }
+  .wf-dot.in_progress { background: #f0a500; }
+  .wf-dot.awaiting_approval { background: #d9534f; }
+  .wf-dot.failed { background: #d9534f; }
+  .wf-agent-foot { padding: 0.4rem 0.8rem; border-top: 1px solid #f0f0f5; font-size: 0.78rem; color: #6b6b78; display: flex; justify-content: space-between; }
+  .wf-attention { background: #fff3cd; border: 1px solid #f0c14b; border-radius: 4px; padding: 0.6rem 0.8rem; margin-bottom: 0.5rem; font-size: 0.88rem; }
+  .wf-attention button { margin-left: 0.5rem; }
+</style>
+
+<h1>Workflow <code>{{ run_id }}</code> <span id="wf-status" class="pill">{{ snapshot.status }}</span></h1>
+
+<div class="wf-header" id="wf-header-stats">
+  <div class="wf-stat">Elapsed<strong id="wf-elapsed">{{ snapshot.elapsed_seconds }}s</strong></div>
+  <div class="wf-stat">Total token cost<strong id="wf-cost">${{ snapshot.estimated_cost_usd }}</strong></div>
+  <div class="wf-stat">Work products<strong id="wf-wp">{{ snapshot.work_products_done }} / {{ snapshot.work_products_total }}</strong></div>
+  <div class="wf-stat">Agents active<strong id="wf-agents-active">{{ snapshot.agents_active }} / {{ snapshot.agents_total }}</strong></div>
+</div>
+
+<div class="wf-phasebar" id="wf-phasebar"></div>
+<div class="wf-agents" id="wf-agents"></div>
+
+<h2>Recent Activity</h2>
+<table id="wf-activity-table"><tr><th>Time</th><th>Agent</th><th>Event</th></tr></table>
+
+<h2>Human Attention Required</h2>
+<div id="wf-attention"></div>
+
+<p class="muted" id="wf-polling-note">Refreshing every 3 seconds.</p>
+
+<script>
+const RUN_ID = {{ run_id_json | safe }};
+
+function fmtTime(iso) {
+  try { return new Date(iso).toLocaleTimeString(); } catch (e) { return iso; }
+}
+
+function esc(text) {
+  // Every string field here is currently either our own registry data or
+  // a structured error message this codebase builds itself -- none of it
+  // is raw LLM output today. Escaped anyway: this is the one place a
+  // future field (a model's own response text, say) could reach the page
+  // via innerHTML, and escaping now costs nothing.
+  var div = document.createElement("div");
+  div.textContent = text == null ? "" : String(text);
+  return div.innerHTML;
+}
+
+function render(snapshot) {
+  document.getElementById("wf-status").textContent = snapshot.status;
+  document.getElementById("wf-status").className = "pill" + (snapshot.status === "completed" ? " pass" : "");
+  document.getElementById("wf-elapsed").textContent = snapshot.elapsed_seconds + "s";
+  document.getElementById("wf-cost").textContent = "$" + snapshot.estimated_cost_usd;
+  document.getElementById("wf-wp").textContent = snapshot.work_products_done + " / " + snapshot.work_products_total;
+  document.getElementById("wf-agents-active").textContent = snapshot.agents_active + " / " + snapshot.agents_total;
+
+  document.getElementById("wf-phasebar").innerHTML = snapshot.phases.map(function (p) {
+    var pct = p.total ? Math.round((100 * p.done) / p.total) : 0;
+    return '<div class="wf-phase"><div class="wf-phase-bar"><div class="wf-phase-fill' +
+      (p.done === p.total && p.total ? ' done' : '') + '" style="width:' + pct + '%"></div></div>' +
+      esc(p.name) + '<br><span class="muted">' + p.done + ' / ' + p.total + '</span></div>';
+  }).join("");
+
+  var colors = ["#2f6fed", "#1f9d55", "#6f42c1", "#d9534f"];
+  document.getElementById("wf-agents").innerHTML = snapshot.agents.map(function (a, i) {
+    var wps = a.work_products.map(function (wp) {
+      return '<li><span class="wf-dot ' + wp.status + '"></span>' + esc(wp.name) + '</li>';
+    }).join("");
+    return '<div class="wf-agent-card">' +
+      '<div class="wf-agent-head" style="background:' + colors[i % colors.length] + '">' + esc(a.name) + '</div>' +
+      '<div class="wf-agent-body">' +
+      '<div class="wf-agent-activity">' + esc(a.current_activity || (a.error ? "Error: " + a.error : a.status)) + '</div>' +
+      '<ul class="wf-wp-list">' + wps + '</ul>' +
+      '</div>' +
+      '<div class="wf-agent-foot"><span>' + a.elapsed_seconds + 's</span><span>' + a.total_tokens + ' tokens</span></div>' +
+      '</div>';
+  }).join("");
+
+  var table = document.getElementById("wf-activity-table");
+  table.innerHTML = "<tr><th>Time</th><th>Agent</th><th>Event</th></tr>" + snapshot.recent_activity.map(function (e) {
+    return "<tr><td>" + fmtTime(e.at) + "</td><td>" + esc(e.agent_name) + "</td><td>" + esc(e.message) + "</td></tr>";
+  }).join("");
+
+  var attention = document.getElementById("wf-attention");
+  if (!snapshot.human_attention.length) {
+    attention.innerHTML = '<p class="empty">Nothing waiting on a human right now.</p>';
+  } else {
+    attention.innerHTML = snapshot.human_attention.map(function (item) {
+      return '<div class="wf-attention">' +
+        '<strong>' + esc(item.work_product_name) + '</strong> (' + esc(item.agent_key) + ') -- ' + esc(item.reason) +
+        '<button onclick="approve(' + JSON.stringify(item.agent_slot_key) + ', ' + JSON.stringify(item.work_product_key) + ')">Approve (SINGLE_REVIEWER)</button>' +
+        '</div>';
+    }).join("");
+  }
+}
+
+function approve(slotKey, workProductKey) {
+  fetch("/api/workflows/" + RUN_ID + "/approve", {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({agent_slot_key: slotKey, work_product_key: workProductKey, granted: "SINGLE_REVIEWER"}),
+  }).then(function (r) { return r.json(); }).then(render).catch(function (e) { console.error(e); });
+}
+
+function poll() {
+  fetch("/api/workflows/" + RUN_ID).then(function (r) { return r.json(); }).then(function (snapshot) {
+    render(snapshot);
+    if (snapshot.status !== "completed") {
+      setTimeout(poll, 3000);
+    } else {
+      document.getElementById("wf-polling-note").textContent = "Run complete.";
+    }
+  }).catch(function (e) { console.error(e); setTimeout(poll, 5000); });
+}
+
+render({{ snapshot_json | safe }});
+setTimeout(poll, 3000);
+</script>
+{% endblock %}

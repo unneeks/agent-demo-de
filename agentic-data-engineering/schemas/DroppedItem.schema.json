@@ -1,0 +1,80 @@
+{
+  "$defs": {
+    "ContextItemKind": {
+      "description": "What kind of thing a candidate context item is.\n\nThe delivery kinds matter: an agent executing a DeliveryContract must be\nshown the checklist and acceptance criteria it will be judged against, and a\npolicy can require exactly that.",
+      "enum": [
+        "KNOWLEDGE",
+        "EVIDENCE",
+        "MEMORY",
+        "PROJECT_FACT",
+        "POLICY",
+        "SCHEMA",
+        "CODE",
+        "FINDING",
+        "DELIVERY_STANDARD",
+        "CHECKLIST",
+        "ACCEPTANCE_CRITERION",
+        "GATE_RULE",
+        "DELIVERY_TEMPLATE"
+      ],
+      "title": "ContextItemKind",
+      "type": "string"
+    },
+    "DropReason": {
+      "description": "Why a candidate did not make it into a bundle.",
+      "enum": [
+        "BUDGET_EXCEEDED",
+        "BELOW_TRUST_FLOOR",
+        "STALE",
+        "KIND_NOT_ALLOWED",
+        "MISSING_CITATION",
+        "REDACTED",
+        "DUPLICATE"
+      ],
+      "title": "DropReason",
+      "type": "string"
+    }
+  },
+  "$id": "https://agentic-data-engineering/schemas/DroppedItem.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "A candidate that did not make the bundle, and why.",
+  "properties": {
+    "detail": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Detail"
+    },
+    "item_id": {
+      "title": "Item Id",
+      "type": "string"
+    },
+    "kind": {
+      "$ref": "#/$defs/ContextItemKind"
+    },
+    "reason": {
+      "$ref": "#/$defs/DropReason"
+    },
+    "token_estimate": {
+      "default": 0,
+      "minimum": 0,
+      "title": "Token Estimate",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "item_id",
+    "kind",
+    "reason"
+  ],
+  "title": "DroppedItem",
+  "type": "object",
+  "x-metamodel-version": "0.1.0"
+}

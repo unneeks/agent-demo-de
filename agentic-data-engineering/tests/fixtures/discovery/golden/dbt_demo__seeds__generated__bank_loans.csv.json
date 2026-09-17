@@ -1,0 +1,55 @@
+{
+  "backend": "manually-authored",
+  "raw_response": {
+    "entities": [
+      {
+        "asset_kind": "dataset",
+        "confidence": 0.85,
+        "entity_type": "DataAsset",
+        "local_id": "a1",
+        "suggested_id": "bank_loans"
+      },
+      {
+        "asset_ref_local_id": "a1",
+        "confidence": 0.8,
+        "entity_type": "SchemaDefinition",
+        "fields": [
+          {
+            "data_type": "string",
+            "name": "loan_id"
+          },
+          {
+            "data_type": "string",
+            "name": "customer_id"
+          },
+          {
+            "data_type": "string",
+            "name": "loan_type"
+          },
+          {
+            "data_type": "string",
+            "name": "principal_balance"
+          },
+          {
+            "data_type": "string",
+            "name": "days_past_due"
+          }
+        ],
+        "local_id": "s1",
+        "suggested_id": "bank_loans.schema"
+      }
+    ],
+    "relationships": [
+      {
+        "confidence": 0.9,
+        "source_local_id": "a1",
+        "target_kind": "SchemaDefinition",
+        "target_symbolic_name": "bank_loans.schema",
+        "type": "HAS_SCHEMA"
+      }
+    ]
+  },
+  "recorded_at": "2026-08-09T00:00:00+00:00",
+  "request_hash": "8e56f81363b9d2055698be73bd927c9b6f9a07232e6acf7cff47ea3ee5263404",
+  "source_path": "dbt_demo/seeds/generated/bank_loans.csv"
+}

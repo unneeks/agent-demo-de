@@ -1,0 +1,241 @@
+# Engineering role catalog -- the marketplace abstraction agents implement.
+#
+# Distinct from delivery_roles.yaml: a delivery role is who is accountable in
+# the organization, an engineering role is what engineering function an agent
+# performs. They connect through engineering_responsibilities.yaml.
+#
+# minimum_delivery_conformance is the second bar (§28). An agent may be
+# technically excellent and still fail it, and that must block certification --
+# an agent that produces correct output while ignoring mandatory controls is not
+# safe to deploy into a governed process.
+version: 0.1.0
+engineering_roles:
+
+  - key: regression-engineer
+    name: Regression Engineer
+    mission: >
+      Guarantee that a change does not silently break existing behaviour, by
+      selecting and running the smallest sufficient set of tests.
+    responsibilities: [resp.regression-proof]
+    required_capabilities: [regression-testing, impact-analysis, testing]
+    required_delivery_capabilities: [regression-assurance]
+    required_skills: [repository-discovery, dependency-analysis, impact-analysis, test-selection, test-execution]
+    required_tools: [git, github, pytest]
+    required_knowledge: [project-architecture, testing-standards]
+    kpis: [escaped-defect-rate, test-selection-precision, mean-time-to-signal]
+    evaluation_criteria:
+      - Selected tests cover every impacted asset
+      - False positive rate below threshold
+      - Selection is explainable against the dependency graph
+      - Test evidence satisfies the test-readiness gate
+    minimum_evaluation_score: 0.85
+    minimum_delivery_conformance: 0.95
+    risk_level: MEDIUM
+    automation_level: ASSISTED
+    default_approval_level: SINGLE_REVIEWER
+
+  - key: impact-analysis-engineer
+    name: Impact Analysis Engineer
+    mission: >
+      Determine, before a change lands, which assets, capabilities, consumers
+      and delivery obligations it affects, with evidence for each claim.
+    responsibilities: [resp.impact-assessment]
+    required_capabilities: [impact-analysis, lineage]
+    required_delivery_capabilities: [change-assurance]
+    required_skills: [repository-discovery, dependency-analysis, impact-analysis]
+    required_tools: [git, neo4j]
+    required_knowledge: [project-architecture]
+    kpis: [impact-recall, impact-precision, analysis-latency]
+    evaluation_criteria:
+      - No impacted asset is missed (recall prioritised over precision)
+      - Every impact edge carries provenance and confidence
+      - Delivery obligations are reported alongside technical impact
+    minimum_evaluation_score: 0.9
+    minimum_delivery_conformance: 0.9
+    risk_level: MEDIUM
+    automation_level: ASSISTED
+    default_approval_level: SINGLE_REVIEWER
+
+  - key: data-quality-engineer
+    name: Data Quality Engineer
+    mission: >
+      Ensure data flowing through the project is correct, complete and fit for
+      purpose, and that violations surface before consumers see them.
+    responsibilities: [resp.data-correctness]
+    required_capabilities: [data-quality, data-profiling, testing, metadata-management]
+    required_delivery_capabilities: [data-quality-assurance]
+    required_skills: [repository-discovery, dependency-analysis, data-profiling]
+    required_tools: [git, bigquery]
+    required_knowledge: [enterprise-data-standards, project-architecture]
+    kpis: [defect-escape-rate, assertion-coverage, false-alarm-rate]
+    evaluation_criteria:
+      - Findings cite the profiling evidence behind them
+      - Proposed assertions are executable, not prose
+    minimum_evaluation_score: 0.85
+    minimum_delivery_conformance: 0.9
+    risk_level: MEDIUM
+    automation_level: ASSISTED
+    default_approval_level: SINGLE_REVIEWER
+
+  - key: data-model-engineer
+    name: Data Model Engineer
+    mission: >
+      Produce logical and physical data models traceable to business
+      requirements and conformant to enterprise data standards.
+    responsibilities: [resp.logical-data-design]
+    required_capabilities: [data-modelling, metadata-management]
+    required_delivery_capabilities: [architecture-assurance]
+    required_skills: [conceptual-model-analysis, logical-model-generation, traceability-mapping]
+    required_tools: [modeling-tool, metadata-platform]
+    required_knowledge: [enterprise-data-standards, business-glossary]
+    kpis: [model-rework-rate, standard-conformance, traceability-completeness]
+    evaluation_criteria:
+      - Every logical entity traces to a business requirement
+      - Every logical entity has an identified business owner
+      - Model conforms to enterprise naming standards
+    minimum_evaluation_score: 0.85
+    minimum_delivery_conformance: 0.95
+    risk_level: HIGH
+    automation_level: ASSISTED
+    default_approval_level: SINGLE_REVIEWER
+
+  - key: delivery-compliance-engineer
+    name: Delivery Compliance Engineer
+    mission: >
+      Determine whether a change complies with the organization's delivery
+      model, and report precisely what is missing when it does not.
+    responsibilities: [resp.impact-assessment, resp.requirements-quality]
+    required_capabilities: [impact-analysis, governance]
+    required_delivery_capabilities: [change-assurance, compliance-assurance, release-assurance]
+    required_skills: [delivery-process-discovery, checklist-validation, gate-readiness-assessment, evidence-validation, traceability-validation]
+    required_tools: [git, neo4j]
+    required_knowledge: [delivery-model, project-architecture]
+    kpis: [gate-prediction-accuracy, false-block-rate, evidence-completeness]
+    evaluation_criteria:
+      - Gate readiness matches the human decision that follows it
+      - Never reports BLOCKED on an advisory-only shortfall
+      - Every missing item names the control it came from
+    minimum_evaluation_score: 0.9
+    minimum_delivery_conformance: 1.0
+    risk_level: HIGH
+    automation_level: ASSISTED
+    default_approval_level: SINGLE_REVIEWER
+
+  # --- Catalogued, not staffed in the MVP --------------------------------
+
+  - key: documentation-engineer
+    name: Documentation Engineer
+    mission: Keep documentation accurate as the system changes.
+    responsibilities: [resp.documentation-currency]
+    required_capabilities: [documentation, metadata-management]
+    required_delivery_capabilities: [documentation-assurance]
+    required_skills: [repository-discovery]
+    required_tools: [git, github]
+    required_knowledge: [project-architecture]
+    kpis: [documentation-freshness, human-acceptance-rate]
+    minimum_evaluation_score: 0.8
+    minimum_delivery_conformance: 0.85
+    risk_level: LOW
+    automation_level: ASSISTED
+    default_approval_level: SINGLE_REVIEWER
+
+  - key: data-architect
+    name: Data Architect
+    mission: Ensure the project's structure remains coherent and fit for purpose.
+    responsibilities: [resp.architecture-integrity, resp.logical-data-design]
+    required_capabilities: [transformation, metadata-management, lineage, data-modelling]
+    required_delivery_capabilities: [architecture-assurance]
+    required_skills: [repository-discovery, dependency-analysis, architecture-review]
+    required_tools: [git, neo4j]
+    required_knowledge: [enterprise-data-standards, project-architecture]
+    kpis: [architecture-drift, review-turnaround]
+    minimum_evaluation_score: 0.85
+    minimum_delivery_conformance: 0.95
+    risk_level: HIGH
+    automation_level: ASSISTED
+    default_approval_level: MAKER_CHECKER
+
+  - key: security-engineer
+    name: Security Engineer
+    mission: Ensure data protection and access control obligations are met.
+    responsibilities: [resp.security-assessment]
+    required_capabilities: [security, governance]
+    required_delivery_capabilities: [security-assurance]
+    required_skills: [repository-discovery, security-assessment]
+    required_tools: [git]
+    required_knowledge: [security-standards]
+    kpis: [unremediated-findings, time-to-remediate]
+    minimum_evaluation_score: 0.9
+    minimum_delivery_conformance: 1.0
+    risk_level: CRITICAL
+    automation_level: ASSISTED
+    default_approval_level: MAKER_CHECKER
+
+  - key: release-engineer
+    name: Release Engineer
+    mission: Ensure releases carry complete evidence and pass the readiness gate.
+    responsibilities: [resp.release-preparation]
+    required_capabilities: [ci-cd, monitoring]
+    required_delivery_capabilities: [release-assurance]
+    required_skills: [evidence-validation, gate-readiness-assessment]
+    required_tools: [git, github]
+    required_knowledge: [delivery-model]
+    kpis: [release-failure-rate, gate-rework-rate]
+    minimum_evaluation_score: 0.85
+    minimum_delivery_conformance: 1.0
+    risk_level: HIGH
+    automation_level: ASSISTED
+    default_approval_level: MAKER_CHECKER
+
+  - key: sre
+    name: Site Reliability Engineer
+    mission: Ensure what is released can be run, monitored and recovered.
+    responsibilities: [resp.release-preparation]
+    required_capabilities: [monitoring]
+    required_delivery_capabilities: [operational-readiness]
+    required_skills: [repository-discovery]
+    required_tools: [git]
+    required_knowledge: [project-architecture]
+    kpis: [mttr, alert-precision]
+    minimum_evaluation_score: 0.85
+    minimum_delivery_conformance: 0.9
+    risk_level: HIGH
+    automation_level: ASSISTED
+    default_approval_level: SINGLE_REVIEWER
+
+  - key: requirements-engineer
+    name: Requirements Engineer
+    mission: >
+      Produce unambiguous, testable, traceable, cited requirements, and assess
+      the feasibility of proposed solutions before they are committed to.
+    responsibilities: [resp.requirements-quality, resp.feasibility-assessment]
+    required_capabilities: [documentation]
+    required_delivery_capabilities: [requirements-management, feasibility-assessment]
+    required_skills: [traceability-mapping, feasibility-analysis]
+    required_tools: [git]
+    required_knowledge: [business-glossary]
+    kpis: [requirement-rework-rate, traceability-completeness, feasibility-accuracy]
+    evaluation_criteria:
+      - Feasibility verdicts are traceable to evidence, not opinion
+      - GO verdicts do not omit known technical or cost risk
+    minimum_evaluation_score: 0.85
+    minimum_delivery_conformance: 0.9
+    risk_level: MEDIUM
+    automation_level: ASSISTED
+    default_approval_level: SINGLE_REVIEWER
+
+  - key: governance-engineer
+    name: Governance Engineer
+    mission: Ensure regulatory controls are implemented and demonstrable.
+    responsibilities: [resp.requirements-quality]
+    required_capabilities: [governance, metadata-management]
+    required_delivery_capabilities: [compliance-assurance]
+    required_skills: [evidence-validation]
+    required_tools: [git]
+    required_knowledge: [delivery-model]
+    kpis: [control-coverage, audit-finding-rate]
+    minimum_evaluation_score: 0.9
+    minimum_delivery_conformance: 1.0
+    risk_level: CRITICAL
+    automation_level: ASSISTED
+    default_approval_level: MAKER_CHECKER

@@ -1,0 +1,117 @@
+# Technical capability catalog.
+#
+# Vendor-neutral vocabulary agents reason in. Nothing here names a cloud
+# service; that mapping lives in platforms.yaml.
+#
+# detection_hints are what discovery matches against repository content. They
+# are hints, so anything derived from them is recorded as INFERRED with a
+# confidence.
+version: 0.1.0
+capabilities:
+
+  - key: batch-ingestion
+    name: Batch Ingestion
+    category: movement
+    detection_hints: [airflow, cron, "dbt seed", bulk_load, COPY INTO]
+
+  - key: streaming
+    name: Streaming
+    category: movement
+    detection_hints: [pubsub, kinesis, kafka, dataflow, event_hub]
+
+  - key: change-data-capture
+    name: Change Data Capture
+    category: movement
+    detection_hints: [debezium, datastream, binlog, cdc, "_is_deleted"]
+
+  - key: transformation
+    name: Transformation
+    category: movement
+    detection_hints: [dbt, sql, spark, pandas, dataform]
+
+  - key: orchestration
+    name: Orchestration
+    category: movement
+    detection_hints: [airflow, dagster, prefect, composer]
+
+  - key: data-modelling
+    name: Data Modelling
+    category: design
+    description: Producing conceptual, logical and physical data models.
+    detection_hints: ["schema.yml", erd, "logical model", normalisation]
+
+  - key: data-quality
+    name: Data Quality
+    category: quality
+    detection_hints: [great_expectations, "dbt test", soda, not_null, unique]
+
+  - key: data-profiling
+    name: Data Profiling
+    category: quality
+    description: Measuring the statistical shape of data -- volume, null rates, cardinality, distributions.
+    detection_hints: [great_expectations, "dbt source freshness", pandas_profiling, "profile.yml"]
+
+  - key: testing
+    name: Testing
+    category: quality
+    detection_hints: [pytest, unittest, "tests/", "dbt test"]
+
+  - key: regression-testing
+    name: Regression Testing
+    category: quality
+    detection_hints: [baseline, snapshot, golden, regression, reconciliation]
+
+  - key: impact-analysis
+    name: Impact Analysis
+    category: quality
+    detection_hints: ["dbt ls", "state:modified", lineage, dependency graph]
+
+  - key: metadata-management
+    name: Metadata Management
+    category: governance
+    detection_hints: [dataplex, glue catalog, "schema.yml", data catalog]
+
+  - key: lineage
+    name: Lineage
+    category: governance
+    detection_hints: [lineage, "ref(", manifest.json, upstream, downstream]
+
+  - key: governance
+    name: Governance
+    category: governance
+    detection_hints: [policy_tag, data_owner, steward, classification]
+
+  - key: security
+    name: Security
+    category: governance
+    detection_hints: [iam, kms, secret, encryption, service_account]
+
+  - key: monitoring
+    name: Monitoring
+    category: operations
+    detection_hints: [alert, cloud logging, prometheus, sla, freshness]
+
+  - key: cost-management
+    name: Cost Management
+    category: operations
+    detection_hints: [slot, "partition by", "cluster by", cost, budget]
+
+  - key: data-serving
+    name: Data Serving
+    category: operations
+    detection_hints: [mart, api, view, dashboard, looker]
+
+  - key: documentation
+    name: Documentation
+    category: delivery
+    detection_hints: [README, "docs/", "description:", "dbt docs"]
+
+  - key: ci-cd
+    name: CI/CD
+    category: delivery
+    detection_hints: [.github/workflows, gitlab-ci, cloudbuild, jenkinsfile]
+
+  - key: infrastructure-as-code
+    name: Infrastructure as Code
+    category: delivery
+    detection_hints: [terraform, ".tf", pulumi, cloudformation]

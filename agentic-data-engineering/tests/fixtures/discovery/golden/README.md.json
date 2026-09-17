@@ -1,0 +1,50 @@
+{
+  "backend": "manually-authored",
+  "raw_response": {
+    "entities": [
+      {
+        "artifact_key": "readme.agentic-ai-ollama-demo",
+        "artifact_kind": "project-readme",
+        "confidence": 0.85,
+        "entity_type": "DeliveryArtifact",
+        "local_id": "doc",
+        "suggested_id": "readme.agentic-ai-ollama-demo"
+      }
+    ],
+    "relationships": [
+      {
+        "confidence": 0.75,
+        "source_local_id": "doc",
+        "target_id": "bank_customers",
+        "type": "DESCRIBES"
+      },
+      {
+        "confidence": 0.75,
+        "source_local_id": "doc",
+        "target_id": "bank_accounts",
+        "type": "DESCRIBES"
+      },
+      {
+        "confidence": 0.75,
+        "source_local_id": "doc",
+        "target_id": "bank_transactions",
+        "type": "DESCRIBES"
+      },
+      {
+        "confidence": 0.75,
+        "source_local_id": "doc",
+        "target_id": "bank_loans",
+        "type": "DESCRIBES"
+      },
+      {
+        "confidence": 0.75,
+        "source_local_id": "doc",
+        "target_id": "mart_customer_360",
+        "type": "DESCRIBES"
+      }
+    ]
+  },
+  "recorded_at": "2026-08-09T00:00:00+00:00",
+  "request_hash": "710df4819081f18df607597cbfcc5c2f730af000ec64a7b921b8e728958d46f5",
+  "source_path": "README.md"
+}

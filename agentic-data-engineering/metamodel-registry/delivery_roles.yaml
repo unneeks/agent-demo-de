@@ -1,0 +1,75 @@
+# Delivery roles -- who is accountable in the organization's process.
+#
+# These are organizational facts discovered from RACI tables, gate definitions
+# and process documents. They exist whether or not this platform does.
+#
+# Note that Data Architect appears here AND in engineering_roles.yaml, and they
+# are not the same object. The delivery role is an accountability that signs
+# gates; the engineering role is a marketplace abstraction an agent implements.
+# Conflating them is the mistake §12 is warning about -- the delivery Data
+# Architect also carries resp.architecture-signoff, which no agent may hold.
+#
+# incompatible_with encodes segregation of duties: the same person may not hold
+# both roles on the same change.
+version: 0.1.0
+delivery_roles:
+
+  - key: data-architect
+    name: Data Architect
+    responsibilities: [resp.architecture-integrity, resp.logical-data-design, resp.architecture-signoff]
+    approves_gates: [gate.data-architecture-review, gate.architecture-review]
+    accountable_for_tasks: [task.logical-data-model, task.solution-architecture, task.conceptual-model]
+    is_segregated: false
+
+  - key: solution-architect
+    name: Solution Architect
+    responsibilities: [resp.architecture-integrity, resp.architecture-signoff]
+    approves_gates: [gate.architecture-review, gate.release-readiness]
+    accountable_for_tasks: [task.solution-architecture]
+    is_segregated: false
+
+  - key: data-engineer
+    name: Data Engineer
+    responsibilities: [resp.data-correctness, resp.regression-proof]
+    approves_gates: []
+    accountable_for_tasks: [task.build-pipeline, task.unit-test]
+    is_segregated: false
+
+  - key: test-lead
+    name: Test Lead
+    responsibilities: [resp.regression-proof, resp.impact-assessment]
+    approves_gates: [gate.test-readiness]
+    accountable_for_tasks: [task.regression-test, task.test-strategy]
+    is_segregated: true
+    # A person cannot both build the pipeline and sign off its testing.
+    incompatible_with: [data-engineer]
+
+  - key: security-architect
+    name: Security Architect
+    responsibilities: [resp.security-assessment, resp.security-clearance]
+    approves_gates: [gate.release-readiness, gate.security-review]
+    accountable_for_tasks: [task.security-assessment]
+    is_segregated: true
+    incompatible_with: [data-engineer]
+
+  - key: release-manager
+    name: Release Manager
+    responsibilities: [resp.release-preparation, resp.release-readiness]
+    approves_gates: [gate.release-readiness]
+    accountable_for_tasks: [task.release-package, task.operational-runbook]
+    is_segregated: true
+    incompatible_with: [data-engineer]
+
+  - key: business-analyst
+    name: Business Analyst
+    responsibilities: [resp.requirements-quality, resp.feasibility-assessment]
+    approves_gates: [gate.requirements-review]
+    accountable_for_tasks: [task.business-requirements, task.feasibility-assessment]
+    is_segregated: false
+
+  - key: data-steward
+    name: Data Steward
+    responsibilities: [resp.data-correctness, resp.documentation-currency]
+    approves_gates: []
+    accountable_for_tasks: [task.data-quality-rules]
+    is_segregated: false

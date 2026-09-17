@@ -1,0 +1,41 @@
+{
+  "$id": "https://agentic-data-engineering/schemas/ConformanceGap.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "One reason an agent cannot satisfy a delivery contract.",
+  "properties": {
+    "detail": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Detail"
+    },
+    "dimension": {
+      "description": "capability | skill | tool | knowledge | checklist | criterion | gate | artifact",
+      "title": "Dimension",
+      "type": "string"
+    },
+    "mandatory": {
+      "default": true,
+      "title": "Mandatory",
+      "type": "boolean"
+    },
+    "missing": {
+      "title": "Missing",
+      "type": "string"
+    }
+  },
+  "required": [
+    "dimension",
+    "missing"
+  ],
+  "title": "ConformanceGap",
+  "type": "object",
+  "x-metamodel-version": "0.1.0"
+}

@@ -1,0 +1,92 @@
+# Delivery capability catalog (§16).
+#
+# What the organization's *process* assures, as distinct from what the technical
+# system does. A project routinely scores high on technical capability and low
+# here, and that comparison is the most valuable finding the platform produces.
+#
+# evidenced_by lists what must exist in the delivery model for the capability to
+# be credited. A process that claims Security Assurance but has no security gate
+# and no security evidence requirement scores low regardless of what the
+# handbook says -- capability is inferred from what the model actually enforces,
+# not from what it asserts.
+version: 0.1.0
+delivery_capabilities:
+
+  - key: requirements-management
+    name: Requirements Management
+    category: definition
+    description: Requirements are captured, traceable and testable.
+    evidenced_by: [requirement_entities, traceability_edges, acceptance_criteria]
+    realized_by_roles: [requirements-engineer]
+
+  - key: feasibility-assessment
+    name: Feasibility Assessment
+    category: definition
+    description: >
+      A proposed solution's technical, operational and cost feasibility is
+      assessed before requirements and architecture commit resources to it.
+    evidenced_by: [feasibility_artifact, feasibility_checklist]
+    realized_by_roles: [requirements-engineer, data-architect]
+
+  - key: architecture-assurance
+    name: Architecture Assurance
+    category: design
+    description: Solution and data architecture are reviewed before build.
+    evidenced_by: [architecture_gate, architecture_checklist, architecture_artifact]
+    realized_by_roles: [data-architect]
+
+  - key: change-assurance
+    name: Change Assurance
+    category: control
+    description: Every change is impact-assessed, tested and approved proportionately.
+    evidenced_by: [change_process, impact_analysis, approval_gate]
+    realized_by_roles: [impact-analysis-engineer, regression-engineer]
+
+  - key: regression-assurance
+    name: Regression Assurance
+    category: control
+    description: Changes are proven not to break existing behaviour.
+    evidenced_by: [regression_tests, test_evidence, test_gate]
+    realized_by_roles: [regression-engineer]
+
+  - key: data-quality-assurance
+    name: Data Quality Assurance
+    category: control
+    description: Data correctness is asserted and violations surface before consumers see them.
+    evidenced_by: [quality_checklist, quality_evidence]
+    realized_by_roles: [data-quality-engineer]
+
+  - key: security-assurance
+    name: Security Assurance
+    category: control
+    description: Security obligations are assessed and evidenced before release.
+    evidenced_by: [security_gate, security_assessment_evidence]
+    realized_by_roles: [security-engineer]
+
+  - key: compliance-assurance
+    name: Compliance Assurance
+    category: control
+    description: Regulatory controls are implemented and demonstrable to an auditor.
+    evidenced_by: [controls, control_evidence, retention_policy]
+    realized_by_roles: [governance-engineer]
+
+  - key: release-assurance
+    name: Release Assurance
+    category: release
+    description: Releases pass a readiness gate with complete evidence.
+    evidenced_by: [release_process, release_gate, release_checklist]
+    realized_by_roles: [release-engineer]
+
+  - key: operational-readiness
+    name: Operational Readiness
+    category: release
+    description: What is released can be run, monitored and recovered.
+    evidenced_by: [runbook_artifact, monitoring_evidence, incident_process]
+    realized_by_roles: [sre]
+
+  - key: documentation-assurance
+    name: Documentation Assurance
+    category: delivery
+    description: Documentation stays accurate as the system changes.
+    evidenced_by: [documentation_artifact, documentation_checklist]
+    realized_by_roles: [documentation-engineer]

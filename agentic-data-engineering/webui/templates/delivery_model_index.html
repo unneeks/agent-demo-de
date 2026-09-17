@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}Delivery Models{% endblock %}
+{% block content %}
+<h1>Delivery Models</h1>
+{% if models %}
+<table>
+  <tr><th>Key</th><th>Name</th><th>Methodology</th></tr>
+  {% for m in models %}
+  <tr>
+    <td><a href="/delivery-models/{{ m.key }}">{{ m.key }}</a></td>
+    <td>{{ m.name }}</td>
+    <td>{{ m.methodology or "--" }}</td>
+  </tr>
+  {% endfor %}
+</table>
+{% else %}
+<p class="empty">No delivery models loaded.</p>
+{% endif %}
+{% endblock %}
