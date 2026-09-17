@@ -32,12 +32,20 @@ class ToolCallRecord:
 
 @dataclass(frozen=True)
 class AgentTurn:
-    """One `AgentLLMClient.next_turn()` call and its resolved tool calls."""
+    """One `AgentLLMClient.next_turn()` call and its resolved tool calls.
+
+    `raw` carries whatever backend-specific telemetry `AgentTurnResult.raw`
+    reported for this turn (e.g. `AgentCoreHarnessClient`'s real token
+    usage/latency) -- additive; every existing backend already sets `raw`
+    on `AgentTurnResult` today, but `run_agent()` was discarding it before
+    this field existed, silently dropping real signal a caller might want.
+    """
 
     index: int
     text: str | None
     tool_calls: list[ToolCallRecord]
     stop_reason: str
+    raw: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass(frozen=True)

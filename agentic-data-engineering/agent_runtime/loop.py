@@ -162,7 +162,15 @@ def run_agent(
             )
             for request in turn_result.tool_calls
         ]
-        turns.append(AgentTurn(index=index, text=turn_result.text, tool_calls=records, stop_reason=stop_reason))
+        turns.append(
+            AgentTurn(
+                index=index,
+                text=turn_result.text,
+                tool_calls=records,
+                stop_reason=stop_reason,
+                raw=turn_result.raw,
+            )
+        )
         all_tool_calls.extend(records)
         evidence.extend(item for record in records if (item := _evidence_for(record, agent, reference_time)) is not None)
 
