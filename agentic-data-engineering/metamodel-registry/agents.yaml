@@ -97,6 +97,27 @@ agents:
     model_name: claude-sonnet
     status: CANDIDATE
 
+  # --- Added for the workflow dashboard (docs/workflow-dashboard.md,
+  # ADR-0023)'s "Data Analyst" slot. A near-miss against requirements-
+  # engineer's full stated requirements (missing feasibility-assessment
+  # tooling, which nothing in the skills catalog realizes yet) -- fine
+  # here because the workflow dashboard dispatches by agent_key directly,
+  # never through resolve_role(); it does not need this agent to be a
+  # marketplace *match*, only a real, runnable Agent.
+  - key: requirements-analyst-agent
+    name: Requirements Analyst Agent
+    role_key: requirements-engineer
+    mission: Elicit, analyse and document stakeholder requirements before design begins.
+    capabilities: [documentation]
+    delivery_capabilities: [requirements-management]
+    skills: [traceability-mapping]
+    tools: [git]
+    knowledge_packs: [business-glossary]
+    execution_model: PLANNER_EXECUTOR
+    model_provider: anthropic
+    model_name: claude-sonnet
+    status: CANDIDATE
+
   # --- Deferred integration point (c), realized here: EXTERNAL_AGENT, and
   # deliberately incomplete against its role -- proves missing_requirements().
   - key: copilot-coding-agent-regression

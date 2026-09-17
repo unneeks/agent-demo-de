@@ -1,0 +1,83 @@
+# Workflow dashboard templates (docs/workflow-dashboard.md, ADR-0023).
+#
+# A workflow template names which real catalog Agent staffs each slot, and
+# which work products that slot produces, phase by phase. This is a
+# lighter-weight, display-oriented layer on top of the delivery model --
+# it reuses the delivery model's real phase/task vocabulary where a work
+# product genuinely corresponds to one (`task_key`), and is honest when it
+# doesn't (`task_key: null` -- an illustrative work product this template
+# tracks for the dashboard, not yet backed by a registered DeliveryTask).
+#
+# Agent-to-slot assignment here is the template's own authoring decision,
+# not a resolve_role()-derived staffing outcome -- a workflow run dispatches
+# by agent_key directly. See orchestrator/workflow.py.
+version: 0.1.0
+workflow_templates:
+
+  - key: data-engineering-sdlc
+    name: Data Engineering SDLC
+    delivery_model_key: de-delivery-model
+    phases:
+      - {key: requirements, name: Requirements}
+      - {key: design, name: Design}
+      - {key: build, name: Build}
+      - {key: test, name: Test}
+      - {key: release, name: Release}
+
+    agent_slots:
+
+      - key: data-analyst
+        name: Data Analyst Agent
+        agent_key: requirements-analyst-agent
+        mission: Elicit, analyse and document requirements
+        context_policy: {policy_key: workflow.data-analyst, max_tokens: 6000}
+        work_products:
+          - {key: stakeholder-requirements, name: Stakeholder Requirements, phase_key: requirements, task_key: task.business-requirements, demo_duration_seconds: 90, demo_tokens: 34000}
+          - {key: business-objectives, name: Business Objectives, phase_key: requirements, demo_duration_seconds: 70, demo_tokens: 28000}
+          - {key: solution-requirements, name: Solution Requirements, phase_key: requirements, demo_duration_seconds: 60, demo_tokens: 25000}
+          - {key: use-cases, name: Use Cases, phase_key: requirements, demo_duration_seconds: 50, demo_tokens: 20000}
+          - {key: data-glossary-initial, name: "Data Glossary (Initial)", phase_key: requirements, demo_duration_seconds: 40, demo_tokens: 18000}
+          - {key: jira-features, name: JIRA Features, phase_key: requirements, demo_duration_seconds: 45, demo_tokens: 21000}
+          - {key: requirements-traceability, name: Requirements Traceability, phase_key: requirements, demo_duration_seconds: 55, demo_tokens: 22000}
+
+      - key: data-engineer
+        name: Data Engineer Agent
+        agent_key: data-model-composer
+        mission: Design, build and test data pipelines
+        context_policy: {policy_key: workflow.data-engineer, max_tokens: 8000}
+        work_products:
+          - {key: data-design-medallion, name: "Data Design (Medallion)", phase_key: design, task_key: task.logical-data-model, demo_duration_seconds: 100, demo_tokens: 40000}
+          - {key: technical-design, name: Technical Design, phase_key: design, task_key: task.solution-architecture, demo_duration_seconds: 90, demo_tokens: 36000}
+          - {key: dbt-models, name: dbt Models, phase_key: build, task_key: task.build-pipeline, demo_duration_seconds: 120, demo_tokens: 52000}
+          - {key: data-quality-tests, name: Data Quality Tests, phase_key: build, task_key: task.unit-test, demo_duration_seconds: 80, demo_tokens: 30000}
+          - {key: infrastructure-terraform, name: "Infrastructure (Terraform)", phase_key: build, demo_duration_seconds: 90, demo_tokens: 33000}
+          - {key: deployment-scripts, name: Deployment Scripts, phase_key: build, demo_duration_seconds: 60, demo_tokens: 24000}
+          - {key: runbook, name: Runbook, phase_key: build, demo_duration_seconds: 55, demo_tokens: 21000}
+          - {key: data-lineage-documentation, name: Data Lineage Documentation, phase_key: build, demo_duration_seconds: 45, demo_tokens: 18000}
+
+      - key: test-engineer
+        name: Test Engineer Agent
+        agent_key: regression-agent
+        mission: Create and execute test scenarios
+        context_policy: {policy_key: workflow.test-engineer, max_tokens: 6000}
+        work_products:
+          - {key: test-strategy, name: Test Strategy, phase_key: test, demo_duration_seconds: 70, demo_tokens: 27000}
+          - {key: test-scenarios, name: Test Scenarios, phase_key: test, task_key: task.regression-test, demo_duration_seconds: 85, demo_tokens: 33000}
+          - {key: test-data-sets, name: Test Data Sets, phase_key: test, demo_duration_seconds: 55, demo_tokens: 21000}
+          - {key: automated-test-scripts, name: Automated Test Scripts, phase_key: test, demo_duration_seconds: 90, demo_tokens: 35000}
+          - {key: test-execution-report, name: Test Execution Report, phase_key: test, demo_duration_seconds: 50, demo_tokens: 19000}
+          - {key: defect-log, name: Defect Log, phase_key: test, demo_duration_seconds: 40, demo_tokens: 15000}
+          - {key: test-summary-report, name: Test Summary Report, phase_key: test, demo_duration_seconds: 45, demo_tokens: 17000}
+
+      - key: release-lead
+        name: Release Lead Agent
+        agent_key: delivery-compliance-agent
+        mission: Manage release readiness and operations
+        context_policy: {policy_key: workflow.release-lead, max_tokens: 6000}
+        work_products:
+          - {key: release-plan, name: Release Plan, phase_key: release, demo_duration_seconds: 60, demo_tokens: 24000}
+          - {key: deployment-checklist, name: Deployment Checklist, phase_key: release, task_key: task.release-package, demo_duration_seconds: 70, demo_tokens: 27000}
+          - {key: change-log, name: Change Log, phase_key: release, demo_duration_seconds: 30, demo_tokens: 11000}
+          - {key: release-notes, name: Release Notes, phase_key: release, demo_duration_seconds: 35, demo_tokens: 13000}
+          - {key: go-no-go-assessment, name: Go/No-Go Assessment, phase_key: release, task_key: task.security-assessment, demo_duration_seconds: 50, demo_tokens: 20000}
+          - {key: bau-handover-pack, name: BAU Handover Pack, phase_key: release, demo_duration_seconds: 45, demo_tokens: 18000}
