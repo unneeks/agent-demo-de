@@ -101,6 +101,46 @@ class AgentRunHttpRequest(BaseModel):
     context_policy: ContextPolicy
 
 
+class WorkflowLiveBackendConfig(BaseModel):
+    """Which real `AgentLLMClient` to use for a live workflow run, and the
+    local-machine context a real `ToolExecutor` needs (`repo_path`/`repo`).
+    Never carries AWS credentials -- `AgentCoreHarnessClient` always uses
+    the ambient boto3 default chain; this only names *which* deployed
+    Harness/model to call."""
+
+    llm_backend: Literal["agentcore", "anthropic", "copilot_cli"]
+    automation_level: AutomationLevel
+    #: agentcore only.
+    harness_arn: str | None = None
+    qualifier: str | None = None
+    model_id: str | None = None
+    #: anthropic only; falls back to AnthropicAgentClient's own default.
+    anthropic_model: str | None = None
+    #: LocalToolExecutor context, shared by any backend that calls a tool.
+    repo_path: str | None = None
+    repo: str | None = None
+
+
+class WorkflowRunRequest(BaseModel):
+    template_key: str
+    mode: Literal["demo", "live"]
+    #: Applied to every agent slot that has no more specific entry in
+    #: `live_agent_backends` below. `None` for demo mode; required (on
+    #: this field or per-slot) for live mode -- never defaulted, since a
+    #: live run always needs a caller-named Harness/model.
+    live_backend: WorkflowLiveBackendConfig | None = None
+    #: Optional per-slot override, keyed by the template's own agent slot
+    #: key (e.g. "data-analyst") -- for the (advanced, API-only) case where
+    #: different roles should use different Harnesses/models.
+    live_agent_backends: dict[str, WorkflowLiveBackendConfig] = {}
+
+
+class WorkflowApproveRequest(BaseModel):
+    agent_slot_key: str
+    work_product_key: str
+    granted: ApprovalLevel
+
+
 class CycleRunRequest(BaseModel):
     delivery_model_key: str
     change: Change | None = None
@@ -123,4 +163,7 @@ __all__ = [
     "GateAssessRequest",
     "MarketplaceResponse",
     "ProjectGraphResponse",
+    "WorkflowApproveRequest",
+    "WorkflowLiveBackendConfig",
+    "WorkflowRunRequest",
 ]

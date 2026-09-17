@@ -33,14 +33,37 @@ from fastapi.templating import Jinja2Templates
 from agent_runtime.errors import AgentRuntimeError
 from domain.metamodel.registry import MetamodelRegistry
 from orchestrator.errors import UnknownGateError
+from orchestrator.workflow import WorkflowRunner, load_workflow_templates
 from persistence.ports import GraphRepository, MetadataRepository
 from project_graph.errors import IngestionError, UnknownProjectError
 from project_graph.service import ProjectGraphService
 
-from webui.api.errors import ReplayBackendUnavailableError, UnknownAgentError
-from webui.api.routes import agent_runs, cycles, entities, evaluations as api_evaluations, gates, reads
+from webui.api.errors import (
+    MissingWorkflowBackendError,
+    ReplayBackendUnavailableError,
+    UnknownAgentError,
+    UnknownWorkflowRunError,
+    UnknownWorkflowTemplateError,
+)
+from webui.api.routes import (
+    agent_runs,
+    cycles,
+    entities,
+    evaluations as api_evaluations,
+    gates,
+    reads,
+    workflows as api_workflows,
+)
 from webui.errors import UnknownDeliveryModelError
-from webui.routes import delivery_model, evaluations, gate_readiness, marketplace, project_graph, projects
+from webui.routes import (
+    delivery_model,
+    evaluations,
+    gate_readiness,
+    marketplace,
+    project_graph,
+    projects,
+    workflows,
+)
 
 TEMPLATES_DIR = Path(__file__).parent / "templates"
 
@@ -71,6 +94,19 @@ def create_app(
     app.state.service = service
     app.state.templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
     app.state.agent_fixtures_dir = agent_fixtures_dir
+    try:
+        app.state.workflow_templates = load_workflow_templates(registry)
+    except FileNotFoundError:
+        # Additive feature: a registry root with no workflow_templates.yaml
+        # at all (e.g. a minimal registry a test builds for an unrelated
+        # fixture) must not break every other route this app serves --
+        # only using the workflow dashboard itself fails there, and does
+        # so with a real UnknownWorkflowTemplateError naming the empty
+        # catalog, not a 500 at startup. A malformed *existing* file
+        # (WorkflowTemplateError, bad YAML) is a real bug and is left to
+        # raise loudly here instead.
+        app.state.workflow_templates = {}
+    app.state.workflow_runs: dict[str, WorkflowRunner] = {}
 
     for router in (
         projects.router,
@@ -79,12 +115,14 @@ def create_app(
         marketplace.router,
         evaluations.router,
         gate_readiness.router,
+        workflows.router,
         entities.router,
         reads.router,
         api_evaluations.router,
         gates.router,
         agent_runs.router,
         cycles.router,
+        api_workflows.router,
     ):
         app.include_router(router)
 
@@ -93,6 +131,9 @@ def create_app(
         (UnknownGateError, 404),
         (UnknownDeliveryModelError, 404),
         (UnknownAgentError, 404),
+        (UnknownWorkflowTemplateError, 404),
+        (UnknownWorkflowRunError, 404),
+        (MissingWorkflowBackendError, 422),
         (ReplayBackendUnavailableError, 501),
         (IngestionError, 422),
         (ValueError, 422),

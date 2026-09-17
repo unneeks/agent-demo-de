@@ -20,6 +20,8 @@ from domain.metamodel.registry import MetamodelRegistry
 from persistence.ports import GraphRepository, MetadataRepository
 from project_graph.service import ProjectGraphService
 
+from orchestrator.workflow import WorkflowRunner, WorkflowTemplate
+
 
 def get_registry(request: Request) -> MetamodelRegistry:
     return request.app.state.registry
@@ -43,3 +45,11 @@ def get_templates(request: Request) -> Jinja2Templates:
 
 def get_agent_fixtures_dir(request: Request) -> Path | None:
     return request.app.state.agent_fixtures_dir
+
+
+def get_workflow_templates(request: Request) -> dict[str, WorkflowTemplate]:
+    return request.app.state.workflow_templates
+
+
+def get_workflow_runs(request: Request) -> dict[str, WorkflowRunner]:
+    return request.app.state.workflow_runs

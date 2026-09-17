@@ -12,20 +12,30 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from agent_runtime.agentcore_client import AgentCoreHarnessClient
 from agent_runtime.anthropic_client import AnthropicAgentClient
 from agent_runtime.approval import AutomationLevelApprovalPolicy
 from agent_runtime.copilot_cli_client import CopilotCliAgentClient
 from agent_runtime.llm import AgentLLMClient
+from agent_runtime.local_tool_executor import LocalToolExecutor
 from agent_runtime.replay_client import ReplayAgentClient
 from agent_runtime.simulated_tools import SimulatedToolExecutor
+from agent_runtime.tools import ToolExecutor
 from domain.metamodel.registry import MetamodelRegistry
 
 from orchestrator.agent_step import AgentRunRequest
 from orchestrator.evaluate import EvaluationRequest
 from orchestrator.gate import GateRequest
+from orchestrator.workflow import LiveAgentBackend, WorkflowTemplate
 
-from webui.api.errors import ReplayBackendUnavailableError, UnknownAgentError
-from webui.api.schemas import AgentRunHttpRequest, EvaluationRunRequest, GateAssessRequest
+from webui.api.errors import MissingWorkflowBackendError, ReplayBackendUnavailableError, UnknownAgentError
+from webui.api.schemas import (
+    AgentRunHttpRequest,
+    EvaluationRunRequest,
+    GateAssessRequest,
+    WorkflowLiveBackendConfig,
+    WorkflowRunRequest,
+)
 
 
 def build_evaluation_request(body: EvaluationRunRequest, registry: MetamodelRegistry) -> EvaluationRequest:
@@ -87,9 +97,53 @@ def build_agent_run_request(
     )
 
 
+def build_workflow_llm_client(config: WorkflowLiveBackendConfig) -> AgentLLMClient:
+    """`AgentCoreHarnessClient` is the one backend the other three
+    (`build_llm_client`) don't cover -- added here rather than folded into
+    that function, since a workflow's `WorkflowLiveBackendConfig` is a
+    different request shape (`harness_arn`/`qualifier`/`model_id`) from
+    `AgentRunHttpRequest`'s plain `llm_backend` string."""
+    if config.llm_backend == "agentcore":
+        return AgentCoreHarnessClient(
+            harness_arn=config.harness_arn or "",
+            qualifier=config.qualifier,
+            model_id=config.model_id,
+        )
+    if config.llm_backend == "anthropic":
+        return AnthropicAgentClient(model=config.anthropic_model) if config.anthropic_model else AnthropicAgentClient()
+    if config.llm_backend == "copilot_cli":
+        return CopilotCliAgentClient()
+    raise AssertionError(f"unreachable -- Literal type already constrained backend, got {config.llm_backend!r}")
+
+
+def build_workflow_tool_executor(config: WorkflowLiveBackendConfig) -> ToolExecutor:
+    """Real execution where `LocalToolExecutor` has one
+    (git/pytest/github), `SimulatedToolExecutor` for everything else --
+    matching `LocalToolExecutor`'s own documented fallback discipline
+    rather than leaving those actions unusable in live mode."""
+    return LocalToolExecutor(repo_path=config.repo_path, repo=config.repo, fallback=SimulatedToolExecutor())
+
+
+def build_live_backends(body: WorkflowRunRequest, template: WorkflowTemplate) -> dict[str, LiveAgentBackend]:
+    backends: dict[str, LiveAgentBackend] = {}
+    for slot in template.agent_slots:
+        config = body.live_agent_backends.get(slot.key) or body.live_backend
+        if config is None:
+            raise MissingWorkflowBackendError(slot.key)
+        backends[slot.key] = LiveAgentBackend(
+            llm_client=build_workflow_llm_client(config),
+            tool_executor=build_workflow_tool_executor(config),
+            automation_level=config.automation_level,
+        )
+    return backends
+
+
 __all__ = [
     "build_agent_run_request",
     "build_evaluation_request",
     "build_gate_request",
+    "build_live_backends",
     "build_llm_client",
+    "build_workflow_llm_client",
+    "build_workflow_tool_executor",
 ]

@@ -19,7 +19,7 @@ neo4j = ["neo4j>=5.14"]
 postgres = ["psycopg[binary]>=3.1"]
 agent = ["anthropic>=0.40"]
 agentcore = ["boto3>=1.34"]
-web = ["fastapi>=0.110", "uvicorn>=0.27", "jinja2>=3.1", "httpx>=0.27"]
+web = ["fastapi>=0.110", "uvicorn>=0.27", "jinja2>=3.1", "httpx>=0.27", "python-multipart>=0.0.9"]
 
 [tool.setuptools.packages.find]
 where = ["."]
@@ -41,4 +41,13 @@ markers = [
     "integration: requires a live Neo4j or PostgreSQL instance",
     "agent_integration: requires a live LLM provider (ANTHROPIC_API_KEY, or the copilot/gh CLI on PATH)",
 ]
-filterwarnings = ["error::DeprecationWarning"]
+filterwarnings = [
+    "error::DeprecationWarning",
+    # Pre-existing environment drift, unrelated to this codebase: the
+    # installed starlette/anyio pair emits this at import time
+    # (starlette/testclient.py importing anyio.abc.BlockingPortal), which
+    # otherwise turns every fastapi.testclient import into a collection
+    # error under the strict filter above. Narrowly ignored by message
+    # rather than loosening the blanket error filter.
+    "ignore:The anyio\\.abc\\.BlockingPortal alias is deprecated:DeprecationWarning",
+]
